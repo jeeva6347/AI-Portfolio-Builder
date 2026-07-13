@@ -1,10 +1,11 @@
+import os
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
-import os
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
-from django.urls import reverse_lazy, reverse
-from django.http import HttpResponse, HttpResponseForbidden
+from django.urls import reverse
+from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
+import copy
 
 from dashboard.navigation import get_sidebar_navigation
 from themes.models import Theme
@@ -40,18 +41,159 @@ def _base_context(request, active_tab="personal"):
     }
 
 
-# ── PORTFOLIO BUILDER WORKSPACE ───────────────────────────────────────────────
+# ── PORTFOLIO LIST VIEW ──────────────────────────────────────────────────────
+
+class PortfolioListView(LoginRequiredMixin, View):
+    """
+    Dashboard list view showing all user portfolios partitioned by status.
+    """
+    template_name = "portfolio/list.html"
+
+    def get(self, request):
+        portfolios = Portfolio.objects.filter(user=request.user).order_by("-updated_at")
+        ctx = _base_context(request, "list")
+        ctx.update({
+            "portfolios": portfolios,
+            "drafts": portfolios.filter(status=Portfolio.Status.DRAFT),
+            "published": portfolios.filter(status=Portfolio.Status.PUBLISHED),
+            "archived": portfolios.filter(status=Portfolio.Status.ARCHIVED),
+            "breadcrumbs": [
+                {"title": "Dashboard", "url": "#"},
+                {"title": "My Portfolios", "url": "#"},
+            ],
+        })
+        return render(request, self.template_name, ctx)
+
+
+# ── CREATE, DELETE, & DUPLICATE ACTIONS ──────────────────────────────────────
+
+class PortfolioCreateView(LoginRequiredMixin, View):
+    """Creates a new draft portfolio and redirects to its visual editor."""
+    def post(self, request):
+        # Create a default draft portfolio
+        count = Portfolio.objects.filter(user=request.user).count()
+        portfolio = Portfolio.objects.create(
+            user=request.user,
+            name=f"My Portfolio {count + 1}",
+            title="Software Engineer",
+            status=Portfolio.Status.DRAFT
+        )
+        messages.success(request, f"New draft portfolio '{portfolio.name}' created.")
+        return redirect("portfolio:builder", pk=portfolio.pk)
+
+
+class PortfolioDeleteView(LoginRequiredMixin, View):
+    """Deletes a portfolio record."""
+    def post(self, request, pk):
+        portfolio = get_object_or_404(Portfolio, pk=pk, user=request.user)
+        name = portfolio.name
+        portfolio.delete()
+        messages.success(request, f"Deleted portfolio '{name}'.")
+        return redirect("portfolio:list")
+
+
+class PortfolioDuplicateView(LoginRequiredMixin, View):
+    """
+    Clones a portfolio record along with all related skills, projects,
+    experience, education, and testimonials.
+    """
+    def post(self, request, pk):
+        portfolio = get_object_or_404(Portfolio, pk=pk, user=request.user)
+        
+        # 1. Duplicate top-level model
+        clone = copy.copy(portfolio)
+        clone.id = None
+        clone.pk = None
+        clone.name = f"Copy of {portfolio.name}"
+        clone.status = Portfolio.Status.DRAFT
+        clone.save()
+
+        # 2. Duplicate child relations
+        for item in portfolio.skills.all():
+            skill_clone = copy.copy(item)
+            skill_clone.id = None
+            skill_clone.pk = None
+            skill_clone.portfolio = clone
+            skill_clone.save()
+
+        for item in portfolio.projects.all():
+            proj_clone = copy.copy(item)
+            proj_clone.id = None
+            proj_clone.pk = None
+            proj_clone.portfolio = clone
+            proj_clone.save()
+
+        for item in portfolio.experiences.all():
+            exp_clone = copy.copy(item)
+            exp_clone.id = None
+            exp_clone.pk = None
+            exp_clone.portfolio = clone
+            exp_clone.save()
+
+        for item in portfolio.education.all():
+            edu_clone = copy.copy(item)
+            edu_clone.id = None
+            edu_clone.pk = None
+            edu_clone.portfolio = clone
+            edu_clone.save()
+
+        for item in portfolio.certificates.all():
+            cert_clone = copy.copy(item)
+            cert_clone.id = None
+            cert_clone.pk = None
+            cert_clone.portfolio = clone
+            cert_clone.save()
+
+        for item in portfolio.services.all():
+            serv_clone = copy.copy(item)
+            serv_clone.id = None
+            serv_clone.pk = None
+            serv_clone.portfolio = clone
+            serv_clone.save()
+
+        for item in portfolio.testimonials.all():
+            test_clone = copy.copy(item)
+            test_clone.id = None
+            test_clone.pk = None
+            test_clone.portfolio = clone
+            test_clone.save()
+
+        messages.success(request, f"Duplicated portfolio into '{clone.name}'.")
+        return redirect("portfolio:list")
+
+
+# ── STATUS MUTATION ACTIONS ──────────────────────────────────────────────────
+
+class PortfolioPublishView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        portfolio = get_object_or_404(Portfolio, pk=pk, user=request.user)
+        portfolio.status = Portfolio.Status.PUBLISHED
+        portfolio.save(update_fields=["status"])
+        messages.success(request, f"Published portfolio '{portfolio.name}' successfully!")
+        return redirect("portfolio:list")
+
+
+class PortfolioArchiveView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        portfolio = get_object_or_404(Portfolio, pk=pk, user=request.user)
+        portfolio.status = Portfolio.Status.ARCHIVED
+        portfolio.save(update_fields=["status"])
+        messages.success(request, f"Archived portfolio '{portfolio.name}'.")
+        return redirect("portfolio:list")
+
+
+# ── VISUAL BUILDER WORKSPACE & API ───────────────────────────────────────────
 
 class PortfolioBuilderView(LoginRequiredMixin, View):
     """
-    Main tabbed visual workspace for editing all portfolio details,
-    social links, and footer configurations.
+    Visual split-screen editor workspace for a specific portfolio ID.
+    Renders left editing panel forms and right live preview viewport.
     """
     template_name = "portfolio/builder.html"
     login_url = "/accounts/login/"
 
-    def get(self, request):
-        portfolio, _ = Portfolio.objects.get_or_create(user=request.user)
+    def get(self, request, pk):
+        portfolio = get_object_or_404(Portfolio, pk=pk, user=request.user)
         active_tab = request.GET.get("tab", "personal")
         
         ctx = _base_context(request, active_tab)
@@ -59,8 +201,8 @@ class PortfolioBuilderView(LoginRequiredMixin, View):
             "portfolio": portfolio,
             "form": PortfolioForm(instance=portfolio),
             "breadcrumbs": [
-                {"title": "Dashboard", "url": "#"},
-                {"title": "Portfolio Builder", "url": "#"},
+                {"title": "My Portfolios", "url": reverse("portfolio:list")},
+                {"title": f"Editing: {portfolio.name}", "url": "#"},
             ],
             # Child item forms
             "skill_form": PortfolioSkillForm(),
@@ -82,23 +224,24 @@ class PortfolioBuilderView(LoginRequiredMixin, View):
         })
         return render(request, self.template_name, ctx)
 
-    def post(self, request):
-        portfolio, _ = Portfolio.objects.get_or_create(user=request.user)
+    def post(self, request, pk):
+        """Standard POST fallback handling if javascript is disabled."""
+        portfolio = get_object_or_404(Portfolio, pk=pk, user=request.user)
         active_tab = request.POST.get("tab", "personal")
         form = PortfolioForm(request.POST, request.FILES, instance=portfolio)
         
         if form.is_valid():
             form.save()
             messages.success(request, "Portfolio information updated successfully.")
-            return redirect(f"{reverse('portfolio:builder')}?tab={active_tab}")
+            return redirect(f"{reverse('portfolio:builder', kwargs={'pk': portfolio.pk})}?tab={active_tab}")
             
         ctx = _base_context(request, active_tab)
         ctx.update({
             "portfolio": portfolio,
             "form": form,
             "breadcrumbs": [
-                {"title": "Dashboard", "url": "#"},
-                {"title": "Portfolio Builder", "url": "#"},
+                {"title": "My Portfolios", "url": reverse("portfolio:list")},
+                {"title": f"Editing: {portfolio.name}", "url": "#"},
             ],
             "skill_form": PortfolioSkillForm(),
             "project_form": PortfolioProjectForm(),
@@ -119,11 +262,25 @@ class PortfolioBuilderView(LoginRequiredMixin, View):
         return render(request, self.template_name, ctx)
 
 
+class PortfolioUpdateAPI(LoginRequiredMixin, View):
+    """
+    AJAX endpoint validating and auto-saving individual fields
+    to support real-time preview updates without page reload.
+    """
+    def post(self, request, pk):
+        portfolio = get_object_or_404(Portfolio, pk=pk, user=request.user)
+        form = PortfolioForm(request.POST, request.FILES, instance=portfolio)
+        if form.is_valid():
+            form.save()
+            return JsonResponse({"success": True, "message": "Draft saved."})
+        return JsonResponse({"success": False, "errors": form.errors}, status=400)
+
+
 # ── SUB-ITEM CREATE VIEWS ────────────────────────────────────────────────────
 
 class SkillCreateView(LoginRequiredMixin, View):
-    def post(self, request):
-        portfolio = get_object_or_404(Portfolio, user=request.user)
+    def post(self, request, pk):
+        portfolio = get_object_or_404(Portfolio, pk=pk, user=request.user)
         form = PortfolioSkillForm(request.POST)
         if form.is_valid():
             skill = form.save(commit=False)
@@ -132,12 +289,12 @@ class SkillCreateView(LoginRequiredMixin, View):
             messages.success(request, f"Added skill '{skill.name}'.")
         else:
             messages.error(request, "Invalid skill data.")
-        return redirect(f"{reverse('portfolio:builder')}?tab=skills")
+        return redirect(f"{reverse('portfolio:builder', kwargs={'pk': portfolio.pk})}?tab=skills")
 
 
 class ProjectCreateView(LoginRequiredMixin, View):
-    def post(self, request):
-        portfolio = get_object_or_404(Portfolio, user=request.user)
+    def post(self, request, pk):
+        portfolio = get_object_or_404(Portfolio, pk=pk, user=request.user)
         form = PortfolioProjectForm(request.POST, request.FILES)
         if form.is_valid():
             project = form.save(commit=False)
@@ -146,12 +303,12 @@ class ProjectCreateView(LoginRequiredMixin, View):
             messages.success(request, f"Added project '{project.title}'.")
         else:
             messages.error(request, "Invalid project data.")
-        return redirect(f"{reverse('portfolio:builder')}?tab=projects")
+        return redirect(f"{reverse('portfolio:builder', kwargs={'pk': portfolio.pk})}?tab=projects")
 
 
 class ExperienceCreateView(LoginRequiredMixin, View):
-    def post(self, request):
-        portfolio = get_object_or_404(Portfolio, user=request.user)
+    def post(self, request, pk):
+        portfolio = get_object_or_404(Portfolio, pk=pk, user=request.user)
         form = PortfolioExperienceForm(request.POST)
         if form.is_valid():
             experience = form.save(commit=False)
@@ -160,12 +317,12 @@ class ExperienceCreateView(LoginRequiredMixin, View):
             messages.success(request, f"Added experience at '{experience.company}'.")
         else:
             messages.error(request, "Invalid experience data.")
-        return redirect(f"{reverse('portfolio:builder')}?tab=experience")
+        return redirect(f"{reverse('portfolio:builder', kwargs={'pk': portfolio.pk})}?tab=experience")
 
 
 class EducationCreateView(LoginRequiredMixin, View):
-    def post(self, request):
-        portfolio = get_object_or_404(Portfolio, user=request.user)
+    def post(self, request, pk):
+        portfolio = get_object_or_404(Portfolio, pk=pk, user=request.user)
         form = PortfolioEducationForm(request.POST)
         if form.is_valid():
             edu = form.save(commit=False)
@@ -174,12 +331,12 @@ class EducationCreateView(LoginRequiredMixin, View):
             messages.success(request, f"Added education '{edu.degree}'.")
         else:
             messages.error(request, "Invalid education data.")
-        return redirect(f"{reverse('portfolio:builder')}?tab=education")
+        return redirect(f"{reverse('portfolio:builder', kwargs={'pk': portfolio.pk})}?tab=education")
 
 
 class CertificateCreateView(LoginRequiredMixin, View):
-    def post(self, request):
-        portfolio = get_object_or_404(Portfolio, user=request.user)
+    def post(self, request, pk):
+        portfolio = get_object_or_404(Portfolio, pk=pk, user=request.user)
         form = PortfolioCertificateForm(request.POST)
         if form.is_valid():
             cert = form.save(commit=False)
@@ -188,12 +345,12 @@ class CertificateCreateView(LoginRequiredMixin, View):
             messages.success(request, f"Added certificate '{cert.name}'.")
         else:
             messages.error(request, "Invalid certificate data.")
-        return redirect(f"{reverse('portfolio:builder')}?tab=certificates")
+        return redirect(f"{reverse('portfolio:builder', kwargs={'pk': portfolio.pk})}?tab=certificates")
 
 
 class ServiceCreateView(LoginRequiredMixin, View):
-    def post(self, request):
-        portfolio = get_object_or_404(Portfolio, user=request.user)
+    def post(self, request, pk):
+        portfolio = get_object_or_404(Portfolio, pk=pk, user=request.user)
         form = PortfolioServiceForm(request.POST)
         if form.is_valid():
             service = form.save(commit=False)
@@ -202,12 +359,12 @@ class ServiceCreateView(LoginRequiredMixin, View):
             messages.success(request, f"Added service '{service.title}'.")
         else:
             messages.error(request, "Invalid service data.")
-        return redirect(f"{reverse('portfolio:builder')}?tab=services")
+        return redirect(f"{reverse('portfolio:builder', kwargs={'pk': portfolio.pk})}?tab=services")
 
 
 class TestimonialCreateView(LoginRequiredMixin, View):
-    def post(self, request):
-        portfolio = get_object_or_404(Portfolio, user=request.user)
+    def post(self, request, pk):
+        portfolio = get_object_or_404(Portfolio, pk=pk, user=request.user)
         form = PortfolioTestimonialForm(request.POST)
         if form.is_valid():
             test = form.save(commit=False)
@@ -216,7 +373,7 @@ class TestimonialCreateView(LoginRequiredMixin, View):
             messages.success(request, f"Added testimonial from '{test.reviewer_name}'.")
         else:
             messages.error(request, "Invalid testimonial data.")
-        return redirect(f"{reverse('portfolio:builder')}?tab=testimonials")
+        return redirect(f"{reverse('portfolio:builder', kwargs={'pk': portfolio.pk})}?tab=testimonials")
 
 
 # ── SUB-ITEM DELETE VIEWS ────────────────────────────────────────────────────
@@ -226,10 +383,11 @@ class SkillDeleteView(LoginRequiredMixin, View):
         skill = get_object_or_404(PortfolioSkill, pk=pk)
         if skill.portfolio.user != request.user:
             return HttpResponseForbidden()
+        portfolio_id = skill.portfolio.pk
         name = skill.name
         skill.delete()
         messages.success(request, f"Deleted skill '{name}'.")
-        return redirect(f"{reverse('portfolio:builder')}?tab=skills")
+        return redirect(f"{reverse('portfolio:builder', kwargs={'pk': portfolio_id})}?tab=skills")
 
 
 class ProjectDeleteView(LoginRequiredMixin, View):
@@ -237,10 +395,11 @@ class ProjectDeleteView(LoginRequiredMixin, View):
         project = get_object_or_404(PortfolioProject, pk=pk)
         if project.portfolio.user != request.user:
             return HttpResponseForbidden()
+        portfolio_id = project.portfolio.pk
         title = project.title
         project.delete()
         messages.success(request, f"Deleted project '{title}'.")
-        return redirect(f"{reverse('portfolio:builder')}?tab=projects")
+        return redirect(f"{reverse('portfolio:builder', kwargs={'pk': portfolio_id})}?tab=projects")
 
 
 class ExperienceDeleteView(LoginRequiredMixin, View):
@@ -248,10 +407,11 @@ class ExperienceDeleteView(LoginRequiredMixin, View):
         exp = get_object_or_404(PortfolioExperience, pk=pk)
         if exp.portfolio.user != request.user:
             return HttpResponseForbidden()
+        portfolio_id = exp.portfolio.pk
         company = exp.company
         exp.delete()
         messages.success(request, f"Deleted experience at '{company}'.")
-        return redirect(f"{reverse('portfolio:builder')}?tab=experience")
+        return redirect(f"{reverse('portfolio:builder', kwargs={'pk': portfolio_id})}?tab=experience")
 
 
 class EducationDeleteView(LoginRequiredMixin, View):
@@ -259,10 +419,11 @@ class EducationDeleteView(LoginRequiredMixin, View):
         edu = get_object_or_404(PortfolioEducation, pk=pk)
         if edu.portfolio.user != request.user:
             return HttpResponseForbidden()
+        portfolio_id = edu.portfolio.pk
         degree = edu.degree
         edu.delete()
         messages.success(request, f"Deleted education '{degree}'.")
-        return redirect(f"{reverse('portfolio:builder')}?tab=education")
+        return redirect(f"{reverse('portfolio:builder', kwargs={'pk': portfolio_id})}?tab=education")
 
 
 class CertificateDeleteView(LoginRequiredMixin, View):
@@ -270,10 +431,11 @@ class CertificateDeleteView(LoginRequiredMixin, View):
         cert = get_object_or_404(PortfolioCertificate, pk=pk)
         if cert.portfolio.user != request.user:
             return HttpResponseForbidden()
+        portfolio_id = cert.portfolio.pk
         name = cert.name
         cert.delete()
         messages.success(request, f"Deleted certificate '{name}'.")
-        return redirect(f"{reverse('portfolio:builder')}?tab=certificates")
+        return redirect(f"{reverse('portfolio:builder', kwargs={'pk': portfolio_id})}?tab=certificates")
 
 
 class ServiceDeleteView(LoginRequiredMixin, View):
@@ -281,10 +443,11 @@ class ServiceDeleteView(LoginRequiredMixin, View):
         service = get_object_or_404(PortfolioService, pk=pk)
         if service.portfolio.user != request.user:
             return HttpResponseForbidden()
+        portfolio_id = service.portfolio.pk
         title = service.title
         service.delete()
         messages.success(request, f"Deleted service '{title}'.")
-        return redirect(f"{reverse('portfolio:builder')}?tab=services")
+        return redirect(f"{reverse('portfolio:builder', kwargs={'pk': portfolio_id})}?tab=services")
 
 
 class TestimonialDeleteView(LoginRequiredMixin, View):
@@ -292,10 +455,11 @@ class TestimonialDeleteView(LoginRequiredMixin, View):
         test = get_object_or_404(PortfolioTestimonial, pk=pk)
         if test.portfolio.user != request.user:
             return HttpResponseForbidden()
+        portfolio_id = test.portfolio.pk
         name = test.reviewer_name
         test.delete()
         messages.success(request, f"Deleted testimonial from '{name}'.")
-        return redirect(f"{reverse('portfolio:builder')}?tab=testimonials")
+        return redirect(f"{reverse('portfolio:builder', kwargs={'pk': portfolio_id})}?tab=testimonials")
 
 
 # ── THEME SELECTION & LIVE PREVIEW ───────────────────────────────────────────
@@ -307,22 +471,22 @@ class SelectThemeView(LoginRequiredMixin, View):
     """
     template_name = "portfolio/select_theme.html"
 
-    def get(self, request):
-        portfolio, _ = Portfolio.objects.get_or_create(user=request.user)
+    def get(self, request, pk):
+        portfolio = get_object_or_404(Portfolio, pk=pk, user=request.user)
         themes = Theme.objects.filter(status=Theme.Status.APPROVED)
         ctx = _base_context(request, "theme")
         ctx.update({
             "portfolio": portfolio,
             "themes": themes,
             "breadcrumbs": [
-                {"title": "Dashboard", "url": "#"},
+                {"title": "My Portfolios", "url": reverse("portfolio:list")},
                 {"title": "Select Theme", "url": "#"},
             ],
         })
         return render(request, self.template_name, ctx)
 
-    def post(self, request):
-        portfolio, _ = Portfolio.objects.get_or_create(user=request.user)
+    def post(self, request, pk):
+        portfolio = get_object_or_404(Portfolio, pk=pk, user=request.user)
         theme_id = request.POST.get("theme_id")
         if theme_id:
             theme = get_object_or_404(Theme, pk=theme_id, status=Theme.Status.APPROVED)
@@ -333,22 +497,27 @@ class SelectThemeView(LoginRequiredMixin, View):
             portfolio.selected_theme = None
             portfolio.save(update_fields=["selected_theme"])
             messages.success(request, "Theme de-activated. Portfolio is now unmapped.")
-        return redirect("portfolio:select_theme")
+        return redirect("portfolio:select_theme", pk=portfolio.pk)
 
 
 class UserPortfolioPreview(LoginRequiredMixin, View):
     """
-    Live portfolio compiler that renders the user's active theme
-    populated with their own dynamic database values.
+    Live portfolio compiler that renders a specific portfolio's
+    active theme template.
+    Restricts access to owner unless the status is PUBLISHED.
     """
-    def get(self, request):
-        portfolio = get_object_or_404(Portfolio, user=request.user)
-        theme = portfolio.selected_theme
+    def get(self, request, pk):
+        portfolio = get_object_or_404(Portfolio, pk=pk)
         
+        # Security Access check: if unpublished, restrict to owner
+        if portfolio.status != Portfolio.Status.PUBLISHED and portfolio.user != request.user:
+            return HttpResponseForbidden("This portfolio draft is unpublished and private.")
+
+        theme = portfolio.selected_theme
         if not theme:
             return HttpResponse(
                 "<h3>No active theme selected.</h3><p>Please select a theme from the "
-                "<a href='/portfolio/theme/' target='_parent'>Select Theme</a> tab to preview your portfolio.</p>",
+                "Select Theme tab to preview your portfolio.</p>",
                 content_type="text/html"
             )
             

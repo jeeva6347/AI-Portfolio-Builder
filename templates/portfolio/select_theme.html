@@ -7,7 +7,7 @@
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
     {% include "dashboard/components/breadcrumb.html" %}
     <div class="d-flex gap-2">
-        <a href="{% url 'portfolio:builder' %}" class="btn btn-outline-secondary rounded-pill px-3 d-flex align-items-center gap-2">
+        <a href="{% url 'portfolio:builder' portfolio.pk %}" class="btn btn-outline-secondary rounded-pill px-3 d-flex align-items-center gap-2">
             <i class="bi bi-arrow-left"></i> Back to Builder
         </a>
     </div>
@@ -63,12 +63,12 @@
                 </span>
                 
                 {% if portfolio.selected_theme == theme %}
-                <form method="post" action="{% url 'portfolio:select_theme' %}" class="m-0">
+                <form method="post" action="{% url 'portfolio:select_theme' portfolio.pk %}" class="m-0">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">De-activate</button>
                 </form>
                 {% else %}
-                <form method="post" action="{% url 'portfolio:select_theme' %}" class="m-0">
+                <form method="post" action="{% url 'portfolio:select_theme' portfolio.pk %}" class="m-0">
                     {% csrf_token %}
                     <input type="hidden" name="theme_id" value="{{ theme.pk }}">
                     <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3">Activate Layout</button>

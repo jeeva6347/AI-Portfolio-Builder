@@ -1,6 +1,7 @@
 import os
 import shutil
 import zipfile
+import json
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
@@ -9,14 +10,20 @@ from django.conf import settings
 
 from themes.models import Theme, ThemeCategory, ThemeMapping, ThemeMappingField
 from themes.services import process_theme_upload
-from .models import Portfolio, PortfolioSkill, PortfolioProject, PortfolioExperience
+from .models import (
+    Portfolio,
+    PortfolioSkill,
+    PortfolioProject,
+    PortfolioExperience,
+    PortfolioEducation
+)
 
 User = get_user_model()
 
 
 class PortfolioBuilderTestCase(TestCase):
     """
-    Test suite for Module 7 Portfolio Builder.
+    Test suite for Module 7 and Module 8: Live Preview & Visual Editor.
     """
     def setUp(self):
         # Create standard test user
@@ -26,6 +33,14 @@ class PortfolioBuilderTestCase(TestCase):
             password="testpassword"
         )
         self.user.save()
+
+        # Create secondary test user for permission checks
+        self.other_user = User.objects.create_user(
+            username="otheruser",
+            email="other@example.com",
+            password="otherpassword"
+        )
+        self.other_user.save()
 
         # Create category
         self.category = ThemeCategory.objects.create(
@@ -100,7 +115,7 @@ class PortfolioBuilderTestCase(TestCase):
             mapping=self.mapping,
             field_key="projects.list",
             selector=".project-card",
-            attribute=ThemeMappingField.AttributeType.TEXT  # mapped container tag
+            attribute=ThemeMappingField.AttributeType.TEXT
         )
         ThemeMappingField.objects.create(
             mapping=self.mapping,
@@ -141,15 +156,17 @@ class PortfolioBuilderTestCase(TestCase):
 
     def test_portfolio_builder_tab_access(self):
         """Verify the builder dashboard view requires login and serves segments correctly."""
+        portfolio = Portfolio.objects.create(user=self.user, name="Build Test")
+        
         # Unauthenticated access
-        res = self.client.get(reverse("portfolio:builder"))
+        res = self.client.get(reverse("portfolio:builder", kwargs={"pk": portfolio.pk}))
         self.assertEqual(res.status_code, 302)  # Redirects to login
 
         # Authenticated access
         self.client.login(username="testuser", password="testpassword")
-        res_auth = self.client.get(reverse("portfolio:builder") + "?tab=personal")
+        res_auth = self.client.get(reverse("portfolio:builder", kwargs={"pk": portfolio.pk}) + "?tab=personal")
         self.assertEqual(res_auth.status_code, 200)
-        self.assertContains(res_auth, "Personal details")
+        self.assertContains(res_auth, "Full Name")
 
     def test_skills_projects_experiences_crud(self):
         """Verify user can add/delete related skills, projects, and experiences via POST views."""
@@ -158,7 +175,7 @@ class PortfolioBuilderTestCase(TestCase):
 
         # 1. Add Skill
         res_skill = self.client.post(
-            reverse("portfolio:skill_create"),
+            reverse("portfolio:skill_create", kwargs={"pk": portfolio.pk}),
             data={"skill_type": "technical", "name": "Django", "level": "Expert"}
         )
         self.assertEqual(res_skill.status_code, 302)
@@ -166,7 +183,7 @@ class PortfolioBuilderTestCase(TestCase):
 
         # 2. Add Experience
         res_exp = self.client.post(
-            reverse("portfolio:experience_create"),
+            reverse("portfolio:experience_create", kwargs={"pk": portfolio.pk}),
             data={
                 "company": "Tech Corp",
                 "position": "Django Developer",
@@ -179,7 +196,7 @@ class PortfolioBuilderTestCase(TestCase):
 
         # 3. Add Project
         res_proj = self.client.post(
-            reverse("portfolio:project_create"),
+            reverse("portfolio:project_create", kwargs={"pk": portfolio.pk}),
             data={
                 "title": "Awesome SaaS",
                 "description": "Premium Django dashboard project.",
@@ -202,7 +219,7 @@ class PortfolioBuilderTestCase(TestCase):
 
         # Activate theme
         res_act = self.client.post(
-            reverse("portfolio:select_theme"),
+            reverse("portfolio:select_theme", kwargs={"pk": portfolio.pk}),
             data={"theme_id": self.theme.pk}
         )
         self.assertEqual(res_act.status_code, 302)
@@ -224,7 +241,7 @@ class PortfolioBuilderTestCase(TestCase):
         )
 
         # Query live preview endpoint
-        res_prev = self.client.get(reverse("portfolio:preview"))
+        res_prev = self.client.get(reverse("portfolio:preview", kwargs={"pk": portfolio.pk}))
         self.assertEqual(res_prev.status_code, 200)
         
         compiled_html = res_prev.content.decode("utf-8")
@@ -241,3 +258,87 @@ class PortfolioBuilderTestCase(TestCase):
         self.assertIn("Theme Mapper App", compiled_html)
         self.assertIn("Dynamic SAAS platform", compiled_html)
         self.assertIn("Visual website mapper", compiled_html)
+
+    # ── MODULE 8 NEW TESTS ───────────────────────────────────────────────────
+
+    def test_portfolio_listing_by_status(self):
+        """Verify multi-portfolio dashboard listing page shows status segments counts."""
+        self.client.login(username="testuser", password="testpassword")
+        
+        # Create draft, published, archived portfolios
+        Portfolio.objects.create(user=self.user, name="D1", status=Portfolio.Status.DRAFT)
+        Portfolio.objects.create(user=self.user, name="P1", status=Portfolio.Status.PUBLISHED)
+        Portfolio.objects.create(user=self.user, name="A1", status=Portfolio.Status.ARCHIVED)
+
+        res = self.client.get(reverse("portfolio:list"))
+        self.assertEqual(res.status_code, 200)
+        self.assertContains(res, "D1")
+        self.assertContains(res, "P1")
+        self.assertContains(res, "A1")
+
+    def test_portfolio_duplication_clones_all_child_records(self):
+        """Verify portfolio clone action deep-copies flat properties and related list items."""
+        self.client.login(username="testuser", password="testpassword")
+        portfolio = Portfolio.objects.create(user=self.user, name="Original Portfolio", title="CTO")
+        
+        # Add related records
+        PortfolioSkill.objects.create(portfolio=portfolio, name="Python Programming")
+        PortfolioProject.objects.create(portfolio=portfolio, title="Django Server")
+
+        res_dup = self.client.post(reverse("portfolio:duplicate", kwargs={"pk": portfolio.pk}))
+        self.assertEqual(res_dup.status_code, 302)
+
+        # Check duplicated clone portfolio exists
+        clones = Portfolio.objects.filter(user=self.user, name="Copy of Original Portfolio")
+        self.assertTrue(clones.exists())
+        
+        clone = clones.first()
+        self.assertEqual(clone.title, "CTO")
+        self.assertEqual(clone.status, Portfolio.Status.DRAFT)
+
+        # Verify child relations cloned successfully
+        self.assertTrue(clone.skills.filter(name="Python Programming").exists())
+        self.assertTrue(clone.projects.filter(title="Django Server").exists())
+
+    def test_autosave_draft_api_asynchronously(self):
+        """Verify debounced AJAX partial form POST saves draft values successfully."""
+        self.client.login(username="testuser", password="testpassword")
+        portfolio = Portfolio.objects.create(user=self.user, name="Initial Name")
+
+        res_ajax = self.client.post(
+            reverse("portfolio:update_api", kwargs={"pk": portfolio.pk}),
+            data={
+                "name": "Updated Name via API",
+                "title": "Staff Architect",
+                "about": "New description...",
+            },
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest"
+        )
+        self.assertEqual(res_ajax.status_code, 200)
+        
+        # Verify JSON response success
+        json_data = json.loads(res_ajax.content.decode("utf-8"))
+        self.assertTrue(json_data["success"])
+
+        # Check DB updated
+        portfolio.refresh_from_db()
+        self.assertEqual(portfolio.name, "Updated Name via API")
+        self.assertEqual(portfolio.title, "Staff Architect")
+
+    def test_unauthorized_draft_preview_is_blocked(self):
+        """Ensure other users cannot view or preview another user's unpublished drafts."""
+        # Create a draft portfolio for self.user
+        portfolio = Portfolio.objects.create(user=self.user, name="Secret Draft", status=Portfolio.Status.DRAFT)
+
+        # Login as other_user and attempt to fetch preview
+        self.client.login(username="otheruser", password="otherpassword")
+        res_preview = self.client.get(reverse("portfolio:preview", kwargs={"pk": portfolio.pk}))
+        self.assertEqual(res_preview.status_code, 403)  # Forbidden block!
+
+        # Set status to PUBLISHED and verify access is allowed
+        portfolio.status = Portfolio.Status.PUBLISHED
+        portfolio.save(update_fields=["status"])
+
+        res_published_preview = self.client.get(reverse("portfolio:preview", kwargs={"pk": portfolio.pk}))
+        # Now allowed (either returns 200 compiled HTML or warnings about missing mapping selections)
+        self.assertIn(res_published_preview.status_code, [200, 404])

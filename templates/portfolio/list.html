@@ -1,0 +1,80 @@
+{% extends "dashboard/layouts/base.html" %}
+{% load static %}
+
+{% block title %}My Portfolios | AI Portfolio Builder{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    {% include "dashboard/components/breadcrumb.html" %}
+    <form method="post" action="{% url 'portfolio:create' %}" class="m-0">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary rounded-pill px-4 d-flex align-items-center gap-2 shadow-sm">
+            <i class="bi bi-plus-lg"></i> Create Portfolio
+        </button>
+    </form>
+</div>
+
+{# ── Stat Cards Summary ── #}
+<div class="row g-4 mb-4">
+    <div class="col-6 col-md-3">
+        {% include "dashboard/components/cards/stat_card.html" with title="Total Portfolios" value=portfolios.count icon="bi-collection-fill" color="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300" %}
+    </div>
+    <div class="col-6 col-md-3">
+        {% include "dashboard/components/cards/stat_card.html" with title="Drafts" value=drafts.count icon="bi-file-earmark-text-fill" color="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300" %}
+    </div>
+    <div class="col-6 col-md-3">
+        {% include "dashboard/components/cards/stat_card.html" with title="Published" value=published.count icon="bi-globe" color="bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-300" %}
+    </div>
+    <div class="col-6 col-md-3">
+        {% include "dashboard/components/cards/stat_card.html" with title="Archived" value=archived.count icon="bi-archive-fill" color="bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-300" %}
+    </div>
+</div>
+
+{# ── Portfolios List Card Tabs ── #}
+<div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+    <ul class="nav nav-pills gap-2 mb-4 border-b border-gray-100 dark:border-gray-700 pb-3" id="portfolioTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link rounded-pill active px-4 py-1.5 font-semibold text-sm" id="all-tab" data-bs-toggle="tab" data-bs-target="#all-pane" type="button" role="tab">
+                All ({{ portfolios.count }})
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link rounded-pill px-4 py-1.5 font-semibold text-sm" id="drafts-tab" data-bs-toggle="tab" data-bs-target="#drafts-pane" type="button" role="tab">
+                Drafts ({{ drafts.count }})
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link rounded-pill px-4 py-1.5 font-semibold text-sm" id="published-tab" data-bs-toggle="tab" data-bs-target="#published-pane" type="button" role="tab">
+                Published ({{ published.count }})
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link rounded-pill px-4 py-1.5 font-semibold text-sm" id="archived-tab" data-bs-toggle="tab" data-bs-target="#archived-pane" type="button" role="tab">
+                Archived ({{ archived.count }})
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="portfolioTabsContent">
+        {# ALL PANE #}
+        <div class="tab-pane fade show active" id="all-pane" role="tabpanel">
+            {% include "portfolio/includes/portfolio_grid.html" with items=portfolios %}
+        </div>
+        
+        {# DRAFTS PANE #}
+        <div class="tab-pane fade" id="drafts-pane" role="tabpanel">
+            {% include "portfolio/includes/portfolio_grid.html" with items=drafts %}
+        </div>
+        
+        {# PUBLISHED PANE #}
+        <div class="tab-pane fade" id="published-pane" role="tabpanel">
+            {% include "portfolio/includes/portfolio_grid.html" with items=published %}
+        </div>
+        
+        {# ARCHIVED PANE #}
+        <div class="tab-pane fade" id="archived-pane" role="tabpanel">
+            {% include "portfolio/includes/portfolio_grid.html" with items=archived %}
+        </div>
+    </div>
+</div>
+{% endblock %}

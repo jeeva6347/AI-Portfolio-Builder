@@ -22,7 +22,7 @@ SIDEBAR_NAVIGATION = [
     {
         "title": "Portfolio",
         "icon": "bi-briefcase-fill",
-        "url": "portfolio:builder",
+        "url": "portfolio:list",
         "required_role": ["SUPER_ADMIN", "ADMIN", "PREMIUM_USER", "FREE_USER"],
         "badge": None,
         "coming_soon": False,

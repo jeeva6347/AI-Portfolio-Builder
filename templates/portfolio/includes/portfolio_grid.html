@@ -1,0 +1,89 @@
+{% if items %}
+<div class="row g-4 animate__animated animate__fadeIn">
+    {% for portfolio in items %}
+    <div class="col-12 col-md-6 col-lg-4">
+        <div class="border rounded-xl bg-white dark:bg-gray-800 p-4 h-100 d-flex flex-column justify-content-between transition-all hover:shadow-sm border-gray-200 dark:border-gray-700">
+            <div>
+                <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
+                    <h5 class="fw-bold text-gray-900 dark:text-white mb-0">{{ portfolio.name }}</h5>
+                    {% if portfolio.status == 'DRAFT' %}
+                    <span class="badge bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded-pill">Draft</span>
+                    {% elif portfolio.status == 'PUBLISHED' %}
+                    <span class="badge bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-pill">Published</span>
+                    {% elif portfolio.status == 'ARCHIVED' %}
+                    <span class="badge bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 rounded-pill">Archived</span>
+                    {% endif %}
+                </div>
+                
+                <p class="text-xs text-gray-500 mb-3">{{ portfolio.title|default:"No Professional Title" }}</p>
+                
+                <div class="d-flex flex-column gap-1.5 mb-3.5">
+                    <div class="text-xxs text-gray-400 d-flex align-items-center gap-1.5">
+                        <i class="bi bi-palette-fill"></i>
+                        <span>Theme: {% if portfolio.selected_theme %}{{ portfolio.selected_theme.name }}{% else %}<span class="text-gray-300">Unselected</span>{% endif %}</span>
+                    </div>
+                    <div class="text-xxs text-gray-400 d-flex align-items-center gap-1.5">
+                        <i class="bi bi-clock-history"></i>
+                        <span>Updated: {{ portfolio.updated_at|date:"M d, Y H:i" }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-100 dark:border-gray-700 pt-3">
+                {# Primary Edit Button #}
+                <div class="d-grid mb-2">
+                    <a href="{% url 'portfolio:builder' portfolio.pk %}" class="btn btn-sm btn-primary rounded-pill py-1.5 font-semibold text-xs">
+                        <i class="bi bi-pencil-fill me-1.5"></i>Edit visual workspace
+                    </a>
+                </div>
+
+                {# Actions bar #}
+                <div class="d-flex flex-wrap gap-1.5 justify-content-between">
+                    <div class="d-flex gap-1">
+                        {# Duplicate #}
+                        <form method="post" action="{% url 'portfolio:duplicate' portfolio.pk %}" class="m-0">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-xs btn-outline-secondary rounded-pill" title="Duplicate Portfolio" onclick="return confirm('Duplicate this portfolio?');">
+                                <i class="bi bi-files"></i>
+                            </button>
+                        </form>
+
+                        {# Publish/Archive toggle #}
+                        {% if portfolio.status != 'PUBLISHED' %}
+                        <form method="post" action="{% url 'portfolio:publish' portfolio.pk %}" class="m-0">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-xs btn-outline-success rounded-pill" title="Publish Site">
+                                <i class="bi bi-globe"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                        
+                        {% if portfolio.status == 'PUBLISHED' %}
+                        <form method="post" action="{% url 'portfolio:archive' portfolio.pk %}" class="m-0">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-xs btn-outline-warning rounded-pill" title="Archive Site">
+                                <i class="bi bi-archive"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+
+                    {# Delete #}
+                    <form method="post" action="{% url 'portfolio:delete' portfolio.pk %}" class="m-0">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-xs btn-outline-danger rounded-pill" title="Delete Portfolio" onclick="return confirm('Permanently delete portfolio? This cannot be undone.');">
+                            <i class="bi bi-trash-fill"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-5 text-gray-400">
+    <i class="bi bi-briefcase text-4xl mb-2 d-block text-gray-300"></i>
+    <p class="mb-0 text-sm">No portfolios in this list.</p>
+</div>
+{% endif %}

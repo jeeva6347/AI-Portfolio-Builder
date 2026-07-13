@@ -8,10 +8,22 @@ class Portfolio(models.Model):
     Main portfolio container representing a user's personal details,
     custom social links, contact form configs, and selected theme.
     """
-    user = models.OneToOneField(
+    user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="portfolio",
+        related_name="portfolios",
+    )
+    
+    class Status(models.TextChoices):
+        DRAFT = "DRAFT", "Draft"
+        PUBLISHED = "PUBLISHED", "Published"
+        ARCHIVED = "ARCHIVED", "Archived"
+
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.DRAFT,
+        help_text="Current publication status of the portfolio"
     )
     selected_theme = models.ForeignKey(
         "themes.Theme",

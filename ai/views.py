@@ -169,8 +169,10 @@ class ResumeReviewView(LoginRequiredMixin, View):
             messages.error(request, "Invalid JSON format inside lists editor.")
             return redirect("ai:review")
 
-        # Create or update user portfolio
-        portfolio, _ = Portfolio.objects.get_or_create(user=request.user)
+        # Select first portfolio or create a new draft
+        portfolio = Portfolio.objects.filter(user=request.user).first()
+        if not portfolio:
+            portfolio = Portfolio.objects.create(user=request.user, name="My Resume Portfolio")
 
         # Update flat characteristics
         portfolio.name = name
@@ -244,4 +246,4 @@ class ResumeReviewView(LoginRequiredMixin, View):
             del request.session["parsed_resume_data"]
 
         messages.success(request, "AI resume details integrated into your portfolio builder workspace!")
-        return redirect("portfolio:builder")
+        return redirect("portfolio:builder", pk=portfolio.pk)

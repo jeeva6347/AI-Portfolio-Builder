@@ -1,6 +1,18 @@
 # Changelog
 
-## [Unreleased] - Module 6: AI Resume Import & AI Portfolio Generation
+## [Completed] - Module 8: Live Preview & Visual Portfolio Editor
+### Added
+- Multi-portfolio management listing dashboard (`templates/portfolio/list.html`) partitioning Drafts, Published, and Archived states.
+- Database relationship refactoring: updated `Portfolio.user` to ForeignKey and added a text-choice `status` field with migration `0003`.
+- Side-by-side split-screen editing visual workspace (`templates/portfolio/builder.html`) with Left Editing Panel and Right Live Preview viewport.
+- Viewport size responsive controllers (Desktop, Laptop, Tablet, Mobile) and CSS transform-based zoom scale managers (50% - 150%).
+- Debounced (800ms) autosave script (`static/js/portfolio_builder.js`) asynchronously committing updates via `PortfolioUpdateAPI` AJAX endpoint.
+- Smooth dynamic iframe refreshing by fetching fresh compiled HTML layouts and document-writing without browser reload blinks.
+- Duplicate portfolio action cloned properties and deep-copied child list items (skills, projects, educations, experiences).
+- Security controls: restricted visual editor workspace access and unpublished preview iframe access to the owner of the portfolio (403 Forbidden).
+- Expanded automated tests suite by adding 4 comprehensive unit tests in `portfolio/tests.py`.
+
+## [Completed] - Module 6: AI Resume Import & AI Portfolio Generation
 ### Added
 - Resume parser service (`ai/services.py`) extracting personal details, contact coordinates, social profile links, skills, experiences, educations, and projects.
 - Gemini LLM parser connector integration with structured JSON outputs.

@@ -5,8 +5,8 @@
 {% block content %}
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
     {% include "dashboard/components/breadcrumb.html" %}
-    <a href="{% url 'portfolio:builder' %}" class="btn btn-primary d-flex align-items-center gap-2 shadow-sm rounded-pill px-4">
-        <i class="bi bi-briefcase-fill"></i> Go to Builder
+    <a href="{% url 'portfolio:list' %}" class="btn btn-primary d-flex align-items-center gap-2 shadow-sm rounded-pill px-4">
+        <i class="bi bi-briefcase-fill"></i> My Portfolios
     </a>
 </div>
 
@@ -34,8 +34,7 @@
     <h3 class="h4 font-bold text-gray-900 dark:text-white mb-2">Your Portfolio is Active!</h3>
     <p class="text-gray-500 dark:text-gray-400 mb-4 max-w-md mx-auto">Active Layout Theme: <strong class="text-blue-500">{{ selected_theme_name }}</strong>. You can update your content or switch themes at any time.</p>
     <div class="d-flex justify-content-center gap-2">
-        <a href="{% url 'portfolio:builder' %}" class="btn btn-primary rounded-pill px-4 py-2"><i class="bi bi-pencil-fill me-2"></i>Edit Content</a>
-        <a href="{% url 'portfolio:select_theme' %}" class="btn btn-outline-secondary rounded-pill px-4 py-2"><i class="bi bi-palette-fill me-2"></i>Change Theme</a>
+        <a href="{% url 'portfolio:list' %}" class="btn btn-primary rounded-pill px-4 py-2"><i class="bi bi-briefcase-fill me-2"></i>Manage Portfolios</a>
     </div>
 </div>
 {% else %}
@@ -45,7 +44,7 @@
     </div>
     <h3 class="h4 font-bold text-gray-900 dark:text-white mb-2">You haven't created a portfolio yet</h3>
     <p class="text-gray-500 dark:text-gray-400 mb-4 max-w-md mx-auto">Get started by choosing a theme and generating your first portfolio in minutes.</p>
-    <a href="{% url 'portfolio:builder' %}" class="btn btn-primary rounded-pill px-4 py-2"><i class="bi bi-magic me-2"></i>Start building</a>
+    <a href="{% url 'portfolio:list' %}" class="btn btn-primary rounded-pill px-4 py-2"><i class="bi bi-magic me-2"></i>Start building</a>
 </div>
 {% endif %}
 {% endblock %}
