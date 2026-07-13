@@ -56,6 +56,16 @@
 - [x] Dynamic template compiler list replication support and base-href tag injection
 - [x] Comprehensive tests (4 passing test cases covering preview compilation, permissions and CRUD)
 
+## Module 6 (AI Extra) — AI Resume Import & Portfolio Generation (COMPLETE)
+- [x] ResumeUpload model + initial migrations and admin registrations
+- [x] PDF/DOCX file text parser reading structure securely
+- [x] Heuristic regex section-divider mapping and protocol-optional links parser
+- [x] Content Enrichment generating professional summaries and SEO metadata
+- [x] Drag-drop resume upload page with validation checks
+- [x] JSON list review/edit editor workspace
+- [x] Overwrite/merge db portfolio updates
+- [x] Unit test suite containing 4 test cases
+
 ## Next: Module 8 — Live Preview
 - [ ] Implement routing and serving of compiled portfolio HTML under user subdomain or custom slug
 - [ ] Connect public CSS, JS, and image assets resolution pipeline
@@ -63,5 +73,5 @@
 
 
 ## Explicitly excluded from this phase (per brief)
-- Portfolio Builder logic, GitHub Auto Publish, Payments, Premium
-  feature-gating, AI, Analytics, Resume Import
+- GitHub Auto Publish, Payments, Premium feature-gating, Analytics
+

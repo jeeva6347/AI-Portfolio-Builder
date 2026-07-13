@@ -1,6 +1,6 @@
 # Project Status
 
-**Completion:** Module 7 (Portfolio Builder) — complete. ~22% overall (5 of ~22 modules).
+**Completion:** Module 6 (AI Resume Import & AI Portfolio Generation) — complete. ~27% overall (6 of ~22 modules).
 
 ## Completed
 - Module 1: Authentication (Custom User model, Email/Social Auth)
@@ -8,9 +8,10 @@
 - Module 5: Theme Engine (Upload, Validate, Extract, Marketplace, Preview, Admin)
 - Module 6: Theme Mapper (Visual element mapping workspace, HTML scanner & auto-suggest, compiled live iframe preview, duplication, XSS sanitization, tests)
 - Module 7: Portfolio Builder (User portfolio database models, CRUD builder tab subviews, theme activation panel, dynamic list compiler list replication, base-href resolution, tests)
+- Module 6 (AI): AI Resume Import & AI Portfolio Generation (PDF/DOCX file extractors, heuristic fallback regex schemas, Gemini JSON parses, content enrichers, verification editor workspace, merge/overwrite builder population)
 
 ## Not Started
-- Modules 8-22 (Live Preview, Portfolio Export, Resume Import, AI Content, GitHub integration, Payments, Analytics, etc.)
+- Modules 8-22 (Live Preview, Portfolio Export, GitHub integration, Payments, Analytics, etc.)
 
 ## Folder Structure
 ```

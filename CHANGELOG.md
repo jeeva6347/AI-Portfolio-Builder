@@ -1,6 +1,18 @@
 # Changelog
 
-## [Unreleased] - Module 7: Portfolio Builder
+## [Unreleased] - Module 6: AI Resume Import & AI Portfolio Generation
+### Added
+- Resume parser service (`ai/services.py`) extracting personal details, contact coordinates, social profile links, skills, experiences, educations, and projects.
+- Gemini LLM parser connector integration with structured JSON outputs.
+- Robust Regex/Heuristics parsing fallback supporting indented heading divisions and protocol-optional links.
+- AI Content Enrichment pipeline enhancing about descriptions, experience/project summaries, and compiling SEO metadata.
+- Drag-and-drop resume upload portal (`templates/ai/import.html`) with file size validation, extension Whitelisting (PDF/DOCX), and corruption scanning.
+- Review and edit workspace panel (`templates/ai/review.html`) displaying extracted data in editable formats.
+- Integration views: saves the reviewed characteristics, deletes/overwrites legacy profiles, and builds new child records.
+- Active "AI Content" link integrated into sidebar navigation.
+- Comprehensive Unit Test Suite (`ai/tests.py`) covering all Module 6 features.
+
+## [Completed] - Module 7: Portfolio Builder
 ### Added
 - Portfolio database models (`Portfolio`, `PortfolioSkill`, `PortfolioProject`, `PortfolioExperience`, `PortfolioEducation`, `PortfolioCertificate`, `PortfolioService`, `PortfolioTestimonial`) with migrations `0001` and `0002`.
 - Integrated tabular inline sections inside Django Admin for easy model management.

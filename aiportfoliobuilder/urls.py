@@ -15,6 +15,7 @@ urlpatterns = [
     path("dashboard/", include("dashboard.urls")),
     path("themes/", include("themes.urls")),
     path("portfolio/", include("portfolio.urls")),
+    path("ai/", include("ai.urls")),
 ]
 
 if settings.DEBUG:

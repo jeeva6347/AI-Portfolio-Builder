@@ -49,10 +49,10 @@ SIDEBAR_NAVIGATION = [
     {
         "title": "AI Content",
         "icon": "bi-robot",
-        "url": "dashboard:ai_placeholder",
+        "url": "ai:import",
         "required_role": ["SUPER_ADMIN", "PREMIUM_USER", "FREE_USER"],
         "badge": "Beta",
-        "coming_soon": True,
+        "coming_soon": False,
         "name": "ai",
     },
     {

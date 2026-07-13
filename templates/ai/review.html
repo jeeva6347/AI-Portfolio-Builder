@@ -1,0 +1,146 @@
+{% extends "dashboard/layouts/base.html" %}
+{% load static %}
+
+{% block title %}Review AI Portfolio Generation | AI Portfolio Builder{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    {% include "dashboard/components/breadcrumb.html" %}
+</div>
+
+<div class="row">
+    <div class="col-12 col-lg-8">
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
+            <h5 class="fw-bold text-gray-900 dark:text-white mb-2">Review Extracted Portfolio Details</h5>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                Verify and edit the AI-generated and extracted details below before integrating them into your active builder workspace.
+            </p>
+
+            <form method="post" id="reviewForm" class="d-flex flex-column gap-4">
+                {% csrf_token %}
+                
+                {# Personal Info Section #}
+                <div class="border-b border-gray-100 dark:border-gray-700 pb-3">
+                    <h6 class="fw-bold text-blue-500 text-sm mb-3 uppercase tracking-wider"><i class="bi bi-person-fill me-2"></i>Personal Info</h6>
+                    <div class="row g-3">
+                        <div class="col-12 col-sm-6">
+                            <label class="form-label text-xs fw-semibold text-gray-500 uppercase">Full Name</label>
+                            <input type="text" name="name" class="form-control dark:bg-gray-700 dark:border-gray-600 dark:text-white" value="{{ personal.name }}" required>
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <label class="form-label text-xs fw-semibold text-gray-500 uppercase">Professional Title</label>
+                            <input type="text" name="title" class="form-control dark:bg-gray-700 dark:border-gray-600 dark:text-white" value="{{ personal.title }}" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label text-xs fw-semibold text-gray-500 uppercase">Biography (AI-enriched About Me)</label>
+                            <textarea name="about" class="form-control dark:bg-gray-700 dark:border-gray-600 dark:text-white" rows="4" required>{{ personal.about }}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                {# Contact details #}
+                <div class="border-b border-gray-100 dark:border-gray-700 pb-3">
+                    <h6 class="fw-bold text-blue-500 text-sm mb-3 uppercase tracking-wider"><i class="bi bi-envelope-fill me-2"></i>Contact Details</h6>
+                    <div class="row g-3">
+                        <div class="col-12 col-sm-4">
+                            <label class="form-label text-xs fw-semibold text-gray-500 uppercase">Email Address</label>
+                            <input type="email" name="email" class="form-control dark:bg-gray-700 dark:border-gray-600 dark:text-white" value="{{ personal.email }}">
+                        </div>
+                        <div class="col-12 col-sm-4">
+                            <label class="form-label text-xs fw-semibold text-gray-500 uppercase">Phone Number</label>
+                            <input type="text" name="phone" class="form-control dark:bg-gray-700 dark:border-gray-600 dark:text-white" value="{{ personal.phone }}">
+                        </div>
+                        <div class="col-12 col-sm-4">
+                            <label class="form-label text-xs fw-semibold text-gray-500 uppercase">Location / Address</label>
+                            <input type="text" name="address" class="form-control dark:bg-gray-700 dark:border-gray-600 dark:text-white" value="{{ personal.address }}">
+                        </div>
+                    </div>
+                </div>
+
+                {# Social details #}
+                <div class="border-b border-gray-100 dark:border-gray-700 pb-3">
+                    <h6 class="fw-bold text-blue-500 text-sm mb-3 uppercase tracking-wider"><i class="bi bi-share-fill me-2"></i>Social Profiles</h6>
+                    <div class="row g-3">
+                        <div class="col-12 col-sm-6">
+                            <label class="form-label text-xs fw-semibold text-gray-500 uppercase"><i class="bi bi-github"></i> GitHub Profile</label>
+                            <input type="url" name="social_github" class="form-control dark:bg-gray-700 dark:border-gray-600 dark:text-white" value="{{ personal.social_github }}">
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <label class="form-label text-xs fw-semibold text-gray-500 uppercase"><i class="bi bi-linkedin"></i> LinkedIn Profile</label>
+                            <input type="url" name="social_linkedin" class="form-control dark:bg-gray-700 dark:border-gray-600 dark:text-white" value="{{ personal.social_linkedin }}">
+                        </div>
+                    </div>
+                </div>
+
+                {# Dynamic repeating arrays editor (JSON) #}
+                <div>
+                    <h6 class="fw-bold text-blue-500 text-sm mb-2 uppercase tracking-wider"><i class="bi bi-code-square me-2"></i>Skills, Experience, Education & Projects</h6>
+                    <p class="text-xs text-gray-400 mb-2">Edit the structured lists below. You can customize descriptions, names, dates, or add/delete entries directly in the JSON block.</p>
+                    <textarea name="lists_json" id="listsJson" class="form-control font-monospace text-xs dark:bg-gray-900 dark:border-gray-700 dark:text-green-400" rows="18" style="tab-size: 2; line-height:1.4;">{{ lists_json }}</textarea>
+                    <span id="jsonError" class="text-danger text-xs mt-1 d-none"><i class="bi bi-exclamation-triangle-fill me-1"></i>Invalid JSON structure. Please fix formatting.</span>
+                </div>
+
+                {# Overwrite warning checkbox #}
+                <div class="form-check p-3 bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-100 dark:border-yellow-900/30 rounded-xl mt-2">
+                    <input class="form-check-input ms-0 me-2" type="checkbox" name="overwrite" id="overwriteCheck" checked>
+                    <label class="form-check-label text-xs text-yellow-800 dark:text-yellow-300 fw-semibold" for="overwriteCheck">
+                        Overwrite existing portfolio data (recommended for first-time imports)
+                    </label>
+                </div>
+
+                <div class="d-flex justify-content-between gap-3 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                    <a href="{% url 'ai:import' %}" class="btn btn-outline-secondary rounded-pill px-4">Discard</a>
+                    <button type="submit" id="saveBtn" class="btn btn-primary rounded-pill px-5 shadow-sm font-semibold">
+                        <i class="bi bi-check2-circle me-2"></i>Save to Portfolio Builder
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {# Right column schema reference guide #}
+    <div class="col-12 col-lg-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
+            <h6 class="fw-bold text-gray-900 dark:text-white mb-2">JSON Layout Helper</h6>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Ensure arrays retain brackets `[]` and entries retain curly brackets `{{}}` with commas separating elements.</p>
+            <div class="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-100 dark:border-gray-800">
+                <span class="text-xxs fw-bold text-gray-400 uppercase tracking-wider mb-2 d-block">Example Format:</span>
+                <pre class="text-xxs text-gray-600 dark:text-gray-400 mb-0 font-monospace" style="overflow-x:auto;">
+{
+  "skills": [
+    {"name": "Python", "type": "technical"}
+  ],
+  "experience": [
+    {
+      "company": "Google",
+      "position": "Staff Engineer",
+      "duration": "2021 - Present",
+      "description": "Fleshed out compiler APIs..."
+    }
+  ]
+}
+                </pre>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const listsTextarea = document.getElementById('listsJson');
+    const jsonError = document.getElementById('jsonError');
+    const saveBtn = document.getElementById('saveBtn');
+
+    listsTextarea.addEventListener('input', () => {
+        try {
+            const parsed = JSON.parse(listsTextarea.value);
+            jsonError.classList.add('d-none');
+            saveBtn.removeAttribute('disabled');
+        } catch (e) {
+            jsonError.classList.remove('d-none');
+            saveBtn.setAttribute('disabled', 'true');
+        }
+    });
+</script>
+{% endblock %}
