@@ -1,68 +1,50 @@
-# Development Report
+# Module 9 Development Report: GitHub Auto Publish & GitHub Pages Deployment
 
-## Completion Percentage
-**~32%** (Modules 1, 2, 5, 6, 7, 8, and the AI Resume Import module completed).
+We have successfully implemented and verified **Module 9: GitHub Auto Publish & GitHub Pages Deployment**. This module allows users to link their portfolios to their GitHub accounts and publish production-ready static assets directly to GitHub Pages with one click.
 
-## Completed Modules
-1. **Module 1: Authentication** (Custom User model, Email/Social Auth, Sessions)
-2. **Module 2: Dashboard System** (Super Admin, Admin, User Dashboards, Dark/Light theme, Chart.js)
-3. **Module 5: Theme Engine** (Upload, Validation, Extraction, Marketplace, Preview, Admin)
-4. **Module 6: Theme Mapper** (Visual HTML Element Mapping Workspace, CSS Selector suggestions, Duplication, Versioning, XSS filtering, Viewport toggles)
-5. **Module 7: Portfolio Builder** (User Portfolio Models, Builder Configuration Panels, CRUD list sub-views, Theme Activation, Live Site Preview compilation, Dynamic lists replication)
-6. **AI Module: Resume Import & AI Generation** (PDF/DOCX extractors, heuristic fallback regex schemas, Gemini JSON parses, content enrichers, verification editor workspace, merge/overwrite builder population)
-7. **Module 8: Live Preview & Visual Portfolio Editor** (Multi-portfolios listing dashboard, ForeignKey refactoring, side-by-side editing workspace viewport, responsive viewports zoom, debounced autosave, dynamic non-blink iframe reload API, duplication clones, tests)
+---
 
-## Pre-flight Issues Fixed
-- **Missing migration:** `accounts/migrations/0002_user_theme_preference.py` created. Adds `theme_preference` field additively.
-- **Root URL 404:** `/` now redirects to `/accounts/login/`.
+## 1. Architectural Highlights
 
-## Remaining Modules
-9. Portfolio Export
-10. GitHub Pages Deployment
-11. Premium Subscription
-12. Payments (Stripe)
-13. Analytics
-14. Notifications (backend)
-15. Settings
-16. Production Deployment
+### Service-Layer Decoupling (`github_integration/services/`)
+To ensure clean code separation, we designed a service layer completely independent of Django views:
+1. **[oauth_service.py](file:///d:/aiportfoliobuilder-module1-auth-v2/aiportfoliobuilder/github_integration/services/oauth_service.py)**: Coordinates token retrievals from the Django allauth database and processes account disconnections safely.
+2. **[repository_service.py](file:///d:/aiportfoliobuilder-module1-auth-v2/aiportfoliobuilder/github_integration/services/repository_service.py)**: Performs REST operations to retrieve user profiles, query list repositories, and create new repositories.
+3. **[exporter_service.py](file:///d:/aiportfoliobuilder-module1-auth-v2/aiportfoliobuilder/github_integration/services/exporter_service.py)**: Packages index HTML and theme assets, scans/identifies media dependencies, copy-bundles binary files, and rewrites relative directory structures to ensure the site runs offline.
+4. **[pages_service.py](file:///d:/aiportfoliobuilder-module1-auth-v2/aiportfoliobuilder/github_integration/services/pages_service.py)**: Triggers Pages activation and inspects status.
+5. **[deployment_service.py](file:///d:/aiportfoliobuilder-module1-auth-v2/aiportfoliobuilder/github_integration/services/deployment_service.py)**: Coordinates the entire deployment timeline, uploading text files inline and binary files as blobs before stitching trees, commits, and updating refs atomically.
 
-## Created Files — Module 8
-- `static/js/portfolio_builder.js` (Autosave & seamless iframe reloading script)
-- `templates/portfolio/list.html` (Portfolios listing dashboard dashboard)
-- `templates/portfolio/includes/portfolio_grid.html` (Reusable grid cards layout)
+---
 
-## Modified Files — Module 8
-- `portfolio/models.py` (ForeignKey mapping for user + status choices)
-- `portfolio/migrations/0003_portfolio_status_alter_portfolio_user.py` (Migration changes)
-- `portfolio/views.py` (Listing, duplicate, delete, AJAX update API views)
-- `portfolio/urls.py` (Wired new builder actions routes)
-- `portfolio/tests.py` (Expanded test suite with 4 new tests)
-- `dashboard/views.py` (Dashboard stats count query update)
-- `templates/dashboard/user.html` (Dashboard links updated to central listing view)
-- `templates/portfolio/builder.html` (Split-screen editing layout workspace)
-- `templates/portfolio/select_theme.html` (URL routing adjustments)
-- `dashboard/navigation.py` (Sidebar URL updated to list view)
+## 2. Database Models (`github_integration/models.py`)
 
-## Database Changes — Module 8
-- Refactored `portfolio_portfolio` table: changed `user_id` from unique one-to-one index to non-unique foreign-key index, and added a `status` field.
+*   **`GitHubRepoConfig`**: Eases portfolio unlinking by tracking repository name, owner username, and target branch.
+*   **`GitHubDeployment`**: Records historical log entries for versioning, timing stats, error logs, and hosting status.
 
-## Validation Note
-- All 18 unit tests successfully passed via `py manage.py test` checks without warnings or errors.
-- All migration chains verify to `OK`.
+---
 
-## Commands Required Before Running
+## 3. UI/UX Interface (`templates/github/dashboard.html`)
+
+*   **Connection Landing Page**: Shows OAuth credentials connection panels with simple onboarding helpers.
+*   **Repository Configurations Form**: Supports selection of existing repositories or quick creation of new ones.
+*   **Deployment Operations Control Panel**: Houses custom commit message entries and triggers.
+*   **Build Status Banner & Logs**: Displays real-time statuses (Success/Pending/Failed), deployment duration, commit SHAs, and live website URLs.
+
+---
+
+## 4. Test Coverage (`github_integration/tests.py`)
+
+We wrote mock integrations testing:
+*   Static bundle exporters and media relative converter scanner assets.
+*   Repository configuration linkages and clearances.
+*   In-memory Git Data API tree/blob pushes and Pages configurations.
+*   Deployment ownership access permissions.
+
+All 22 unit tests in the project pass successfully:
 ```bash
-pip install -r requirements.txt  # Installs python-decouple, mysqlclient, django-allauth, PyJWT, pypdf, python-docx
-python manage.py migrate          # Applies all migrations including refactored portfolio status tables
-python manage.py test             # Runs all 18 test cases to verify project health
-python manage.py runserver
+System check identified no issues (0 silenced).
+----------------------------------------------------------------------
+Ran 22 tests in 51.197s
+
+OK
 ```
-
-## Known Limitations
-- Standard autosave does not capture live file uploads (avatars/resume PDFs), which still require manual save triggers or individual form submissions.
-
-## Next Module
-**Module 9: GitHub Publishing** — Implement automated publication of compiled HTML layout sites to user-configured GitHub repositories (e.g. GitHub Pages).
-
-
-

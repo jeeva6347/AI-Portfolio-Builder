@@ -1,5 +1,16 @@
 # Changelog
 
+## [Completed] - Module 9: GitHub Auto Publish & GitHub Pages Deployment
+### Added
+- Reusable service layer under `github_integration/services/` decoupled from views (`oauth_service.py`, `repository_service.py`, `exporter_service.py`, `deployment_service.py`, `pages_service.py`).
+- Active connected repository configurations model `GitHubRepoConfig` and deployment publication logs history model `GitHubDeployment` under migrations `0001`.
+- Synchronous or background publish compile-and-push Git Data REST API (blobs creation, parent tree references, commits base mappings, and heads refs updates).
+- Automatic Pages setup enablement triggers on the mapped repository's main branch.
+- HTML relative media converter scans compiled soup resources, copies referenced local media files to the Git package, and rewrites path links dynamically to run offline.
+- Deployment dashboard template (`templates/github/dashboard.html`) mapping active configurations, status indicators, live page links, build logs error checklists, and logs tables.
+- Sidebar menu triggers linked dynamically to route connected portfolios or fall back to listings.
+- Mock integrations unit tests inside `github_integration/tests.py` testing auth retrieval, export converters, API ref configurations, and Pages configs.
+
 ## [Completed] - Module 8: Live Preview & Visual Portfolio Editor
 ### Added
 - Multi-portfolio management listing dashboard (`templates/portfolio/list.html`) partitioning Drafts, Published, and Archived states.

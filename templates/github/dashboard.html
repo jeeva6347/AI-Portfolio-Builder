@@ -1,0 +1,295 @@
+{% extends "dashboard/layouts/base.html" %}
+{% load static %}
+
+{% block title %}GitHub Publishing | AI Portfolio Builder{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    {% include "dashboard/components/breadcrumb.html" %}
+</div>
+
+<div class="row g-4">
+    {# ── LEFT COLUMN: GITHUB CONNECTION & REPO CONFIG ── #}
+    <div class="col-12 col-lg-6">
+        {# Connection Panel #}
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 mb-4">
+            <h5 class="fw-bold text-gray-900 dark:text-white mb-3">
+                <i class="bi bi-github text-dark dark:text-white me-2"></i>GitHub Account Connection
+            </h5>
+            
+            {% if is_connected %}
+            <div class="p-3 bg-green-50 dark:bg-green-950/20 border border-green-100 dark:border-green-900 rounded-xl d-flex align-items-center justify-content-between gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="bg-green-500 text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                        <i class="bi bi-github fs-4"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold text-green-900 dark:text-green-300 mb-0.5">Linked as @{{ github_username }}</h6>
+                        <span class="text-xxs text-green-700 dark:text-green-400 d-flex align-items-center gap-1">
+                            <i class="bi bi-check-circle-fill"></i> OAuth connection authorized
+                        </span>
+                    </div>
+                </div>
+                <form method="post" action="{% url 'github:disconnect' %}" class="m-0">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-xs btn-outline-danger rounded-pill px-3" onclick="return confirm('Disconnect your GitHub account connection?');">Disconnect</button>
+                </form>
+            </div>
+            {% else %}
+            <div class="text-center py-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-dashed p-4">
+                <i class="bi bi-github text-5xl text-gray-300 mb-2 d-block"></i>
+                <h6 class="fw-bold text-gray-800 dark:text-white mb-2">Connect your GitHub Account</h6>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-3.5 max-w-sm mx-auto">
+                    Link your GitHub profile via secure OAuth web authorization to deploy your portfolios directly to public Git repositories with GitHub Pages.
+                </p>
+                <a href="{% url 'github:connect' %}" class="btn btn-sm btn-primary rounded-pill px-4">
+                    <i class="bi bi-plus-lg me-1.5"></i>Connect GitHub Profile
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+        {# Repository Mapping Setup #}
+        {% if is_connected %}
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+            <h5 class="fw-bold text-gray-900 dark:text-white mb-3">
+                <i class="bi bi-link-45deg text-blue-500 me-2"></i>Repository Mapping Configuration
+            </h5>
+
+            {% if repo_config %}
+            {# Active config connected #}
+            <div class="border rounded-xl p-3.5 bg-gray-50/50 dark:bg-gray-900/20 mb-3 border-gray-200 dark:border-gray-700">
+                <span class="text-xxs fw-bold text-gray-400 uppercase tracking-wider mb-2 d-block">Active Repository Configuration</span>
+                <div class="d-flex align-items-start justify-content-between gap-3">
+                    <div>
+                        <h6 class="fw-bold text-gray-900 dark:text-white mb-1.5 d-flex align-items-center gap-2">
+                            <i class="bi bi-folder-fill text-yellow-500"></i>
+                            {{ repo_config.repository_owner }}/{{ repo_config.repo_name }}
+                        </h6>
+                        <div class="d-flex flex-wrap gap-2 text-xxs text-gray-500">
+                            <span><i class="bi bi-git me-1"></i>Branch: <strong>{{ repo_config.branch_name }}</strong></span>
+                            <span>·</span>
+                            <span>Linked: {{ repo_config.updated_at|date:"M d, Y" }}</span>
+                        </div>
+                    </div>
+                    
+                    {# Remove connection #}
+                    <form method="post" action="{% url 'github:clear' portfolio.pk %}" class="m-0">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-xs btn-outline-danger rounded-pill px-2.5" onclick="return confirm('Clear repository mapping config? This unlinks the site but preserves committed files on GitHub.');">
+                            Disconnect Config
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            {# Rename or change config accordion trigger #}
+            <p class="text-xxs text-gray-400 mb-3"><i class="bi bi-info-circle"></i> Need to rename or map to a different repository? Disconnect config above first.</p>
+
+            {# Visual publish console trigger #}
+            <div class="border rounded-xl p-4 bg-blue-50/30 dark:bg-blue-950/10 border-blue-100 dark:border-blue-900">
+                <span class="text-xxs fw-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-3 d-block">Publish Control Panel</span>
+                <form method="post" action="{% url 'github:publish' portfolio.pk %}" class="d-flex flex-column gap-3">
+                    {% csrf_token %}
+                    <div>
+                        <label class="form-label text-xxs fw-semibold text-gray-500 uppercase">Deployment Commit Message (Optional)</label>
+                        <input type="text" name="commit_message" class="form-control form-control-sm" placeholder="Publish portfolio updates via AI Portfolio Builder">
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary rounded-pill py-2 font-bold w-100 d-flex align-items-center justify-content-center gap-2">
+                        <i class="bi bi-rocket-takeoff-fill"></i> Publish to GitHub Pages
+                    </button>
+                </form>
+            </div>
+            {% else %}
+            {# No repo mapped yet - Setup Form #}
+            <form method="post" action="{% url 'github:configure' portfolio.pk %}" class="d-flex flex-column gap-3.5">
+                {% csrf_token %}
+                
+                <div>
+                    <label class="form-label text-xxs fw-semibold text-gray-500 uppercase d-block mb-2">Repository Options</label>
+                    <div class="d-flex flex-column gap-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="repo_choice" id="choiceExisting" value="existing" checked onchange="toggleRepoForm(this.value)">
+                            <label class="form-check-label text-xs" for="choiceExisting">
+                                Select an existing repository from my account
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="repo_choice" id="choiceNew" value="new" onchange="toggleRepoForm(this.value)">
+                            <label class="form-check-label text-xs" for="choiceNew">
+                                Create a new public repository
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                {# Choice panel: Existing #}
+                <div id="panelExisting">
+                    <label class="form-label text-xxs fw-semibold text-gray-500 uppercase">Select Target Repository</label>
+                    <select name="existing_repo" class="form-select form-select-sm">
+                        <option value="">-- Choose one of your repositories --</option>
+                        {% for r in repos_list %}
+                        <option value="{{ r.name }}">{{ r.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                {# Choice panel: New #}
+                <div id="panelNew" style="display:none;">
+                    <label class="form-label text-xxs fw-semibold text-gray-500 uppercase">New Repository Name</label>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-gray-50 text-xxs text-gray-400 font-mono">{{ github_username }}/</span>
+                        <input type="text" name="new_repo" class="form-control" placeholder="my-resume-portfolio" pattern="^[a-zA-Z0-9_\-\.]+$" title="Only alphanumeric, underscores, hyphens, and periods allowed.">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-sm btn-primary rounded-pill py-2 fw-semibold">
+                    <i class="bi bi-save me-1.5"></i>Link Repository Mapping
+                </button>
+            </form>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    {# ── RIGHT COLUMN: LATEST DEPLOYMENT DETAILS & HISTORY ── #}
+    <div class="col-12 col-lg-6">
+        {# Latest Deployment Stats card #}
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 mb-4">
+            <h5 class="fw-bold text-gray-900 dark:text-white mb-3">
+                <i class="bi bi-rocket-fill text-green-500 me-2"></i>Pages Deployment Status
+            </h5>
+
+            {% if latest_deployment %}
+            <div class="d-flex flex-column gap-3">
+                {# Status Info #}
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-2">
+                        {% if latest_deployment.status == 'SUCCESS' %}
+                        <span class="badge bg-green-100 text-green-700 dark:bg-green-950/20 dark:text-green-400 px-3 py-1.5 rounded-pill d-flex align-items-center gap-1.5">
+                            <i class="bi bi-check-circle-fill"></i> Success
+                        </span>
+                        {% elif latest_deployment.status == 'PENDING' %}
+                        <span class="badge bg-yellow-100 text-yellow-700 dark:bg-yellow-950/20 dark:text-yellow-400 px-3 py-1.5 rounded-pill d-flex align-items-center gap-1.5">
+                            <i class="bi bi-arrow-repeat animate-spin"></i> Pending
+                        </span>
+                        {% else %}
+                        <span class="badge bg-red-100 text-red-700 dark:bg-red-950/20 dark:text-red-400 px-3 py-1.5 rounded-pill d-flex align-items-center gap-1.5">
+                            <i class="bi bi-exclamation-triangle-fill"></i> Failed
+                        </span>
+                        {% endif %}
+                    </div>
+                    <span class="text-xxs text-gray-400 font-mono">Build v{{ latest_deployment.deployment_version }}</span>
+                </div>
+
+                {# Stats list #}
+                <div class="row g-2 border-y border-gray-100 dark:border-gray-700 py-3 my-1">
+                    <div class="col-6">
+                        <span class="text-xxs text-gray-400 d-block mb-0.5">LAST DEPLOYMENT TIME</span>
+                        <span class="text-xs fw-bold text-gray-800 dark:text-white">{{ latest_deployment.created_at|date:"M d, Y H:i:s" }}</span>
+                    </div>
+                    <div class="col-6">
+                        <span class="text-xxs text-gray-400 d-block mb-0.5">DEPLOYMENT DURATION</span>
+                        <span class="text-xs fw-bold text-gray-800 dark:text-white">{{ latest_deployment.deployment_duration|default:"0.0" }}s</span>
+                    </div>
+                    <div class="col-6 mt-2">
+                        <span class="text-xxs text-gray-400 d-block mb-0.5">COMMIT HASH (SHA)</span>
+                        <span class="text-xs fw-bold text-gray-800 dark:text-white font-mono">{{ latest_deployment.last_commit_sha|slice:":8"|default:"N/A" }}</span>
+                    </div>
+                    <div class="col-6 mt-2">
+                        <span class="text-xxs text-gray-400 d-block mb-0.5">PAGES HOSTING</span>
+                        <span class="text-xs fw-bold text-gray-800 dark:text-white">
+                            {% if latest_deployment.pages_enabled %}<i class="bi bi-cloud-check text-green-500"></i> Active{% else %}<i class="bi bi-cloud-slash text-red-500"></i> Inactive{% endif %}
+                        </span>
+                    </div>
+                </div>
+
+                {% if latest_deployment.status == 'SUCCESS' and latest_deployment.published_url %}
+                <div class="p-3 bg-green-50/50 dark:bg-green-950/10 border rounded-xl d-flex align-items-center justify-content-between gap-3">
+                    <div class="overflow-hidden">
+                        <span class="text-xxs text-green-700 dark:text-green-400 d-block mb-0.5 font-bold uppercase tracking-wider">Live URL Link</span>
+                        <a href="{{ latest_deployment.published_url }}" target="_blank" class="text-xs text-blue-500 text-decoration-none fw-bold truncate d-block">
+                            {{ latest_deployment.published_url }}
+                        </a>
+                    </div>
+                    <a href="{{ latest_deployment.published_url }}" target="_blank" class="btn btn-xs btn-primary rounded-pill px-3 py-1.5 shadow-sm text-xxs font-semibold">
+                        <i class="bi bi-box-arrow-up-right me-1"></i> Visit Site
+                    </a>
+                </div>
+                {% endif %}
+
+                {% if latest_deployment.status == 'FAILED' %}
+                <div class="alert alert-danger p-3 mb-0 rounded-xl text-xs">
+                    <h6 class="fw-bold mb-1"><i class="bi bi-exclamation-triangle-fill me-1"></i>Build Error logs:</h6>
+                    <p class="mb-0 font-mono text-xxs text-danger-900 bg-red-50/50 dark:bg-red-950/20 p-2.5 rounded border border-red-200">{{ latest_deployment.error_message }}</p>
+                    <p class="mb-0 mt-2 text-xxs"><i class="bi bi-info-circle"></i> Verification Checklist: Verify that your repository is public and Pages is not blocked by organization permissions.</p>
+                </div>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="text-center py-4 text-gray-400">
+                <i class="bi bi-cloud-arrow-up text-4xl text-gray-300 d-block mb-1.5 animate__animated animate__pulse animate__infinite"></i>
+                <p class="text-xs mb-0">No deployment logs available. Configure repository mapping and publish to generate your first live build website!</p>
+            </div>
+            {% endif %}
+        </div>
+
+        {# Deployment history logs #}
+        {% if deployments %}
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+            <h5 class="fw-bold text-gray-900 dark:text-white mb-3">
+                <i class="bi bi-clock-history me-2 text-gray-400"></i>Deployment History
+            </h5>
+            <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                <table class="table table-sm text-xs">
+                    <thead>
+                        <tr>
+                            <th>Ver</th>
+                            <th>Commit Msg</th>
+                            <th>SHA</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in deployments %}
+                        <tr>
+                            <td>v{{ log.deployment_version }}</td>
+                            <td>{{ log.deployment_message|truncatechars:20 }}</td>
+                            <td class="font-mono text-xxs">{{ log.last_commit_sha|slice:":8" }}</td>
+                            <td>{{ log.created_at|date:"M d, H:i" }}</td>
+                            <td>
+                                {% if log.status == 'SUCCESS' %}
+                                <span class="badge bg-green-100 text-green-700 rounded-pill">Ok</span>
+                                {% elif log.status == 'PENDING' %}
+                                <span class="badge bg-yellow-100 text-yellow-700 rounded-pill">Pending</span>
+                                {% else %}
+                                <span class="badge bg-red-100 text-red-700 rounded-pill">Err</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function toggleRepoForm(value) {
+        const panelExisting = document.getElementById('panelExisting');
+        const panelNew = document.getElementById('panelNew');
+        if (value === 'new') {
+            panelExisting.style.display = 'none';
+            panelNew.style.display = 'block';
+        } else {
+            panelExisting.style.display = 'block';
+            panelNew.style.display = 'none';
+        }
+    }
+</script>
+{% endblock %}

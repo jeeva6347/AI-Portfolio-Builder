@@ -16,6 +16,7 @@ urlpatterns = [
     path("themes/", include("themes.urls")),
     path("portfolio/", include("portfolio.urls")),
     path("ai/", include("ai.urls")),
+    path("github/", include("github_integration.urls")),
 ]
 
 if settings.DEBUG:

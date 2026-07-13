@@ -40,10 +40,10 @@ SIDEBAR_NAVIGATION = [
     {
         "title": "GitHub",
         "icon": "bi-github",
-        "url": "dashboard:github_placeholder",
+        "url": "portfolio:list",
         "required_role": ["SUPER_ADMIN", "PREMIUM_USER", "FREE_USER"],
         "badge": None,
-        "coming_soon": True,
+        "coming_soon": False,
         "name": "github",
     },
     {
@@ -101,11 +101,24 @@ def get_sidebar_navigation(user):
                     url_name = "dashboard:admin"
                 else:
                     url_name = "dashboard:user"
+            elif item["name"] == "github":
+                from portfolio.models import Portfolio
+                portfolio = Portfolio.objects.filter(user=user).order_by("-updated_at").first()
+                if portfolio:
+                    from django.urls import reverse
+                    url_name = None
+                    try:
+                        resolved_url = reverse("github:dashboard", kwargs={"pk": portfolio.pk})
+                    except Exception:
+                        resolved_url = "#"
+                else:
+                    url_name = "portfolio:list"
                     
-            try:
-                resolved_url = reverse_lazy(url_name)
-            except Exception:
-                resolved_url = "#"
+            if url_name:
+                try:
+                    resolved_url = reverse_lazy(url_name)
+                except Exception:
+                    resolved_url = "#"
 
             nav_item = item.copy()
             nav_item["url"] = resolved_url

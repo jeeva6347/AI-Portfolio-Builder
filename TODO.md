@@ -77,11 +77,21 @@
 - [x] Security permissions: restricted visual editor and unpublished previews to portfolio owner
 - [x] Expanded automated test suite by adding 4 comprehensive tests (18 tests total)
 
-## Next: Module 9 — GitHub Publishing
-- [ ] Automated git publish setup flow
-- [ ] Connect public CSS, JS, and image assets resolution pipeline
-- [ ] Verify accessibility, responsive rendering, and custom domains
+## Module 9 — GitHub Auto Publish & GitHub Pages Deployment (COMPLETE)
+- [x] Reusable service layer under `github_integration/services/` (oauth, repository, exporter, deployment, pages)
+- [x] Mapped database configs `GitHubRepoConfig` and deployment history records `GitHubDeployment`
+- [x] Static site package exporter converter (copies media assets to package and rewrites references dynamically)
+- [x] In-memory Git Data REST API pushes (blobs uploads, parent trees referencing, commit creations, branch ref updates)
+- [x] Enable and verify GitHub Pages hosting
+- [x] Connect/disconnect OAuth profile integrations and unlinking repos without deleting files
+- [x] Visual deployment management dashboard panel (status badge, build log warning checklist, version tracking)
+- [x] Mock integrations unit tests inside tests.py (22 tests total passing OK)
+
+## Next: Module 10 — Premium Plans & Subscriptions
+- [ ] Stripe integration
+- [ ] Premium plans model and subscription gating middleware
+- [ ] Tier checks on themes, downloads, and custom domains
 
 ## Explicitly excluded from this phase (per brief)
-- Payments, Premium feature-gating, Analytics, Deployments
+- Payment Gateway, Analytics, Custom Domains, Deployment Automation
 

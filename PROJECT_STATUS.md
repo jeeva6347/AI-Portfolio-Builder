@@ -1,6 +1,6 @@
 # Project Status
 
-**Completion:** Module 8 (Live Preview & Visual Portfolio Editor) — complete. ~32% overall (7 of ~22 modules).
+**Completion:** Module 9 (GitHub Auto Publish & GitHub Pages Deployment) — complete. ~36% overall (8 of ~22 modules).
 
 ## Completed
 - Module 1: Authentication (Custom User model, Email/Social Auth)
@@ -10,22 +10,22 @@
 - Module 7: Portfolio Builder (User portfolio database models, CRUD builder tab subviews, theme activation panel, dynamic list compiler list replication, base-href resolution, tests)
 - Module 6 (AI): AI Resume Import & AI Portfolio Generation (PDF/DOCX file extractors, heuristic fallback regex schemas, Gemini JSON parses, content enrichers, verification editor workspace, merge/overwrite builder population)
 - Module 8: Live Preview & Visual Portfolio Editor (Multi-portfolios dashboard, ForeignKey refactoring, side-by-side editing sidebar panel, responsive viewports zoom, debounced autosave, non-blink dynamic iframe reloading, duplication clone actions, tests)
+- Module 9: GitHub Auto Publish & GitHub Pages Deployment (Reusable service layer oauth/repos/exporter/deployment/pages, repo configuration models, in-memory Git Data API commit pushes, Pages activator, layout media link absolute-to-relative converter, templates dashboard)
 
 ## Not Started
-- Modules 9-22 (GitHub publishing, Portfolio Export, Payments, Analytics, etc.)
+- Modules 10-22 (Payments, Analytics, Domain Mapping, PDF Export, etc.)
 
 ## Folder Structure
 ```
 aiportfoliobuilder/
 ├── accounts/            <- Module 1, complete
-├── dashboard/            <- Module 2-4, empty scaffold
-├── themes/               <- Module 5-8, empty scaffold
-├── portfolio/             <- future phase, empty scaffold
+├── dashboard/            <- Module 2-4, complete
+├── themes/               <- Module 5, complete
+├── portfolio/             <- Module 6-8, complete
+├── github_integration/    <- Module 9, complete (named to avoid colliding with PyGithub import)
+├── ai/                    <- Module 6 (AI), complete
 ├── analytics/             <- future phase, empty scaffold
 ├── payments/              <- future phase, empty scaffold
-├── github_integration/    <- future phase, empty scaffold (named to
-│                             avoid colliding with the PyGithub import)
-├── ai/                    <- future phase, empty scaffold
 ├── notifications/         <- empty scaffold
 ├── api/                   <- empty scaffold
 ├── core/                  <- empty scaffold

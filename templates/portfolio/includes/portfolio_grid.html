@@ -48,6 +48,11 @@
                             </button>
                         </form>
 
+                        {# GitHub Deploy #}
+                        <a href="{% url 'github:dashboard' portfolio.pk %}" class="btn btn-xs btn-outline-dark rounded-pill" title="Deploy to GitHub">
+                            <i class="bi bi-github"></i>
+                        </a>
+
                         {# Publish/Archive toggle #}
                         {% if portfolio.status != 'PUBLISHED' %}
                         <form method="post" action="{% url 'portfolio:publish' portfolio.pk %}" class="m-0">
