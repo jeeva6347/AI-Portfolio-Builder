@@ -17,6 +17,7 @@ urlpatterns = [
     path("builder/<int:pk>/duplicate/", views.PortfolioDuplicateView.as_view(), name="duplicate"),
     path("builder/<int:pk>/publish/", views.PortfolioPublishView.as_view(), name="publish"),
     path("builder/<int:pk>/archive/", views.PortfolioArchiveView.as_view(), name="archive"),
+    path("builder/<int:pk>/restore/", views.PortfolioRestoreView.as_view(), name="restore"),
 
     # Related items creation urls
     path("builder/<int:pk>/skills/create/", views.SkillCreateView.as_view(), name="skill_create"),

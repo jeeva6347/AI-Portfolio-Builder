@@ -50,13 +50,13 @@ class PortfolioListView(LoginRequiredMixin, View):
     template_name = "portfolio/list.html"
 
     def get(self, request):
-        portfolios = Portfolio.objects.filter(user=request.user).order_by("-updated_at")
+        portfolios = list(Portfolio.objects.filter(user=request.user).select_related("selected_theme").order_by("-updated_at"))
         ctx = _base_context(request, "list")
         ctx.update({
             "portfolios": portfolios,
-            "drafts": portfolios.filter(status=Portfolio.Status.DRAFT),
-            "published": portfolios.filter(status=Portfolio.Status.PUBLISHED),
-            "archived": portfolios.filter(status=Portfolio.Status.ARCHIVED),
+            "drafts": [p for p in portfolios if p.status == Portfolio.Status.DRAFT],
+            "published": [p for p in portfolios if p.status == Portfolio.Status.PUBLISHED],
+            "archived": [p for p in portfolios if p.status == Portfolio.Status.ARCHIVED],
             "breadcrumbs": [
                 {"title": "Dashboard", "url": "#"},
                 {"title": "My Portfolios", "url": "#"},
@@ -182,6 +182,15 @@ class PortfolioArchiveView(LoginRequiredMixin, View):
         portfolio.status = Portfolio.Status.ARCHIVED
         portfolio.save(update_fields=["status"])
         messages.success(request, f"Archived portfolio '{portfolio.name}'.")
+        return redirect("portfolio:list")
+
+
+class PortfolioRestoreView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        portfolio = get_object_or_404(Portfolio, pk=pk, user=request.user)
+        portfolio.status = Portfolio.Status.DRAFT
+        portfolio.save(update_fields=["status"])
+        messages.success(request, f"Restored portfolio '{portfolio.name}' back to draft.")
         return redirect("portfolio:list")
 
 

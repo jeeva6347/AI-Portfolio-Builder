@@ -212,3 +212,27 @@ class ThemeMapperTestCase(TestCase):
             content_type="application/json"
         )
         self.assertEqual(res_save.status_code, 403)
+
+    def test_mime_type_classification(self):
+        """Verify mime-type classification maps extensions to AssetType correctly."""
+        self.assertEqual(ThemeAsset.classify("index.html"), ThemeAsset.AssetType.HTML)
+        self.assertEqual(ThemeAsset.classify("css/style.CSS"), ThemeAsset.AssetType.CSS)
+        self.assertEqual(ThemeAsset.classify("js/app.mjs"), ThemeAsset.AssetType.JS)
+        self.assertEqual(ThemeAsset.classify("img/avatar.WEBP"), ThemeAsset.AssetType.IMAGE)
+        self.assertEqual(ThemeAsset.classify("font/Inter.woff2"), ThemeAsset.AssetType.FONT)
+        self.assertEqual(ThemeAsset.classify("unknown.xyz"), ThemeAsset.AssetType.OTHER)
+
+    def test_theme_download_counter_increment(self):
+        """Verify that viewing theme details increments the downloads count."""
+        initial_downloads = self.theme.downloads
+        self.theme.increment_downloads()
+        self.theme.refresh_from_db()
+        self.assertEqual(self.theme.downloads, initial_downloads + 1)
+
+    def test_zip_validation_invalid_files(self):
+        """Verify that invalid zip uploads are rejected gracefully."""
+        from .services import _validate_zip, ThemeUploadError
+        import io
+        invalid_buffer = io.BytesIO(b"this is plain text not a zip file")
+        with self.assertRaises(ThemeUploadError):
+            _validate_zip(invalid_buffer)

@@ -34,6 +34,10 @@ def compile_portfolio_static_bundle(portfolio) -> dict:
     # 2. Compile portfolio data values into HTML
     compiled_html = apply_theme_mapping(html_template, mapping, portfolio.get_fields_dict())
 
+    # Inject SEO overrides
+    from analytics.services.seo_service import inject_seo_metadata
+    compiled_html = inject_seo_metadata(compiled_html, portfolio)
+
     # 3. Parse with BeautifulSoup to resolve resource links
     soup = BeautifulSoup(compiled_html, "html.parser")
     

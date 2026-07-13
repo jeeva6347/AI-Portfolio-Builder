@@ -135,6 +135,11 @@ class Theme(models.Model):
     def get_absolute_url(self):
         return reverse("themes:theme_detail_admin", kwargs={"slug": self.slug})
 
+    def increment_downloads(self):
+        """Increment the download count for this theme."""
+        self.downloads += 1
+        self.save(update_fields=["downloads"])
+
     @property
     def tag_list(self):
         """Return tags as a Python list."""

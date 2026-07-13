@@ -40,7 +40,6 @@ INSTALLED_APPS = [
     "allauth.socialaccount.providers.github",
 
     # Local apps
-    "core",
     "accounts",
     "dashboard",
     "themes",
@@ -49,8 +48,6 @@ INSTALLED_APPS = [
     "payments",
     "github_integration",
     "ai",
-    "notifications",
-    "api",
 ]
 
 MIDDLEWARE = [
@@ -193,3 +190,24 @@ DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="noreply@aiportfoliobu
 # ---------------------------------------------------------------------------
 SESSION_COOKIE_AGE = config("SESSION_COOKIE_AGE", default=1209600, cast=int)  # 14 days
 SESSION_SAVE_EVERY_REQUEST = True
+
+# ---------------------------------------------------------------------------
+# Production Security settings (Active only when DJANGO_DEBUG=False)
+# ---------------------------------------------------------------------------
+if not DEBUG:
+    # SSL and Redirection
+    SECURE_SSL_REDIRECT = config("SECURE_SSL_REDIRECT", default=True, cast=bool)
+    
+    # Cookies Security
+    SESSION_COOKIE_SECURE = config("SESSION_COOKIE_SECURE", default=True, cast=bool)
+    CSRF_COOKIE_SECURE = config("CSRF_COOKIE_SECURE", default=True, cast=bool)
+    
+    # HSTS Settings
+    SECURE_HSTS_SECONDS = config("SECURE_HSTS_SECONDS", default=31536000, cast=int)
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = config("SECURE_HSTS_INCLUDE_SUBDOMAINS", default=True, cast=bool)
+    SECURE_HSTS_PRELOAD = config("SECURE_HSTS_PRELOAD", default=True, cast=bool)
+    
+    # Fallback to robust random secret key if dummy default is found in environment
+    if SECRET_KEY.startswith("django-insecure-") or len(SECRET_KEY) < 30:
+        import secrets
+        SECRET_KEY = secrets.token_urlsafe(50)

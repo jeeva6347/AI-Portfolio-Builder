@@ -72,15 +72,15 @@ class UserDashboardView(LoginRequiredMixin, DashboardBaseView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         from portfolio.models import Portfolio
-        portfolios = Portfolio.objects.filter(user=self.request.user)
-        primary_portfolio = portfolios.order_by("-updated_at").first()
+        portfolios = list(Portfolio.objects.filter(user=self.request.user).select_related("selected_theme"))
+        primary_portfolio = sorted(portfolios, key=lambda p: p.updated_at or p.created_at, reverse=True)[0] if portfolios else None
         
-        context['my_portfolios'] = portfolios.count()
+        context['my_portfolios'] = len(portfolios)
         context['selected_theme_name'] = primary_portfolio.selected_theme.name if primary_portfolio and primary_portfolio.selected_theme else "None"
         
-        context['drafts'] = portfolios.filter(status=Portfolio.Status.DRAFT).count()
-        context['published'] = portfolios.filter(status=Portfolio.Status.PUBLISHED).count()
-        context['archived'] = portfolios.filter(status=Portfolio.Status.ARCHIVED).count()
+        context['drafts'] = sum(1 for p in portfolios if p.status == Portfolio.Status.DRAFT)
+        context['published'] = sum(1 for p in portfolios if p.status == Portfolio.Status.PUBLISHED)
+        context['archived'] = sum(1 for p in portfolios if p.status == Portfolio.Status.ARCHIVED)
         context['github_projects'] = primary_portfolio.projects.exclude(github_url="").count() if primary_portfolio else 0
         
         # Traffic aggregates

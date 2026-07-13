@@ -349,3 +349,49 @@ class PortfolioBuilderTestCase(TestCase):
         res_published_preview = self.client.get(reverse("portfolio:preview", kwargs={"pk": portfolio.pk}))
         # Now allowed (either returns 200 compiled HTML or warnings about missing mapping selections)
         self.assertIn(res_published_preview.status_code, [200, 404])
+
+    def test_portfolio_archive_and_restore(self):
+        """Verify archiving a portfolio updates status, and restoring reverts it to draft."""
+        self.client.login(username="testuser", password="testpassword")
+        portfolio = Portfolio.objects.create(user=self.user, name="To Archive", status=Portfolio.Status.PUBLISHED)
+        
+        # Archive
+        res_arch = self.client.post(reverse("portfolio:archive", kwargs={"pk": portfolio.pk}))
+        self.assertEqual(res_arch.status_code, 302)
+        portfolio.refresh_from_db()
+        self.assertEqual(portfolio.status, Portfolio.Status.ARCHIVED)
+
+        # Restore
+        res_rest = self.client.post(reverse("portfolio:restore", kwargs={"pk": portfolio.pk}))
+        self.assertEqual(res_rest.status_code, 302)
+        portfolio.refresh_from_db()
+        self.assertEqual(portfolio.status, Portfolio.Status.DRAFT)
+
+    def test_portfolio_deletion_by_owner(self):
+        """Verify owner can delete a portfolio and its data gets removed."""
+        self.client.login(username="testuser", password="testpassword")
+        portfolio = Portfolio.objects.create(user=self.user, name="To Delete")
+        
+        res_del = self.client.post(reverse("portfolio:delete", kwargs={"pk": portfolio.pk}))
+        self.assertEqual(res_del.status_code, 302)
+        self.assertFalse(Portfolio.objects.filter(pk=portfolio.pk).exists())
+
+    def test_visual_editor_page_requires_auth(self):
+        """Verify that accessing visual editor dashboard requires a login redirect."""
+        portfolio = Portfolio.objects.create(user=self.user, name="No Auth Editor")
+        res = self.client.get(reverse("portfolio:builder", kwargs={"pk": portfolio.pk}))
+        self.assertEqual(res.status_code, 302)
+
+    def test_user_cannot_update_other_user_portfolio_api(self):
+        """Verify permission checks block unauthorized AJAX update requests on other portfolios."""
+        portfolio = Portfolio.objects.create(user=self.user, name="Secret Portfolio")
+        
+        self.client.login(username="otheruser", password="otherpassword")
+        res = self.client.post(
+            reverse("portfolio:update_api", kwargs={"pk": portfolio.pk}),
+            data={"name": "Hacked Name"},
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest"
+        )
+        self.assertEqual(res.status_code, 403)
+        portfolio.refresh_from_db()
+        self.assertNotEqual(portfolio.name, "Hacked Name")
