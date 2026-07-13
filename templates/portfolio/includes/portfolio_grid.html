@@ -48,6 +48,16 @@
                             </button>
                         </form>
 
+                        {# SEO Config #}
+                        <a href="{% url 'analytics:seo_config' portfolio.pk %}" class="btn btn-xs btn-outline-primary rounded-pill" title="SEO Settings">
+                            <i class="bi bi-search"></i>
+                        </a>
+
+                        {# Speed Diagnostic #}
+                        <a href="{% url 'analytics:performance_config' portfolio.pk %}" class="btn btn-xs btn-outline-warning rounded-pill" title="Speed Diagnostics">
+                            <i class="bi bi-speedometer2"></i>
+                        </a>
+
                         {# GitHub Deploy #}
                         <a href="{% url 'github:dashboard' portfolio.pk %}" class="btn btn-xs btn-outline-dark rounded-pill" title="Deploy to GitHub">
                             <i class="bi bi-github"></i>

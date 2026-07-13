@@ -562,4 +562,12 @@ class UserPortfolioPreview(LoginRequiredMixin, View):
         # Compile dynamically using BeautifulSoup and mapped selectors
         compiled_html = apply_theme_mapping(html_content, mapping, portfolio.get_fields_dict())
         
+        # 1. Track Traffic Analytics
+        from analytics.services.tracking_service import track_visit
+        track_visit(request, portfolio)
+
+        # 2. Dynamic SEO Injection
+        from analytics.services.seo_service import inject_seo_metadata
+        compiled_html = inject_seo_metadata(compiled_html, portfolio)
+        
         return HttpResponse(compiled_html, content_type="text/html")

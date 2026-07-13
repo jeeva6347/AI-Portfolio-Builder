@@ -18,6 +18,11 @@ urlpatterns = [
     path("ai/", include("ai.urls")),
     path("github/", include("github_integration.urls")),
     path("billing/", include("payments.urls")),
+    path("analytics/", include("analytics.urls")),
+    
+    # Root level SEO files
+    path("sitemap.xml", RedirectView.as_view(url="/analytics/sitemap.xml", permanent=True)),
+    path("robots.txt", RedirectView.as_view(url="/analytics/robots.txt", permanent=True)),
 ]
 
 if settings.DEBUG:

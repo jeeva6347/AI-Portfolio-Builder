@@ -58,10 +58,10 @@ SIDEBAR_NAVIGATION = [
     {
         "title": "Analytics",
         "icon": "bi-graph-up",
-        "url": "dashboard:analytics_placeholder",
+        "url": "analytics:dashboard",
         "required_role": ["SUPER_ADMIN", "PREMIUM_USER"],
         "badge": "Premium",
-        "coming_soon": True,
+        "coming_soon": False,
         "name": "analytics",
     },
     {

@@ -1,0 +1,196 @@
+{% extends "dashboard/layouts/base.html" %}
+{% load static %}
+
+{% block title %}SEO Settings Override | AI Portfolio Builder{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    {% include "dashboard/components/breadcrumb.html" %}
+    
+    <a href="{% url 'portfolio:list' %}" class="btn btn-sm btn-outline-secondary rounded-pill">
+        <i class="bi bi-arrow-left me-1"></i>Back to Portfolios
+    </a>
+</div>
+
+<div class="row g-4">
+    {# ── LEFT COLUMN: EDIT FORM ── #}
+    <div class="col-12 col-lg-7">
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+            <h5 class="fw-bold text-gray-900 dark:text-white mb-3.5">Metadata Configurations</h5>
+            
+            <form method="post" enctype="multipart/form-data" class="d-flex flex-column gap-3.5">
+                {% csrf_token %}
+                
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label text-xxs fw-bold text-gray-500 uppercase">Search Engine Title Override</label>
+                        {{ form.seo_title }}
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label text-xxs fw-bold text-gray-500 uppercase">Meta Description (Snippet)</label>
+                        {{ form.meta_description }}
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label class="form-label text-xxs fw-bold text-gray-500 uppercase">Meta Keywords (Comma separated)</label>
+                        {{ form.keywords }}
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label class="form-label text-xxs fw-bold text-gray-500 uppercase">Canonical URL Override</label>
+                        {{ form.canonical_url }}
+                    </div>
+
+                    <hr class="border-gray-100 dark:border-gray-700 my-2">
+                    
+                    <h6 class="fw-bold text-gray-900 dark:text-white text-xs mb-1">Open Graph / Social Sharing (LinkedIn, Facebook, etc.)</h6>
+                    
+                    <div class="col-12">
+                        <label class="form-label text-xxs fw-bold text-gray-500 uppercase">OG Title</label>
+                        {{ form.og_title }}
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label text-xxs fw-bold text-gray-500 uppercase">OG Description</label>
+                        {{ form.og_description }}
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label class="form-label text-xxs fw-bold text-gray-500 uppercase">Social Share Image</label>
+                        {{ form.og_image }}
+                        {% if seo.og_image %}
+                        <div class="mt-2 text-xxs text-gray-400">
+                            Current: <a href="{{ seo.og_image.url }}" target="_blank" class="text-blue-500">{{ seo.og_image.name }}</a>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label class="form-label text-xxs fw-bold text-gray-500 uppercase">Favicon Upload</label>
+                        {{ form.favicon }}
+                        {% if seo.favicon %}
+                        <div class="mt-2 text-xxs text-gray-400">
+                            Current: <a href="{{ seo.favicon.url }}" target="_blank" class="text-blue-500">{{ seo.favicon.name }}</a>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <hr class="border-gray-100 dark:border-gray-700 my-2">
+                    
+                    <h6 class="fw-bold text-gray-900 dark:text-white text-xs mb-1">Twitter Cards & Crawler Rules</h6>
+                    
+                    <div class="col-12 col-md-6">
+                        <label class="form-label text-xxs fw-bold text-gray-500 uppercase">Twitter Card Title</label>
+                        {{ form.twitter_title }}
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label class="form-label text-xxs fw-bold text-gray-500 uppercase">Twitter Card Description</label>
+                        {{ form.twitter_description }}
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label text-xxs fw-bold text-gray-500 uppercase">robots.txt Directives Override</label>
+                        {{ form.robots_txt }}
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="btn btn-sm btn-primary rounded-pill px-4 fw-bold">
+                        Save SEO Configuration
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {# ── RIGHT COLUMN: LIVE PREVIEW SIMULATORS ── #}
+    <div class="col-12 col-lg-5">
+        {# Google Search snippet simulator #}
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 mb-4">
+            <h5 class="fw-bold text-gray-900 dark:text-white mb-3">Google Search Preview</h5>
+            
+            <div class="border rounded-xl p-3 bg-light/50 dark:bg-gray-900/30">
+                <span class="text-xxs text-gray-500 dark:text-gray-400 d-block mb-1">
+                    https://aiportfoliobuilder.com/preview/{{ portfolio.pk }}/
+                </span>
+                <h4 id="googleTitleSim" class="text-blue-700 dark:text-blue-400 fw-semibold fs-5 mb-1 text-decoration-none cursor-pointer">
+                    {{ seo.seo_title|default:portfolio.name }}
+                </h4>
+                <p id="googleDescSim" class="text-xs text-gray-600 dark:text-gray-400 mb-0">
+                    {{ seo.meta_description|default:"Please write a search engine meta description to see how your site snippet details will look here in real Google search listings." }}
+                </p>
+            </div>
+        </div>
+
+        {# Facebook/Social Share Preview card #}
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+            <h5 class="fw-bold text-gray-900 dark:text-white mb-3">Social Sharing Preview (OG Card)</h5>
+            
+            <div class="border rounded-xl overflow-hidden bg-white dark:bg-gray-900">
+                <div class="ratio ratio-16x9 bg-gray-100 dark:bg-gray-800 d-flex align-items-center justify-content-center overflow-hidden">
+                    {% if seo.og_image %}
+                    <img id="ogImageSim" src="{{ seo.og_image.url }}" alt="OG Image Preview" class="w-100 h-100 object-cover">
+                    {% else %}
+                    <div class="text-gray-300 text-center py-5">
+                        <i class="bi bi-image fs-1 d-block mb-1 text-gray-400"></i>
+                        <span class="text-xxs">No image uploaded. Default placeholder.</span>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="p-3 border-t">
+                    <span class="text-xxs text-gray-400 uppercase tracking-widest">AIPORTFOLIOBUILDER.COM</span>
+                    <h5 id="ogTitleSim" class="fw-bold text-xs text-gray-900 dark:text-white mt-1 mb-1">
+                        {{ seo.og_title|default:portfolio.name }}
+                    </h5>
+                    <p id="ogDescSim" class="text-xxs text-gray-500 mb-0 text-truncate">
+                        {{ seo.og_description|default:seo.meta_description|default:"Social card snippet details populate here." }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Dynamic preview binder updates
+    const titleInput = document.querySelector("input[name='seo_title']");
+    const descInput = document.querySelector("textarea[name='meta_description']");
+    const ogTitleInput = document.querySelector("input[name='og_title']");
+    const ogDescInput = document.querySelector("textarea[name='og_description']");
+
+    const googleTitleSim = document.getElementById("googleTitleSim");
+    const googleDescSim = document.getElementById("googleDescSim");
+    const ogTitleSim = document.getElementById("ogTitleSim");
+    const ogDescSim = document.getElementById("ogDescSim");
+
+    const defaultTitle = "{{ portfolio.name|escapejs }}";
+
+    titleInput.addEventListener("input", function() {
+        googleTitleSim.textContent = titleInput.value || defaultTitle;
+        if (!ogTitleInput.value) {
+            ogTitleSim.textContent = titleInput.value || defaultTitle;
+        }
+    });
+
+    descInput.addEventListener("input", function() {
+        googleDescSim.textContent = descInput.value || "Google description snippet details will populate here.";
+        if (!ogDescInput.value) {
+            ogDescSim.textContent = descInput.value || "Social card description will populate here.";
+        }
+    });
+
+    ogTitleInput.addEventListener("input", function() {
+        ogTitleSim.textContent = ogTitleInput.value || titleInput.value || defaultTitle;
+    });
+
+    ogDescInput.addEventListener("input", function() {
+        ogDescSim.textContent = ogDescInput.value || descInput.value || "Social card description will populate here.";
+    });
+});
+</script>
+{% endblock %}

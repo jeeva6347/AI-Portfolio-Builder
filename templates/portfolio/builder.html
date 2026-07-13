@@ -79,6 +79,12 @@
                         </div>
                     </div>
                     <div class="d-flex gap-1.5">
+                        <a href="{% url 'analytics:seo_config' portfolio.pk %}" class="btn btn-xs btn-outline-primary rounded-pill px-2.5">
+                            <i class="bi bi-search me-1"></i>SEO
+                        </a>
+                        <a href="{% url 'analytics:performance_config' portfolio.pk %}" class="btn btn-xs btn-outline-warning rounded-pill px-2.5">
+                            <i class="bi bi-speedometer2 me-1"></i>Speed
+                        </a>
                         <a href="{% url 'portfolio:select_theme' portfolio.pk %}" class="btn btn-xs btn-outline-secondary rounded-pill px-2.5">
                             <i class="bi bi-palette-fill me-1"></i>Theme
                         </a>

@@ -1,5 +1,19 @@
 # Changelog
 
+## [Completed] - Module 11: Analytics, SEO & Performance
+### Added
+- Complete traffic tracker schema logging visits `PortfolioVisit` (browsers, devices types, countries, referrers, page sections) and metrics totals `PortfolioMetric`.
+- Dynamic SEO tag override profiles `PortfolioSEO` supporting custom meta titles, keywords list, canonical links, OG Facebook sharing tags, and Twitter Cards descriptors.
+- Modular BeautifulSoup filter parser injecting head meta tags and icon favicon links into compiled compiled portfolio layouts preview output.
+- Performance diagnostics service layer (`performance_service.py`) aggregating css, js, image bytes, and suggestion listings (compression prompts, minification alerts).
+- High-fidelity traffic analytics charts (`templates/analytics/dashboard.html`) displaying past 30 days line graphs, referrers tables, devices breakdowns, and admin system statistics.
+- Interactive SEO form metadata editor panel (`templates/analytics/seo_config.html`) including custom crawler robots directives and dynamic Google/Social share SERP snippet previews.
+- Page Speed diagnostic gauges display (`templates/analytics/performance.html`) containing speedometers and files category progress bars.
+- Dynamic sitemaps generation route serving published locating tags `/sitemap.xml` and plain text robot rules `/robots.txt`.
+- Multi-portfolio metrics overview cards and trend lines graphs added to User Dashboard (`user.html`) and Super Admin dashboard.
+- Active visual builder action links inside visual workspace toolbar (`builder.html`) and grid listing templates.
+- Expanded automated unit tests suite inside `analytics/tests.py` testing signals, tracking logs, SEO tags injection, sitemaps XML, robots directives, and premium tier gates (7 new tests, 36 total passing OK).
+
 ## [Completed] - Module 10: SaaS Subscription & Payments
 ### Added
 - Reusable `SubscriptionPlan` model tracking pricing tiers, portfolio limits, premium themes access, AI upload counts, and GitHub publishes caps.

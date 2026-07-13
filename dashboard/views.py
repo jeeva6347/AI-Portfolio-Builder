@@ -39,8 +39,14 @@ class SuperAdminDashboardView(SuperAdminRequiredMixin, DashboardBaseView):
         # Real theme stats
         context['total_themes'] = Theme.objects.count()
         context['premium_themes'] = Theme.objects.filter(is_premium=True, status=Theme.Status.APPROVED).count()
-        context['published_portfolios'] = 0
-        context['monthly_revenue'] = "$0.00"
+        # Real portfolio stats
+        from portfolio.models import Portfolio
+        from payments.models import PaymentTransaction
+        from django.db.models import Sum
+        
+        context['published_portfolios'] = Portfolio.objects.filter(status=Portfolio.Status.PUBLISHED).count()
+        total_revenue = PaymentTransaction.objects.filter(status="success").aggregate(total=Sum("amount"))["total"] or 0.00
+        context['monthly_revenue'] = f"${total_revenue:.2f}"
         context['github_connections'] = User.objects.exclude(github_username="").count()
 
         context['breadcrumbs'] = [{'title': 'Dashboard', 'url': '#'}]
@@ -77,6 +83,41 @@ class UserDashboardView(LoginRequiredMixin, DashboardBaseView):
         context['archived'] = portfolios.filter(status=Portfolio.Status.ARCHIVED).count()
         context['github_projects'] = primary_portfolio.projects.exclude(github_url="").count() if primary_portfolio else 0
         
+        # Traffic aggregates
+        from analytics.models import PortfolioMetric, PortfolioVisit
+        metrics = PortfolioMetric.objects.filter(portfolio__user=self.request.user)
+        total_views = 0
+        avg_seo = 100
+        avg_perf = 100
+        
+        if metrics.exists():
+            total_views = sum(m.total_visits for m in metrics)
+            avg_seo = round(sum(m.seo_score for m in metrics) / metrics.count())
+            avg_perf = round(sum(m.performance_score for m in metrics) / metrics.count())
+            
+        context['total_views'] = total_views
+        context['avg_seo'] = avg_seo
+        context['avg_perf'] = avg_perf
+
+        # 30 days Chart.js trend parameters
+        from datetime import timedelta
+        from django.utils import timezone
+        today = timezone.now().date()
+        date_list = [today - timedelta(days=x) for x in range(30)]
+        date_list.reverse()
+        
+        context['chart_labels'] = [d.strftime("%b %d") for d in date_list]
+        all_user_visits = PortfolioVisit.objects.filter(
+            portfolio__user=self.request.user,
+            timestamp__date__gte=today - timedelta(days=30)
+        )
+        visits_by_date = {}
+        for v in all_user_visits:
+            v_date = v.timestamp.date()
+            visits_by_date[v_date] = visits_by_date.get(v_date, 0) + 1
+            
+        context['chart_data'] = [visits_by_date.get(d, 0) for d in date_list]
+
         context['breadcrumbs'] = [{'title': 'My Dashboard', 'url': '#'}]
         return context
 

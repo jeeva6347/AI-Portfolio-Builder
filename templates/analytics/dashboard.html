@@ -1,0 +1,374 @@
+{% extends "dashboard/layouts/base.html" %}
+{% load static %}
+
+{% block title %}Traffic & SEO Analytics Portal | AI Portfolio Builder{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    {% include "dashboard/components/breadcrumb.html" %}
+</div>
+
+{# ── TOTALS OVERVIEW CARDS ── #}
+<div class="row g-4 mb-4">
+    <div class="col-12 col-sm-6 col-md-3">
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 d-flex align-items-center gap-3">
+            <div class="bg-blue-100 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400 rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                <i class="bi bi-eye-fill fs-4"></i>
+            </div>
+            <div>
+                <span class="text-xxs text-gray-400 uppercase tracking-wider font-semibold">Total Page Views</span>
+                <h4 class="fw-extrabold text-gray-900 dark:text-white mb-0">{{ total_views }}</h4>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-md-3">
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 d-flex align-items-center gap-3">
+            <div class="bg-green-100 text-green-700 dark:bg-green-950/20 dark:text-green-400 rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                <i class="bi bi-people-fill fs-4"></i>
+            </div>
+            <div>
+                <span class="text-xxs text-gray-400 uppercase tracking-wider font-semibold">Unique Visitors</span>
+                <h4 class="fw-extrabold text-gray-900 dark:text-white mb-0">{{ total_uniques }}</h4>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-md-3">
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 d-flex align-items-center gap-3">
+            <div class="bg-yellow-100 text-yellow-700 dark:bg-yellow-950/20 dark:text-yellow-400 rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                <i class="bi bi-arrow-repeat fs-4"></i>
+            </div>
+            <div>
+                <span class="text-xxs text-gray-400 uppercase tracking-wider font-semibold">Returning Sessions</span>
+                <h4 class="fw-extrabold text-gray-900 dark:text-white mb-0">{{ total_returning }}</h4>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-md-3">
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 d-flex align-items-center gap-3">
+            <div class="bg-purple-100 text-purple-700 dark:bg-purple-950/20 dark:text-purple-400 rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                <i class="bi bi-graph-up-arrow fs-4"></i>
+            </div>
+            <div>
+                <span class="text-xxs text-gray-400 uppercase tracking-wider font-semibold">Active Portfolios</span>
+                <h4 class="fw-extrabold text-gray-900 dark:text-white mb-0">{{ portfolios.count }}</h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ── CHART VIEWS HISTORY ── #}
+<div class="row g-4 mb-4">
+    <div class="col-12 col-xl-8">
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 h-100">
+            <h5 class="fw-bold text-gray-900 dark:text-white mb-3">Portfolio Views Over Time (Last 30 Days)</h5>
+            <div style="height: 300px; position: relative;">
+                <canvas id="viewsHistoryChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    {# Active Portfolios Grid list #}
+    <div class="col-12 col-xl-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 h-100 d-flex flex-column justify-content-between">
+            <div>
+                <h5 class="fw-bold text-gray-900 dark:text-white mb-3">Your Portfolios Health</h5>
+                <div class="d-flex flex-column gap-3.5">
+                    {% for item in portfolio_stats %}
+                    <div class="border-b border-gray-100 dark:border-gray-700 pb-2">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-bold text-xs text-gray-800 dark:text-white">{{ item.portfolio.name }}</span>
+                            <span class="badge bg-blue-50 text-blue-700 rounded-pill text-xxs">{{ item.metric.total_visits }} views</span>
+                        </div>
+                        <div class="d-flex gap-3 text-xxs text-gray-400">
+                            <span>SEO Score: <strong class="{% if item.metric.seo_score >= 80 %}text-green-500{% else %}text-yellow-500{% endif %}">{{ item.metric.seo_score }}</strong></span>
+                            <span>Performance Score: <strong class="{% if item.metric.performance_score >= 80 %}text-green-500{% else %}text-yellow-500{% endif %}">{{ item.metric.performance_score }}</strong></span>
+                        </div>
+                        <div class="d-flex gap-1.5 mt-2">
+                            <a href="{% url 'analytics:seo_config' item.portfolio.pk %}" class="btn btn-xxs btn-outline-primary rounded-pill px-2.5">
+                                <i class="bi bi-search me-1"></i>SEO Config
+                            </a>
+                            <a href="{% url 'analytics:performance_config' item.portfolio.pk %}" class="btn btn-xxs btn-outline-warning rounded-pill px-2.5">
+                                <i class="bi bi-speedometer2 me-1"></i>Speed
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ── DEVICE / BROWSER BREAKDOWN splits ── #}
+<div class="row g-4 mb-4">
+    <div class="col-12 col-md-6 col-lg-3">
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 h-100">
+            <h5 class="fw-bold text-gray-900 dark:text-white mb-3.5">Device Distribution</h5>
+            <div style="height: 180px; position: relative;">
+                <canvas id="deviceBreakdownChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-md-6 col-lg-3">
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 h-100">
+            <h5 class="fw-bold text-gray-900 dark:text-white mb-3.5">Browser Distribution</h5>
+            <div style="height: 180px; position: relative;">
+                <canvas id="browserBreakdownChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    {# Top Referrers and Countries lists #}
+    <div class="col-12 col-md-6 col-lg-3">
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 h-100">
+            <h5 class="fw-bold text-gray-900 dark:text-white mb-3">Top Traffic Referrers</h5>
+            {% if referrer_stats %}
+            <div class="d-flex flex-column gap-2.5">
+                {% for ref in referrer_stats %}
+                <div class="d-flex align-items-center justify-content-between text-xs">
+                    <span class="fw-semibold text-gray-600 dark:text-gray-400 font-mono">{{ ref.referrer }}</span>
+                    <span class="fw-bold text-gray-800 dark:text-white">{{ ref.count }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-4 text-gray-300 small">No referrer stats available.</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-12 col-md-6 col-lg-3">
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 h-100">
+            <h5 class="fw-bold text-gray-900 dark:text-white mb-3">Top Visitor Geography</h5>
+            {% if country_stats %}
+            <div class="d-flex flex-column gap-2.5">
+                {% for c in country_stats %}
+                <div class="d-flex align-items-center justify-content-between text-xs">
+                    <span class="fw-semibold text-gray-600 dark:text-gray-400"><i class="bi bi-geo-alt-fill text-danger me-1"></i>{{ c.country }}</span>
+                    <span class="fw-bold text-gray-800 dark:text-white">{{ c.count }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-4 text-gray-300 small">No countries stats available.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{# ── MOST VIEWED PAGES & RECENT ACTIVITY ── #}
+<div class="row g-4 mb-4">
+    <div class="col-12 col-lg-6">
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 h-100">
+            <h5 class="fw-bold text-gray-900 dark:text-white mb-3">Most Visited Pages / Sections</h5>
+            {% if page_stats %}
+            <div class="table-responsive">
+                <table class="table table-sm text-xs">
+                    <thead>
+                        <tr>
+                            <th>Page Path/Section</th>
+                            <th>Portfolio</th>
+                            <th class="text-end">Visits Count</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in page_stats %}
+                        <tr>
+                            <td class="font-mono text-blue-500">?page={{ item.path }}</td>
+                            <td>{{ item.portfolio__name }}</td>
+                            <td class="text-end fw-bold">{{ item.count }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5 text-gray-300 small">No visited section logs logged.</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 h-100">
+            <h5 class="fw-bold text-gray-900 dark:text-white mb-3">Recent Visitor Activities</h5>
+            {% if recent_visits %}
+            <div class="table-responsive">
+                <table class="table table-sm text-xs">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Browser/Device</th>
+                            <th>Referrer</th>
+                            <th>Country</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for visit in recent_visits %}
+                        <tr>
+                            <td class="text-gray-500">{{ visit.timestamp|date:"M d, H:i" }}</td>
+                            <td>{{ visit.browser }} / {{ visit.device_type }}</td>
+                            <td class="font-mono text-xxs">{{ visit.referrer }}</td>
+                            <td>{{ visit.country }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5 text-gray-300 small">No visits tracked yet. Build and publish a portfolio!</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{# ── ADMIN LEVEL GLOBAL ANALYTICS (GATED) ── #}
+{% if is_admin_user %}
+<div class="row g-4 mt-2">
+    <div class="col-12">
+        <hr class="border-gray-200 dark:border-gray-700 mb-4">
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <i class="bi bi-shield-lock-fill text-purple-600 fs-4"></i>
+            <h4 class="fw-bold text-gray-900 dark:text-white mb-0">System SaaS Metrics Overview (Admin Gated)</h4>
+        </div>
+    </div>
+
+    <div class="col-12 col-md-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+            <h5 class="fw-bold text-gray-900 dark:text-white mb-3">Global System Activity</h5>
+            <div class="d-flex flex-column gap-3 text-xs">
+                <div class="d-flex justify-content-between">
+                    <span class="text-gray-500">Cumulative Page Views</span>
+                    <strong class="text-gray-900 dark:text-white">{{ admin_total_views }}</strong>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="text-gray-500">Published Portfolios</span>
+                    <strong class="text-gray-900 dark:text-white">{{ admin_published_portfolios }}</strong>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="text-gray-500">GitHub Publish Deployments</span>
+                    <strong class="text-gray-900 dark:text-white">{{ admin_total_deployments }}</strong>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="text-gray-500">Total AI Resume Imports</span>
+                    <strong class="text-gray-900 dark:text-white">{{ admin_ai_uploads }}</strong>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="text-gray-500">Premium Active Subscribers</span>
+                    <strong class="text-gray-900 dark:text-white">{{ admin_premium_subs }}</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-md-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+            <h5 class="fw-bold text-gray-900 dark:text-white mb-3">Subscription Split</h5>
+            <div class="d-flex flex-column gap-2 text-xs">
+                {% for sub in admin_subscription_distribution %}
+                <div class="d-flex justify-content-between">
+                    <span class="text-gray-500">{{ sub.plan__name }}</span>
+                    <strong class="text-gray-900 dark:text-white">{{ sub.count }} active</strong>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-md-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+            <h5 class="fw-bold text-gray-900 dark:text-white mb-3">Top Downloaded Themes</h5>
+            <div class="d-flex flex-column gap-2 text-xs">
+                {% for theme in admin_popular_themes %}
+                <div class="d-flex justify-content-between">
+                    <span class="text-gray-500">{{ theme.name }}</span>
+                    <strong class="text-gray-900 dark:text-white">{{ theme.downloads }} uses</strong>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // 1. Views History Line Chart
+    const ctxHistory = document.getElementById('viewsHistoryChart').getContext('2d');
+    new Chart(ctxHistory, {
+        type: 'line',
+        data: {
+            labels: {{ chart_labels|safe }},
+            datasets: [{
+                label: 'Views',
+                data: {{ chart_data|safe }},
+                borderColor: '#0d6efd',
+                backgroundColor: 'rgba(13, 110, 253, 0.05)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { precision: 0 }
+                }
+            }
+        }
+    });
+
+    // 2. Device Breakdown Doughnut Chart
+    const ctxDevice = document.getElementById('deviceBreakdownChart').getContext('2d');
+    new Chart(ctxDevice, {
+        type: 'doughnut',
+        data: {
+            labels: {{ device_labels|safe }},
+            datasets: [{
+                data: {{ device_data|safe }},
+                backgroundColor: ['#0d6efd', '#20c997', '#ffc107', '#adb5bd']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } }
+            }
+        }
+    });
+
+    // 3. Browser Breakdown Doughnut Chart
+    const ctxBrowser = document.getElementById('browserBreakdownChart').getContext('2d');
+    new Chart(ctxBrowser, {
+        type: 'doughnut',
+        data: {
+            labels: {{ browser_labels|safe }},
+            datasets: [{
+                data: {{ browser_data|safe }},
+                backgroundColor: ['#6f42c1', '#fd7e14', '#e83e8c', '#17a2b8', '#6c757d']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
