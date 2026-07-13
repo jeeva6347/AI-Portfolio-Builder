@@ -1,21 +1,21 @@
 # Development Report
 
 ## Completion Percentage
-**~18%** (Modules 1, 2, 5, and 6 out of ~22 completed).
+**~22%** (Modules 1, 2, 5, 6, and 7 out of ~22 completed).
 
 ## Completed Modules
 1. **Module 1: Authentication** (Custom User model, Email/Social Auth, Sessions)
 2. **Module 2: Dashboard System** (Super Admin, Admin, User Dashboards, Dark/Light theme, Chart.js)
 3. **Module 5: Theme Engine** (Upload, Validation, Extraction, Marketplace, Preview, Admin)
 4. **Module 6: Theme Mapper** (Visual HTML Element Mapping Workspace, CSS Selector suggestions, Duplication, Versioning, XSS filtering, Viewport toggles)
+5. **Module 7: Portfolio Builder** (User Portfolio Models, Builder Configuration Panels, CRUD list sub-views, Theme Activation, Live Site Preview compilation, Dynamic lists replication)
 
 ## Pre-flight Issues Fixed
 - **Missing migration:** `accounts/migrations/0002_user_theme_preference.py` created. Adds `theme_preference` field additively.
 - **Root URL 404:** `/` now redirects to `/accounts/login/`.
 
 ## Remaining Modules
-7. Portfolio Builder (User portfolio database schema, entry forms, dynamic sections)
-8. Live Preview (with user data)
+8. Live Preview (Subdomain/custom slug serving, public assets resolution)
 9. Portfolio Export
 10. Resume Import
 11. AI Content Generator
@@ -29,48 +29,47 @@
 19. Settings
 20. Production Deployment
 
-## Created Files — Module 6
-- `themes/fields.py` (Centralized 50+ portfolio fields, mock data, and group mappings)
-- `themes/scanner.py` (HTML Parser for tag discovery, suggestion scoring, and regex placeholders)
-- `themes/migrations/0003_thememapping.py` (ThemeMapping and ThemeMappingField database tables)
-- `templates/themes/admin/mapping_list.html` (Mapping profiles dashboard list, actions modal)
-- `templates/themes/admin/mapper.html` (Interactive visual mapper template workspace)
-- `templates/themes/admin/mapper_preview.html` (Dynamic rendering template with viewport resizing)
-- `static/js/theme_mapper.js` (Iframe same-origin selector builder, click handler, highlight overlays, JSON API saver)
+## Created Files — Module 7
+- `portfolio/models.py` (Portfolio, PortfolioSkill, PortfolioProject, PortfolioExperience, PortfolioEducation, PortfolioCertificate, PortfolioService, PortfolioTestimonial models)
+- `portfolio/migrations/0001_initial.py` (initial portfolio schema setup)
+- `portfolio/migrations/0002_alter_portfolioeducation_order_and_more.py` (added blank=True to order fields)
+- `portfolio/forms.py` (ModelForm classes for portfolio base, skills, projects, experience, education, certificates, services, testimonials)
+- `portfolio/urls.py` (16 routes for builder workspace, CRUD operations, theme activation, and preview)
+- `templates/portfolio/builder.html` (multi-tab sidebar configuration wizard)
+- `templates/portfolio/select_theme.html` (active theme activation selector panel)
 
-## Modified Files — Module 6
-- `themes/models.py` (ThemeMapping and ThemeMappingField models appended)
-- `themes/admin.py` (ThemeMappingAdmin and ThemeMappingFieldAdmin classes registered)
-- `themes/services.py` (added `apply_theme_mapping` and `sanitize_html_string` compilers)
-- `themes/forms.py` (added `ThemeMappingForm` metadata editor)
-- `themes/views.py` (added 9 mapping list, edit, preview, duplicate, toggle, delete views and API endpoints)
-- `themes/urls.py` (added 10 mapper paths)
-- `themes/tests.py` (fully populated with 6 test cases checking scanner, compiler, duplicate actions, and security mixins)
-- `templates/themes/admin/theme_detail.html` (added Mappings link)
-- `static/css/themes.css` (appended mapper utilities)
+## Modified Files — Module 7
+- `portfolio/admin.py` (registered all models with custom inline tabular forms)
+- `portfolio/views.py` (added PortfolioBuilderView, SelectThemeView, UserPortfolioPreview compiler, and 14 create/delete CRUD views)
+- `portfolio/tests.py` (full test suite containing 4 test cases testing CRUD, preview compilation, and base tag injection)
+- `themes/services.py` (extended `apply_theme_mapping` to support repeated list compiling and base-href tag injection)
+- `aiportfoliobuilder/urls.py` (wired portfolio.urls namespace)
+- `dashboard/navigation.py` (activated Portfolio link in sidebar)
+- `dashboard/views.py` (UserDashboardView now queries database statistics for has_portfolio, theme name, and GitHub projects count)
+- `templates/dashboard/user.html` (welcome panel displays real dashboard numbers and builder buttons)
 - `CHANGELOG.md`, `TODO.md`, `PROJECT_STATUS.md`
 
-## Database Changes — Module 6
-- New tables: `themes_thememapping`, `themes_thememappingfield` (linked to `themes_theme` and `auth_user`)
-- Enforced constraint: At most one active mapping profile per theme (unique database constraint)
+## Database Changes — Module 7
+- New tables: `portfolio_portfolio`, `portfolio_portfolioskill`, `portfolio_portfolioproject`, `portfolio_portfolioexperience`, `portfolio_portfolioeducation`, `portfolio_portfoliocertificate`, `portfolio_portfolioservice`, `portfolio_portfoliotestimonial` (linked to `auth_user` and `themes_theme`)
 
 ## Validation Note
-- Local dependencies (`python-decouple`, `django-allauth`, `PyJWT`) successfully installed under Python 3.14.
-- All 6 unit tests successfully ran and passed via `py manage.py test themes` without warnings or runtime issues.
+- Local dependencies successfully installed and verified under Python 3.14.
+- All 10 unit tests successfully passed via `py manage.py test` checks.
 - All migration chains verify to `OK`.
 
 ## Commands Required Before Running
 ```bash
-pip install -r requirements.txt  # Installs python-decouple, mysqlclient, django-allauth
-python manage.py migrate          # Applies all migrations including 0003_thememapping
-python manage.py test themes      # Runs test suite to verify project health
+pip install -r requirements.txt  # Installs python-decouple, mysqlclient, django-allauth, PyJWT
+python manage.py migrate          # Applies all migrations including portfolio tables
+python manage.py test             # Runs all 10 test cases to verify project health
 python manage.py runserver
 ```
 
 ## Known Limitations
-- Rich visual loops/list duplication mapping (e.g. duplicating experience items) is compiled element-wise. Complex child templates are fully supported via raw HTML injection or placeholder keys.
-- Sandbox constraints are enforced on the preview iframe to protect against accidental clickjacking or page hijack scripts.
+- Rich media project uploads are served relative to settings.MEDIA_URL.
+- Contact form actions default to a mock value `#`, but can be mapped to external mail targets like Formspree.
 
 ## Next Module
-**Module 7: Portfolio Builder** — Implement the database schemas, user forms, and section mapping integration to save user portfolio content.
+**Module 8: Live Preview** — Implement dynamic serving of compiled user portfolio under user subdomains or custom slugs, and resolve theme static assets.
+
 

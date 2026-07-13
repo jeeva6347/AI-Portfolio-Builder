@@ -1,6 +1,19 @@
 # Changelog
 
-## [Unreleased] - Module 6: Theme Mapper
+## [Unreleased] - Module 7: Portfolio Builder
+### Added
+- Portfolio database models (`Portfolio`, `PortfolioSkill`, `PortfolioProject`, `PortfolioExperience`, `PortfolioEducation`, `PortfolioCertificate`, `PortfolioService`, `PortfolioTestimonial`) with migrations `0001` and `0002`.
+- Integrated tabular inline sections inside Django Admin for easy model management.
+- Multi-tab configuration dashboard panel (`templates/portfolio/builder.html`) allowing users to edit personal, contact, socials, and footer details.
+- Clean CRUD POST sub-views for related lists (skills, experiences, education, projects, certificates, services, testimonials) supporting inline additions and deletes.
+- Dynamic list replication support inside `apply_theme_mapping` to clone template items and inject dynamic portfolio values into templates (like projects.list, experience.list).
+- Auto base-href tag injection resolving relative paths for CSS, JS, and images automatically during theme compilation previews.
+- Theme Selection Dashboard View (`templates/portfolio/select_theme.html`) allowing users to browse and activate templates.
+- Interactive user portfolio preview viewport with viewport switching controls.
+- Comprehensive Unit Test Suite (`portfolio/tests.py`) covering all Module 7 features.
+- Dynamic portfolio statistics wired into the User Dashboard welcome panel.
+
+## [Completed] - Module 6: Theme Mapper
 ### Added
 - Visual mapping interface (`templates/themes/admin/mapper.html`) allowing admins to visually map elements in theme templates.
 - Dotted portfolio mapping keys registry (`themes/fields.py`) containing 50+ normalized fields (Personal Info, Skills, Projects, Experience, Education, Socials, Footer, Contact, etc.).

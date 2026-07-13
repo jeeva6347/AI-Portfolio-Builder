@@ -65,10 +65,15 @@ class UserDashboardView(LoginRequiredMixin, DashboardBaseView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['my_portfolios'] = 0
-        context['drafts'] = 0
-        context['published'] = 0
-        context['github_projects'] = 0
+        from portfolio.models import Portfolio
+        portfolio = Portfolio.objects.filter(user=self.request.user).first()
+        
+        context['my_portfolios'] = 1 if portfolio else 0
+        context['selected_theme_name'] = portfolio.selected_theme.name if portfolio and portfolio.selected_theme else "None"
+        
+        context['drafts'] = 1 if (portfolio and not portfolio.selected_theme) else 0
+        context['published'] = 1 if (portfolio and portfolio.selected_theme) else 0
+        context['github_projects'] = portfolio.projects.exclude(github_url="").count() if portfolio else 0
         
         context['breadcrumbs'] = [{'title': 'My Dashboard', 'url': '#'}]
         return context

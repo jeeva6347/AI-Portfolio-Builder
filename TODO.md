@@ -48,10 +48,18 @@
 - [x] Preview tool with viewport controls (Desktop, Tablet, Mobile)
 - [x] Core scanner and compiler unit tests (6 passing test cases)
 
-## Next: Module 7 — Portfolio Builder
-- [ ] User Portfolio database schema (Portfolio, Section, Field models)
-- [ ] Portfolio form builder to enter profile details, skills, experiences, projects
-- [ ] Linking active theme mapping profile to user portfolio data
+## Module 7 — Portfolio Builder (COMPLETE)
+- [x] User Portfolio database schemas (Portfolio, Skill, Project, Experience, Education models)
+- [x] Multi-tab configuration dashboard panel for personal details, contact, socials, and footers
+- [x] CRUD views for inline sub-items (skills, projects, experiences, educations, certificates, services, testimonials)
+- [x] Theme Selection activation and de-activation view
+- [x] Dynamic template compiler list replication support and base-href tag injection
+- [x] Comprehensive tests (4 passing test cases covering preview compilation, permissions and CRUD)
+
+## Next: Module 8 — Live Preview
+- [ ] Implement routing and serving of compiled portfolio HTML under user subdomain or custom slug
+- [ ] Connect public CSS, JS, and image assets resolution pipeline
+- [ ] Verify accessibility, responsive rendering, and custom fonts load on compile
 
 
 ## Explicitly excluded from this phase (per brief)

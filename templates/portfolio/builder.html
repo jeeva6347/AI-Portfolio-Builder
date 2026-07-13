@@ -1,0 +1,558 @@
+{% extends "dashboard/layouts/base.html" %}
+{% load static %}
+
+{% block title %}Portfolio Builder | AI Portfolio Builder{% endblock %}
+
+{% block extra_css %}
+<style>
+    .builder-container {
+        min-height: 600px;
+    }
+    .viewport-btn.active {
+        background-color: #3b82f6;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    {% include "dashboard/components/breadcrumb.html" %}
+    <div class="d-flex align-items-center gap-2">
+        {% if portfolio.selected_theme %}
+        <span class="badge bg-green-500 text-white rounded-pill px-3 py-1.5 fs-7 d-flex align-items-center gap-1.5">
+            <i class="bi bi-check-circle-fill"></i> Active Theme: {{ portfolio.selected_theme.name }}
+        </span>
+        <a href="{% url 'portfolio:preview' %}" target="_blank" class="btn btn-outline-info rounded-pill px-3 py-1 text-sm">
+            <i class="bi bi-box-arrow-up-right"></i> Open Site
+        </a>
+        {% else %}
+        <span class="badge bg-yellow-500 text-white rounded-pill px-3 py-1.5 fs-7 d-flex align-items-center gap-1.5">
+            <i class="bi bi-exclamation-triangle-fill"></i> No Active Theme
+        </span>
+        <a href="{% url 'portfolio:select_theme' %}" class="btn btn-primary rounded-pill px-4 py-1 text-sm shadow-sm">
+            <i class="bi bi-palette-fill"></i> Choose Theme
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row g-4 builder-container">
+    {# Left Tab Navigation Sidebar #}
+    <div class="col-12 col-md-3">
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden p-3 d-flex flex-column gap-1.5">
+            <a href="?tab=personal" class="btn text-start rounded-lg px-3 py-2.5 d-flex align-items-center gap-2.5 {% if active_tab == 'personal' %}btn-primary text-white{% else %}btn-link text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50{% endif %}">
+                <i class="bi bi-person-fill"></i> Personal Info
+            </a>
+            <a href="?tab=skills" class="btn text-start rounded-lg px-3 py-2.5 d-flex align-items-center gap-2.5 {% if active_tab == 'skills' %}btn-primary text-white{% else %}btn-link text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50{% endif %}">
+                <i class="bi bi-tools"></i> Skills
+            </a>
+            <a href="?tab=experience" class="btn text-start rounded-lg px-3 py-2.5 d-flex align-items-center gap-2.5 {% if active_tab == 'experience' %}btn-primary text-white{% else %}btn-link text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50{% endif %}">
+                <i class="bi bi-briefcase-fill"></i> Experience
+            </a>
+            <a href="?tab=education" class="btn text-start rounded-lg px-3 py-2.5 d-flex align-items-center gap-2.5 {% if active_tab == 'education' %}btn-primary text-white{% else %}btn-link text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50{% endif %}">
+                <i class="bi bi-mortarboard-fill"></i> Education
+            </a>
+            <a href="?tab=projects" class="btn text-start rounded-lg px-3 py-2.5 d-flex align-items-center gap-2.5 {% if active_tab == 'projects' %}btn-primary text-white{% else %}btn-link text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50{% endif %}">
+                <i class="bi bi-folder-fill"></i> Projects
+            </a>
+            <a href="?tab=services" class="btn text-start rounded-lg px-3 py-2.5 d-flex align-items-center gap-2.5 {% if active_tab == 'services' %}btn-primary text-white{% else %}btn-link text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50{% endif %}">
+                <i class="bi bi-star-fill"></i> Services & Reviews
+            </a>
+            <a href="?tab=socials" class="btn text-start rounded-lg px-3 py-2.5 d-flex align-items-center gap-2.5 {% if active_tab == 'socials' %}btn-primary text-white{% else %}btn-link text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50{% endif %}">
+                <i class="bi bi-share-fill"></i> Social Links
+            </a>
+            <a href="?tab=preview" class="btn text-start rounded-lg px-3 py-2.5 d-flex align-items-center gap-2.5 {% if active_tab == 'preview' %}btn-primary text-white{% else %}btn-link text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50{% endif %}">
+                <i class="bi bi-eye-fill"></i> Live Preview
+            </a>
+        </div>
+    </div>
+
+    {# Right Tab Content Body #}
+    <div class="col-12 col-md-9">
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+            
+            {# ── TAB: PERSONAL INFO ── #}
+            {% if active_tab == 'personal' %}
+            <form method="post" enctype="multipart/form-data" class="d-flex flex-column gap-3">
+                {% csrf_token %}
+                <input type="hidden" name="tab" value="personal">
+                <h5 class="fw-bold text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-700 pb-2 mb-3">
+                    <i class="bi bi-person-fill text-blue-500 me-2"></i>Personal details
+                </h5>
+                <div class="row g-3">
+                    <div class="col-12 col-sm-6">
+                        <label class="form-label text-gray-700 dark:text-gray-300 fw-semibold text-sm">Full Name</label>
+                        {{ form.name }}
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <label class="form-label text-gray-700 dark:text-gray-300 fw-semibold text-sm">Professional Title</label>
+                        {{ form.title }}
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label text-gray-700 dark:text-gray-300 fw-semibold text-sm">One-Line Tagline</label>
+                        {{ form.tagline }}
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label text-gray-700 dark:text-gray-300 fw-semibold text-sm">Biography (About Me)</label>
+                        {{ form.about }}
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <label class="form-label text-gray-700 dark:text-gray-300 fw-semibold text-sm">Contact Email</label>
+                        {{ form.email }}
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <label class="form-label text-gray-700 dark:text-gray-300 fw-semibold text-sm">Phone Number</label>
+                        {{ form.phone }}
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label text-gray-700 dark:text-gray-300 fw-semibold text-sm">Address / Location</label>
+                        {{ form.address }}
+                    </div>
+                    
+                    {# Media Uploads #}
+                    <div class="col-12 col-sm-6">
+                        <label class="form-label text-gray-700 dark:text-gray-300 fw-semibold text-sm">Profile Avatar Picture</label>
+                        {% if portfolio.photo %}
+                        <div class="mb-2"><img src="{{ portfolio.photo.url }}" class="rounded-circle border" style="width:60px;height:60px;object-fit:cover;"></div>
+                        {% endif %}
+                        <input type="file" name="photo" class="form-control form-control-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" accept="image/*">
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <label class="form-label text-gray-700 dark:text-gray-300 fw-semibold text-sm">Resume PDF File</label>
+                        {% if portfolio.resume %}
+                        <div class="mb-2 text-xs text-blue-500"><i class="bi bi-file-earmark-pdf-fill"></i> {{ portfolio.resume.name }}</div>
+                        {% endif %}
+                        <input type="file" name="resume" class="form-control form-control-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" accept=".pdf">
+                    </div>
+                </div>
+                <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                    <button type="submit" class="btn btn-primary rounded-pill px-4">Save Personal Details</button>
+                </div>
+            </form>
+
+            {# ── TAB: SKILLS ── #}
+            {% elif active_tab == 'skills' %}
+            <h5 class="fw-bold text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-700 pb-2 mb-3">
+                <i class="bi bi-tools text-blue-500 me-2"></i>Manage Skills
+            </h5>
+            
+            {# Skills listing #}
+            <div class="d-flex flex-wrap gap-2 mb-4">
+                {% for skill in skills %}
+                <span class="badge bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 pl-3 pr-2 py-2 rounded-pill d-flex align-items-center gap-2">
+                    {{ skill.name }} 
+                    <span class="text-xs text-gray-400 font-normal">({{ skill.get_skill_type_display }})</span>
+                    <form method="post" action="{% url 'portfolio:skill_delete' skill.pk %}" class="m-0 d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-link text-danger p-0 border-0" style="line-height:0;" onclick="return confirm('Remove skill?');">
+                            <i class="bi bi-x-circle-fill"></i>
+                        </button>
+                    </form>
+                </span>
+                {% empty %}
+                <p class="text-gray-400 py-3 text-sm">No skills added yet.</p>
+                {% endfor %}
+            </div>
+
+            {# Add skill form #}
+            <div class="p-4 bg-gray-50 dark:bg-gray-700/20 rounded-xl border border-gray-100 dark:border-gray-700">
+                <h6 class="fw-bold text-gray-900 dark:text-white mb-3">Add New Skill</h6>
+                <form method="post" action="{% url 'portfolio:skill_create' %}" class="row g-3 align-items-end">
+                    {% csrf_token %}
+                    <div class="col-12 col-sm-4">
+                        <label class="form-label text-xs fw-semibold text-gray-500 uppercase mb-1">Skill Category</label>
+                        {{ skill_form.skill_type }}
+                    </div>
+                    <div class="col-12 col-sm-5">
+                        <label class="form-label text-xs fw-semibold text-gray-500 uppercase mb-1">Skill Name</label>
+                        {{ skill_form.name }}
+                    </div>
+                    <div class="col-12 col-sm-3">
+                        <button type="submit" class="btn btn-primary btn-sm rounded-pill w-100 py-2">Add Skill</button>
+                    </div>
+                </form>
+            </div>
+
+            {# ── TAB: EXPERIENCE ── #}
+            {% elif active_tab == 'experience' %}
+            <h5 class="fw-bold text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-700 pb-2 mb-3">
+                <i class="bi bi-briefcase-fill text-blue-500 me-2"></i>Work Experience
+            </h5>
+
+            {# List existing #}
+            <div class="d-flex flex-column gap-3 mb-4">
+                {% for exp in experiences %}
+                <div class="p-3 border border-gray-100 dark:border-gray-700 rounded-xl d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="fw-bold text-gray-900 dark:text-white mb-0">{{ exp.position }}</h6>
+                        <p class="text-sm text-gray-500 mb-1">{{ exp.company }} · <span class="text-xs font-mono text-gray-400">{{ exp.duration }}</span></p>
+                        <p class="text-xs text-gray-400 mb-0">{{ exp.description|truncatechars:120 }}</p>
+                    </div>
+                    <form method="post" action="{% url 'portfolio:experience_delete' exp.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-circle p-1" onclick="return confirm('Remove experience?');">
+                            <i class="bi bi-trash-fill text-sm"></i>
+                        </button>
+                    </form>
+                </div>
+                {% empty %}
+                <p class="text-gray-400 py-3 text-sm">No work experience added yet.</p>
+                {% endfor %}
+            </div>
+
+            {# Add experience form #}
+            <div class="p-4 bg-gray-50 dark:bg-gray-700/20 rounded-xl border border-gray-100 dark:border-gray-700">
+                <h6 class="fw-bold text-gray-900 dark:text-white mb-3">Add Experience Entry</h6>
+                <form method="post" action="{% url 'portfolio:experience_create' %}" class="d-flex flex-column gap-3">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-12 col-sm-6">
+                            <label class="form-label text-xs fw-semibold text-gray-500 uppercase mb-1">Company Name</label>
+                            {{ experience_form.company }}
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <label class="form-label text-xs fw-semibold text-gray-500 uppercase mb-1">Job Title</label>
+                            {{ experience_form.position }}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label text-xs fw-semibold text-gray-500 uppercase mb-1">Duration (Dates)</label>
+                            {{ experience_form.duration }}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label text-xs fw-semibold text-gray-500 uppercase mb-1">Job Description</label>
+                            {{ experience_form.description }}
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm rounded-pill px-4 align-self-start">Add Experience</button>
+                </form>
+            </div>
+
+            {# ── TAB: EDUCATION ── #}
+            {% elif active_tab == 'education' %}
+            <h5 class="fw-bold text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-700 pb-2 mb-3">
+                <i class="bi bi-mortarboard-fill text-blue-500 me-2"></i>Education
+            </h5>
+
+            {# List #}
+            <div class="d-flex flex-column gap-3 mb-4">
+                {% for edu in educations %}
+                <div class="p-3 border border-gray-100 dark:border-gray-700 rounded-xl d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="fw-bold text-gray-900 dark:text-white mb-0">{{ edu.degree }}</h6>
+                        <p class="text-sm text-gray-500 mb-0">{{ edu.college }} {% if edu.university %}· {{ edu.university }}{% endif %}</p>
+                        <p class="text-xxs text-gray-400 font-mono mb-0">Graduation Year: {{ edu.year }}</p>
+                    </div>
+                    <form method="post" action="{% url 'portfolio:education_delete' edu.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-circle p-1" onclick="return confirm('Remove education?');">
+                            <i class="bi bi-trash-fill text-sm"></i>
+                        </button>
+                    </form>
+                </div>
+                {% empty %}
+                <p class="text-gray-400 py-3 text-sm">No education history added yet.</p>
+                {% endfor %}
+            </div>
+
+            {# Add education form #}
+            <div class="p-4 bg-gray-50 dark:bg-gray-700/20 rounded-xl border border-gray-100 dark:border-gray-700">
+                <h6 class="fw-bold text-gray-900 dark:text-white mb-3">Add Education Entry</h6>
+                <form method="post" action="{% url 'portfolio:education_create' %}" class="d-flex flex-column gap-3">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-12 col-sm-6">
+                            <label class="form-label text-xs fw-semibold text-gray-500 uppercase mb-1">Degree / Course</label>
+                            {{ education_form.degree }}
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <label class="form-label text-xs fw-semibold text-gray-500 uppercase mb-1">School / College</label>
+                            {{ education_form.college }}
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <label class="form-label text-xs fw-semibold text-gray-500 uppercase mb-1">University (Optional)</label>
+                            {{ education_form.university }}
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <label class="form-label text-xs fw-semibold text-gray-500 uppercase mb-1">Graduation Year</label>
+                            {{ education_form.year }}
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm rounded-pill px-4 align-self-start">Add Education</button>
+                </form>
+            </div>
+
+            {# ── TAB: PROJECTS ── #}
+            {% elif active_tab == 'projects' %}
+            <h5 class="fw-bold text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-700 pb-2 mb-3">
+                <i class="bi bi-folder-fill text-blue-500 me-2"></i>Showcase Projects
+            </h5>
+
+            {# List #}
+            <div class="row g-3 mb-4">
+                {% for project in projects %}
+                <div class="col-12 col-sm-6">
+                    <div class="border border-gray-100 dark:border-gray-700 rounded-xl overflow-hidden d-flex flex-column h-100">
+                        {% if project.image %}
+                        <img src="{{ project.image.url }}" class="w-100" style="height:140px;object-fit:cover;">
+                        {% endif %}
+                        <div class="p-3 flex-grow-1 d-flex flex-column justify-content-between">
+                            <div>
+                                <h6 class="fw-bold text-gray-900 dark:text-white mb-1">{{ project.title }}</h6>
+                                <p class="text-xs text-gray-400 mb-2">{{ project.description|truncatechars:90 }}</p>
+                                <div class="d-flex flex-wrap gap-1 mb-2">
+                                    {% for tech in project.technologies.split %}
+                                    <span class="badge bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 text-xxs">{{ tech }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-between border-t border-gray-100 dark:border-gray-700 pt-2.5">
+                                <div class="d-inline-flex gap-2 text-xs">
+                                    {% if project.github_url %}<a href="{{ project.github_url }}" target="_blank"><i class="bi bi-github"></i> Code</a>{% endif %}
+                                    {% if project.live_url %}<a href="{{ project.live_url }}" target="_blank"><i class="bi bi-box-arrow-up-right"></i> Live</a>{% endif %}
+                                </div>
+                                <form method="post" action="{% url 'portfolio:project_delete' project.pk %}" class="m-0">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-circle p-1" onclick="return confirm('Remove project?');">
+                                        <i class="bi bi-trash-fill text-xs"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <p class="text-gray-400 py-3 text-sm">No projects added yet.</p>
+                </div>
+                {% endfor %}
+            </div>
+
+            {# Add project form #}
+            <div class="p-4 bg-gray-50 dark:bg-gray-700/20 rounded-xl border border-gray-100 dark:border-gray-700">
+                <h6 class="fw-bold text-gray-900 dark:text-white mb-3">Add New Project</h6>
+                <form method="post" action="{% url 'portfolio:project_create' %}" enctype="multipart/form-data" class="d-flex flex-column gap-3">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-12 col-sm-6">
+                            <label class="form-label text-xs fw-semibold text-gray-500 uppercase mb-1">Project Title</label>
+                            {{ project_form.title }}
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <label class="form-label text-xs fw-semibold text-gray-500 uppercase mb-1">Tech Stack (Space-separated)</label>
+                            {{ project_form.technologies }}
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <label class="form-label text-xs fw-semibold text-gray-500 uppercase mb-1">GitHub Repo link</label>
+                            {{ project_form.github_url }}
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <label class="form-label text-xs fw-semibold text-gray-500 uppercase mb-1">Live Demo link</label>
+                            {{ project_form.live_url }}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label text-xs fw-semibold text-gray-500 uppercase mb-1">Project Screenshot Image</label>
+                            <input type="file" name="image" class="form-control form-control-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" accept="image/*">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label text-xs fw-semibold text-gray-500 uppercase mb-1">Description</label>
+                            {{ project_form.description }}
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm rounded-pill px-4 align-self-start">Add Project</button>
+                </form>
+            </div>
+
+            {# ── TAB: SERVICES & REVIEWS ── #}
+            {% elif active_tab == 'services' %}
+            <h5 class="fw-bold text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-700 pb-2 mb-3">
+                <i class="bi bi-star-fill text-blue-500 me-2"></i>Services & Reviews
+            </h5>
+
+            {# Row containing both lists #}
+            <div class="row g-4 mb-4">
+                {# Services list #}
+                <div class="col-12 col-sm-6">
+                    <h6 class="fw-bold text-gray-900 dark:text-white mb-2">My Services</h6>
+                    <div class="d-flex flex-column gap-2 mb-3">
+                        {% for s in services %}
+                        <div class="p-2 border border-gray-100 dark:border-gray-700 rounded-lg d-flex align-items-center justify-content-between">
+                            <span class="text-sm font-semibold text-gray-800 dark:text-gray-200"><i class="bi {{ s.icon }} me-1.5 text-blue-500"></i>{{ s.title }}</span>
+                            <form method="post" action="{% url 'portfolio:service_delete' s.pk %}" class="m-0">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-link text-danger p-0 border-0" onclick="return confirm('Delete service?');">
+                                    <i class="bi bi-trash-fill text-xs"></i>
+                                </button>
+                            </form>
+                        </div>
+                        {% empty %}
+                        <p class="text-xs text-gray-400">No services added.</p>
+                        {% endfor %}
+                    </div>
+                    
+                    {# Add service form #}
+                    <div class="p-3 bg-gray-50 dark:bg-gray-700/20 rounded-lg border border-gray-100 dark:border-gray-700">
+                        <h6 class="text-xs fw-bold text-gray-700 dark:text-white uppercase mb-2">New Service</h6>
+                        <form method="post" action="{% url 'portfolio:service_create' %}" class="d-flex flex-column gap-2">
+                            {% csrf_token %}
+                            {{ service_form.title }}
+                            {{ service_form.icon }}
+                            {{ service_form.description }}
+                            <button type="submit" class="btn btn-xs btn-primary rounded-pill py-1.5">Add Service</button>
+                        </form>
+                    </div>
+                </div>
+
+                {# Testimonials list #}
+                <div class="col-12 col-sm-6">
+                    <h6 class="fw-bold text-gray-900 dark:text-white mb-2">Testimonials</h6>
+                    <div class="d-flex flex-column gap-2 mb-3">
+                        {% for t in testimonials %}
+                        <div class="p-2 border border-gray-100 dark:border-gray-700 rounded-lg d-flex align-items-center justify-content-between">
+                            <span class="text-sm font-semibold text-gray-800 dark:text-gray-200"><i class="bi bi-chat-quote-fill me-1.5 text-blue-500"></i>{{ t.reviewer_name }}</span>
+                            <form method="post" action="{% url 'portfolio:testimonial_delete' t.pk %}" class="m-0">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-link text-danger p-0 border-0" onclick="return confirm('Delete testimonial?');">
+                                    <i class="bi bi-trash-fill text-xs"></i>
+                                </button>
+                            </form>
+                        </div>
+                        {% empty %}
+                        <p class="text-xs text-gray-400">No testimonials added.</p>
+                        {% endfor %}
+                    </div>
+                    
+                    {# Add testimonial form #}
+                    <div class="p-3 bg-gray-50 dark:bg-gray-700/20 rounded-lg border border-gray-100 dark:border-gray-700">
+                        <h6 class="text-xs fw-bold text-gray-700 dark:text-white uppercase mb-2">New Testimonial</h6>
+                        <form method="post" action="{% url 'portfolio:testimonial_create' %}" class="d-flex flex-column gap-2">
+                            {% csrf_token %}
+                            {{ testimonial_form.reviewer_name }}
+                            {{ testimonial_form.reviewer_role }}
+                            {{ testimonial_form.text }}
+                            <button type="submit" class="btn btn-xs btn-primary rounded-pill py-1.5">Add Testimonial</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            {# ── TAB: SOCIAL LINKS ── #}
+            {% elif active_tab == 'socials' %}
+            <form method="post" class="d-flex flex-column gap-3">
+                {% csrf_token %}
+                <input type="hidden" name="tab" value="socials">
+                <h5 class="fw-bold text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-700 pb-2 mb-3">
+                    <i class="bi bi-share-fill text-blue-500 me-2"></i>Social Profiles
+                </h5>
+                <div class="row g-3">
+                    <div class="col-12 col-sm-6">
+                        <label class="form-label text-gray-700 dark:text-gray-300 fw-semibold text-sm"><i class="bi bi-github"></i> GitHub URL</label>
+                        {{ form.social_github }}
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <label class="form-label text-gray-700 dark:text-gray-300 fw-semibold text-sm"><i class="bi bi-linkedin"></i> LinkedIn URL</label>
+                        {{ form.social_linkedin }}
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <label class="form-label text-gray-700 dark:text-gray-300 fw-semibold text-sm"><i class="bi bi-twitter-x"></i> Twitter / X URL</label>
+                        {{ form.social_twitter }}
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <label class="form-label text-gray-700 dark:text-gray-300 fw-semibold text-sm"><i class="bi bi-instagram"></i> Instagram URL</label>
+                        {{ form.social_instagram }}
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <label class="form-label text-gray-700 dark:text-gray-300 fw-semibold text-sm"><i class="bi bi-youtube"></i> YouTube URL</label>
+                        {{ form.social_youtube }}
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <label class="form-label text-gray-700 dark:text-gray-300 fw-semibold text-sm"><i class="bi bi-facebook"></i> Facebook URL</label>
+                        {{ form.social_facebook }}
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label text-gray-700 dark:text-gray-300 fw-semibold text-sm"><i class="bi bi-globe"></i> Custom Website URL</label>
+                        {{ form.social_portfolio }}
+                    </div>
+                </div>
+                <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                    <button type="submit" class="btn btn-primary rounded-pill px-4">Save Social Links</button>
+                </div>
+            </form>
+
+            {# ── TAB: LIVE PREVIEW ── #}
+            {% elif active_tab == 'preview' %}
+            <div class="d-flex align-items-center justify-content-between border-b border-gray-100 dark:border-gray-700 pb-2 mb-3">
+                <h5 class="fw-bold text-gray-900 dark:text-white mb-0">
+                    <i class="bi bi-eye-fill text-blue-500 me-2"></i>Live Website Preview
+                </h5>
+                <div class="btn-group btn-group-sm rounded-pill overflow-hidden" role="group">
+                    <button class="btn btn-outline-secondary px-3 viewport-btn active" onclick="setViewport('100%')" id="btnDesktop"><i class="bi bi-display"></i></button>
+                    <button class="btn btn-outline-secondary px-3 viewport-btn" onclick="setViewport('768px')" id="btnTablet"><i class="bi bi-tablet"></i></button>
+                    <button class="btn btn-outline-secondary px-3 viewport-btn" onclick="setViewport('375px')" id="btnMobile"><i class="bi bi-phone"></i></button>
+                </div>
+            </div>
+
+            {# iframe viewport container #}
+            {% if portfolio.selected_theme %}
+            <div id="previewContainer" style="height: 600px; resize: vertical; overflow: hidden; background:#f8fafc;" class="rounded-lg border border-gray-200 dark:border-gray-700 p-1">
+                <iframe
+                    id="userPreviewFrame"
+                    src="{% url 'portfolio:preview' %}"
+                    style="width: 100%; height: 100%; border: none;"
+                    sandbox="allow-scripts allow-same-origin"
+                    title="User Portfolio Live Preview"
+                    loading="lazy"
+                ></iframe>
+            </div>
+            {% else %}
+            <div class="text-center py-5 text-gray-400">
+                <i class="bi bi-palette-fill text-4xl mb-2 d-block text-gray-300"></i>
+                <p class="mb-3">No theme activated for your portfolio website.</p>
+                <a href="{% url 'portfolio:select_theme' %}" class="btn btn-sm btn-primary rounded-pill px-4">Activate a Theme Layout</a>
+            </div>
+            {% endif %}
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function setViewport(width) {
+    const frame = document.getElementById('userPreviewFrame');
+    const container = document.getElementById('previewContainer');
+    if (!frame) return;
+
+    // Reset buttons active state
+    ['btnDesktop','btnTablet','btnMobile'].forEach(id => {
+        document.getElementById(id)?.classList.remove('active', 'btn-primary', 'text-white');
+        document.getElementById(id)?.classList.add('btn-outline-secondary');
+    });
+
+    if (width === '100%') {
+        frame.style.width = '100%';
+        frame.style.transform = '';
+        frame.style.transformOrigin = '';
+        document.getElementById('btnDesktop')?.classList.replace('btn-outline-secondary', 'btn-primary');
+        document.getElementById('btnDesktop')?.classList.add('active');
+    } else {
+        const containerWidth = container.offsetWidth;
+        const targetWidth = parseInt(width);
+        const scale = Math.min(1, containerWidth / targetWidth);
+        frame.style.width = width;
+        frame.style.transform = `scale(${scale})`;
+        frame.style.transformOrigin = 'top left';
+        if (width === '768px') {
+            document.getElementById('btnTablet')?.classList.replace('btn-outline-secondary', 'btn-primary');
+            document.getElementById('btnTablet')?.classList.add('active');
+        }
+        if (width === '375px') {
+            document.getElementById('btnMobile')?.classList.replace('btn-outline-secondary', 'btn-primary');
+            document.getElementById('btnMobile')?.classList.add('active');
+        }
+    }
+}
+</script>
+{% endblock %}

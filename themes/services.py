@@ -340,58 +340,134 @@ def sanitize_html_string(html_str: str) -> str:
     return str(soup)
 
 
+def _inject_value(element, field, val):
+    from bs4 import BeautifulSoup
+    if field.attribute == "text":
+        element.string = str(val)
+    elif field.attribute == "html":
+        sanitized = sanitize_html_string(str(val))
+        element.clear()
+        val_soup = BeautifulSoup(sanitized, "html.parser")
+        element.append(val_soup)
+    elif field.attribute == "src":
+        element["src"] = str(val)
+    elif field.attribute == "href":
+        element["href"] = str(val)
+    elif field.attribute == "alt":
+        element["alt"] = str(val)
+    elif field.attribute == "placeholder":
+        element["placeholder"] = str(val)
+    elif field.attribute == "custom" and field.custom_attribute:
+        element[field.custom_attribute] = str(val)
+
+
 def apply_theme_mapping(html_content: str, mapping, portfolio_data: dict) -> str:
     """
     Inject portfolio_data into html_content based on mapping configuration.
+    Supports flat fields and dynamic list replication (like projects, experiences).
     Also handles standard template fallback if there are placeholder keys like {{personal.name}}.
     """
     from bs4 import BeautifulSoup
     from .fields import MOCK_DATA
+    import copy
     
-    # Pre-populate placeholders first (standard template replacement)
-    # We combine user data with mock data as fallback to ensure a fully populated preview
+    # Pre-populate placeholders first
     combined_data = MOCK_DATA.copy()
     combined_data.update(portfolio_data)
     
-    # 1. First apply visual CSS selector mappings using BeautifulSoup
+    # 1. Apply visual CSS selector mappings using BeautifulSoup
     soup = BeautifulSoup(html_content, "html.parser")
     
-    # Get all active mapping fields for this mapping profile
+    # Inject base tag so relative assets load correctly from media root
+    theme = mapping.theme
+    if soup.head and theme.index_html_url:
+        base_href = theme.index_html_url.rsplit("index.html", 1)[0]
+        base_tag = soup.new_tag("base", href=base_href)
+        soup.head.insert(0, base_tag)
+        
     mapping_fields = mapping.fields.all().order_by("order", "id")
+
+    # Group list fields vs flat fields
+    list_fields = [f for f in mapping_fields if f.field_key.endswith(".list")]
+    list_keys = [f.field_key.split(".")[0] for f in list_fields]
     
-    for field in mapping_fields:
+    # Flat fields (exclude list fields themselves and any child fields of those lists)
+    flat_fields = [
+        f for f in mapping_fields 
+        if not f.field_key.endswith(".list") and f.field_key.split(".")[0] not in list_keys
+    ]
+    
+    # Render flat fields first
+    for field in flat_fields:
         val = combined_data.get(field.field_key)
         if val is None:
             continue
-            
         elements = soup.select(field.selector)
         for element in elements:
-            if field.attribute == "text":
-                element.string = str(val)
-            elif field.attribute == "html":
-                # Safely sanitize HTML to prevent custom script injection
-                sanitized = sanitize_html_string(str(val))
-                element.clear()
-                # Parse sanitized HTML and insert elements
-                val_soup = BeautifulSoup(sanitized, "html.parser")
-                element.append(val_soup)
-            elif field.attribute == "src":
-                element["src"] = str(val)
-            elif field.attribute == "href":
-                element["href"] = str(val)
-            elif field.attribute == "alt":
-                element["alt"] = str(val)
-            elif field.attribute == "placeholder":
-                element["placeholder"] = str(val)
-            elif field.attribute == "custom" and field.custom_attribute:
-                element[field.custom_attribute] = str(val)
+            _inject_value(element, field, val)
+
+    # Render repeating list elements (e.g. projects.list)
+    for lf in list_fields:
+        prefix = lf.field_key.split(".")[0]  # e.g. "projects"
+        list_items_data = combined_data.get(lf.field_key, [])
+        if not isinstance(list_items_data, list) or not list_items_data:
+            continue
+            
+        matching_items = soup.select(lf.selector)
+        if not matching_items:
+            continue
+            
+        template_item = matching_items[0]
+        container = template_item.parent
+        if not container:
+            continue
+            
+        # Clone it before decomposing the originals
+        template_clone = copy.deepcopy(template_item)
+        
+        # Get all child mapping fields for this list group
+        child_fields = [f for f in mapping_fields if f.field_key.startswith(prefix + ".") and f != lf]
+        
+        # Remove all existing template elements from the container
+        for item in matching_items:
+            item.decompose()
+            
+        # Append cloned/modified nodes for each item in the data list
+        for item_data in list_items_data:
+            item_clone = copy.deepcopy(template_clone)
+            
+            # Populate fields inside the cloned item
+            for cf in child_fields:
+                val = item_data.get(cf.field_key)
+                if val is None:
+                    continue
+                    
+                # Build a relative selector inside the clone
+                rel_sel = cf.selector
+                if cf.selector.startswith(lf.selector):
+                    rel_sel = cf.selector[len(lf.selector):].strip()
+                    # Strip leading combinators if parent was e.g. "ul > li"
+                    if rel_sel.startswith(">"):
+                        rel_sel = rel_sel[1:].strip()
+                
+                targets = item_clone.select(rel_sel) if rel_sel else []
+                if not targets:
+                    targets = item_clone.select(cf.selector)
+                if not targets:
+                    last_part = cf.selector.split()[-1]
+                    targets = item_clone.select(last_part)
+                    
+                for target in targets:
+                    _inject_value(target, cf, val)
+                    
+            container.append(item_clone)
 
     # 2. Re-stringify and apply curly-braces regex replacement as a secondary layer
     final_html = str(soup)
     
-    # We can use scanner's placeholder replacer to handle any remaining {{personal.name}}
     from .scanner import apply_placeholder_data
     final_html = apply_placeholder_data(final_html, combined_data)
     
     return final_html
+
 
