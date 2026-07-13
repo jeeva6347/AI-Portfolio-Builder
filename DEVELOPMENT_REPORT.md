@@ -1,50 +1,49 @@
-# Module 9 Development Report: GitHub Auto Publish & GitHub Pages Deployment
+# Module 10 Development Report: SaaS Subscription & Payments
 
-We have successfully implemented and verified **Module 9: GitHub Auto Publish & GitHub Pages Deployment**. This module allows users to link their portfolios to their GitHub accounts and publish production-ready static assets directly to GitHub Pages with one click.
-
----
-
-## 1. Architectural Highlights
-
-### Service-Layer Decoupling (`github_integration/services/`)
-To ensure clean code separation, we designed a service layer completely independent of Django views:
-1. **[oauth_service.py](file:///d:/aiportfoliobuilder-module1-auth-v2/aiportfoliobuilder/github_integration/services/oauth_service.py)**: Coordinates token retrievals from the Django allauth database and processes account disconnections safely.
-2. **[repository_service.py](file:///d:/aiportfoliobuilder-module1-auth-v2/aiportfoliobuilder/github_integration/services/repository_service.py)**: Performs REST operations to retrieve user profiles, query list repositories, and create new repositories.
-3. **[exporter_service.py](file:///d:/aiportfoliobuilder-module1-auth-v2/aiportfoliobuilder/github_integration/services/exporter_service.py)**: Packages index HTML and theme assets, scans/identifies media dependencies, copy-bundles binary files, and rewrites relative directory structures to ensure the site runs offline.
-4. **[pages_service.py](file:///d:/aiportfoliobuilder-module1-auth-v2/aiportfoliobuilder/github_integration/services/pages_service.py)**: Triggers Pages activation and inspects status.
-5. **[deployment_service.py](file:///d:/aiportfoliobuilder-module1-auth-v2/aiportfoliobuilder/github_integration/services/deployment_service.py)**: Coordinates the entire deployment timeline, uploading text files inline and binary files as blobs before stitching trees, commits, and updating refs atomically.
+We have successfully implemented and verified **Module 10: SaaS Subscription & Payments**. This module converts the platform into a commercial SaaS application by enforcing plan limits, gating features dynamically, and providing user and administrator billing consoles.
 
 ---
 
-## 2. Database Models (`github_integration/models.py`)
+## 1. Database Schema & Models (`payments/models.py`)
 
-*   **`GitHubRepoConfig`**: Eases portfolio unlinking by tracking repository name, owner username, and target branch.
-*   **`GitHubDeployment`**: Records historical log entries for versioning, timing stats, error logs, and hosting status.
-
----
-
-## 3. UI/UX Interface (`templates/github/dashboard.html`)
-
-*   **Connection Landing Page**: Shows OAuth credentials connection panels with simple onboarding helpers.
-*   **Repository Configurations Form**: Supports selection of existing repositories or quick creation of new ones.
-*   **Deployment Operations Control Panel**: Houses custom commit message entries and triggers.
-*   **Build Status Banner & Logs**: Displays real-time statuses (Success/Pending/Failed), deployment duration, commit SHAs, and live website URLs.
+*   **`SubscriptionPlan`**: Dynamic database-managed model for pricing tiers (`free`, `premium`, `enterprise`). Administrators can customize plan limits directly from the Django admin.
+*   **`UserSubscription`**: Links a user to their active subscription tier, auto-renew status, and period renewal schedules.
+*   **`UsageMetrics`**: Aggregates user counts for portfolios, AI resume parses, and publishes, along with raw storage footprint sizes. Updates dynamically via `.sync_metrics()`.
+*   **`PaymentTransaction`**: Audit logs tracking payment receipts, invoice values, currency, and status history.
+*   **Post-Save Signals**: Triggers automatically on account creations to provision default Free plan mappings and metrics summaries.
 
 ---
 
-## 4. Test Coverage (`github_integration/tests.py`)
+## 2. Extensible Service Layer (`payments/services/`)
 
-We wrote mock integrations testing:
-*   Static bundle exporters and media relative converter scanner assets.
-*   Repository configuration linkages and clearances.
-*   In-memory Git Data API tree/blob pushes and Pages configurations.
-*   Deployment ownership access permissions.
+*   **`base.py`**: Defines abstract interface `BasePaymentProvider` for checkout creation and cancellations.
+*   **`mock_provider.py`**: A fully functional mock payment provider simulating checkout portals, transaction references, and callbacks without external pip library requirements.
 
-All 22 unit tests in the project pass successfully:
+---
+
+## 3. Gating Permissions & Middlewares (`payments/permissions.py`)
+
+*   **Decorators & Mixins**: `PortfolioLimitMixin`, `AILimitMixin`, `GitHubPublishLimitMixin` check user metrics counts vs. their active plan limits.
+*   **Integration View-Level Blocks**: Applied checks to portfolio creators, selects, previews, AI parse imports, and GitHub publishes to restrict Free users from accessing premium features.
+
+---
+
+## 4. Dashboards & Interfaces
+
+*   **Billing Dashboard (`templates/payments/billing.html`)**: Lists active subscription details, usage bar charts, checkout options, and invoice logs.
+*   **Mock Checkout Gate (`templates/payments/checkout_mock.html`)**: Stripe-themed simulator offering "Simulate Success" and "Simulate Decline" paths.
+*   **Admin Console (`templates/payments/admin_billing.html`)**: Aggregated indicators for Total Subscribers, Active Plan splits, and Cumulative Revenue sums.
+
+---
+
+## 5. Test Suite (`payments/tests.py`)
+
+*   Added 7 comprehensive tests checking profile signals, portfolio blocks, premium theme blocks, upgrades, transaction logs, cancellations, and admin restrictions.
+*   All project tests pass successfully:
 ```bash
 System check identified no issues (0 silenced).
 ----------------------------------------------------------------------
-Ran 22 tests in 51.197s
+Ran 29 tests in 65.978s
 
 OK
 ```

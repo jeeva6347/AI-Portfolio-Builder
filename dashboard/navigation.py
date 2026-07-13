@@ -65,12 +65,12 @@ SIDEBAR_NAVIGATION = [
         "name": "analytics",
     },
     {
-        "title": "Payments",
+        "title": "Billing & Plans",
         "icon": "bi-credit-card-fill",
-        "url": "dashboard:payments_placeholder",
+        "url": "payments:billing",
         "required_role": ["SUPER_ADMIN", "PREMIUM_USER", "FREE_USER"],
         "badge": None,
-        "coming_soon": True,
+        "coming_soon": False,
         "name": "payments",
     },
     {

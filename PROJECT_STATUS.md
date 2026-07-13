@@ -1,6 +1,6 @@
 # Project Status
 
-**Completion:** Module 9 (GitHub Auto Publish & GitHub Pages Deployment) — complete. ~36% overall (8 of ~22 modules).
+**Completion:** Module 10 (SaaS Subscription & Payments) — complete. ~40% overall (9 of ~22 modules).
 
 ## Completed
 - Module 1: Authentication (Custom User model, Email/Social Auth)
@@ -11,9 +11,10 @@
 - Module 6 (AI): AI Resume Import & AI Portfolio Generation (PDF/DOCX file extractors, heuristic fallback regex schemas, Gemini JSON parses, content enrichers, verification editor workspace, merge/overwrite builder population)
 - Module 8: Live Preview & Visual Portfolio Editor (Multi-portfolios dashboard, ForeignKey refactoring, side-by-side editing sidebar panel, responsive viewports zoom, debounced autosave, non-blink dynamic iframe reloading, duplication clone actions, tests)
 - Module 9: GitHub Auto Publish & GitHub Pages Deployment (Reusable service layer oauth/repos/exporter/deployment/pages, repo configuration models, in-memory Git Data API commit pushes, Pages activator, layout media link absolute-to-relative converter, templates dashboard)
+- Module 10: SaaS Subscription & Payments (Database SubscriptionPlan, UserSubscription, UsageMetrics, and PaymentTransaction models, mock Stripe checkout simulator redirect flow, decorators/CBV mixins premium limits checks, user and admin dashboards templates)
 
 ## Not Started
-- Modules 10-22 (Payments, Analytics, Domain Mapping, PDF Export, etc.)
+- Modules 11-22 (Domain Mapping, Analytics, PDF Export, etc.)
 
 ## Folder Structure
 ```
@@ -24,8 +25,8 @@ aiportfoliobuilder/
 ├── portfolio/             <- Module 6-8, complete
 ├── github_integration/    <- Module 9, complete (named to avoid colliding with PyGithub import)
 ├── ai/                    <- Module 6 (AI), complete
+├── payments/              <- Module 10, complete
 ├── analytics/             <- future phase, empty scaffold
-├── payments/              <- future phase, empty scaffold
 ├── notifications/         <- empty scaffold
 ├── api/                   <- empty scaffold
 ├── core/                  <- empty scaffold

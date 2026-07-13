@@ -1,5 +1,17 @@
 # Changelog
 
+## [Completed] - Module 10: SaaS Subscription & Payments
+### Added
+- Reusable `SubscriptionPlan` model tracking pricing tiers, portfolio limits, premium themes access, AI upload counts, and GitHub publishes caps.
+- `UserSubscription` model recording auto-renew state, renewal dates, and status fields (active, canceled, expired).
+- `UsageMetrics` model aggregating active user stats (portfolios, parses, publishes, and disk space usage sizes).
+- Modular payment provider service layer (`BasePaymentProvider`, `MockPaymentProvider`) managing sessions and simulating checkout URL routing.
+- Custom decorators and CBV mixins enforcing limits checks: `PortfolioLimitMixin`, `AILimitMixin`, `GitHubPublishLimitMixin` blocking premium options for Free tiers.
+- High-fidelity billing templates (`templates/payments/billing.html`, `checkout_mock.html`, `success.html`, `failure.html`) for usage tracking and transaction history logs.
+- Admin revenue summary template (`templates/payments/admin_billing.html`) showing aggregate subscribers splits, plans metrics, and sales transaction tables.
+- Provision signals auto-creating default Free tier subscription and metrics profile on account signup.
+- Expanded mock unit tests inside `payments/tests.py` testing auto creation, limit blocks, upgrades, cancellations, and admin checks (7 new tests, 29 total passing OK).
+
 ## [Completed] - Module 9: GitHub Auto Publish & GitHub Pages Deployment
 ### Added
 - Reusable service layer under `github_integration/services/` decoupled from views (`oauth_service.py`, `repository_service.py`, `exporter_service.py`, `deployment_service.py`, `pages_service.py`).

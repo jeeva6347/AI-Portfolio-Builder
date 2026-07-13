@@ -65,9 +65,12 @@ class PortfolioListView(LoginRequiredMixin, View):
         return render(request, self.template_name, ctx)
 
 
-# ── CREATE, DELETE, & DUPLICATE ACTIONS ──────────────────────────────────────
+from payments.permissions import PortfolioLimitMixin
 
-class PortfolioCreateView(LoginRequiredMixin, View):
+
+# ── PORTFOLIO LIST VIEW ──────────────────────────────────────────────────────
+# ...
+class PortfolioCreateView(PortfolioLimitMixin, LoginRequiredMixin, View):
     """Creates a new draft portfolio and redirects to its visual editor."""
     def post(self, request):
         # Create a default draft portfolio
@@ -92,7 +95,7 @@ class PortfolioDeleteView(LoginRequiredMixin, View):
         return redirect("portfolio:list")
 
 
-class PortfolioDuplicateView(LoginRequiredMixin, View):
+class PortfolioDuplicateView(PortfolioLimitMixin, LoginRequiredMixin, View):
     """
     Clones a portfolio record along with all related skills, projects,
     experience, education, and testimonials.
@@ -490,6 +493,14 @@ class SelectThemeView(LoginRequiredMixin, View):
         theme_id = request.POST.get("theme_id")
         if theme_id:
             theme = get_object_or_404(Theme, pk=theme_id, status=Theme.Status.APPROVED)
+            
+            # Premium Theme Check
+            from payments.permissions import get_user_plan_benefits
+            plan = get_user_plan_benefits(request.user)
+            if theme.is_premium and not plan.premium_themes_enabled:
+                messages.error(request, f"Theme '{theme.name}' is a Premium Theme. Please upgrade your subscription to use it.")
+                return redirect("payments:billing")
+
             portfolio.selected_theme = theme
             portfolio.save(update_fields=["selected_theme"])
             messages.success(request, f"Successfully activated theme '{theme.name}'.")
@@ -520,6 +531,18 @@ class UserPortfolioPreview(LoginRequiredMixin, View):
                 "Select Theme tab to preview your portfolio.</p>",
                 content_type="text/html"
             )
+            
+        # Premium Theme Check
+        if theme.is_premium:
+            from payments.permissions import get_user_plan_benefits
+            plan = get_user_plan_benefits(portfolio.user)
+            if not plan.premium_themes_enabled:
+                return HttpResponse(
+                    "<h3>Premium Theme Required</h3><p>This portfolio template requires a Premium "
+                    "subscription upgrade. Please upgrade your plan to render.</p>",
+                    content_type="text/html",
+                    status=403
+                )
             
         mapping = theme.mappings.filter(is_active=True).first()
         if not mapping:

@@ -87,11 +87,21 @@
 - [x] Visual deployment management dashboard panel (status badge, build log warning checklist, version tracking)
 - [x] Mock integrations unit tests inside tests.py (22 tests total passing OK)
 
-## Next: Module 10 — Premium Plans & Subscriptions
-- [ ] Stripe integration
-- [ ] Premium plans model and subscription gating middleware
-- [ ] Tier checks on themes, downloads, and custom domains
+## Module 10 — SaaS Subscription & Payments (COMPLETE)
+- [x] Reusable `SubscriptionPlan` model with dynamic database admin editable limits
+- `[x]` Provisioned automatic Free subscription and UsageMetrics profile on account creations
+- `[x]` Modular provider services (`BasePaymentProvider`, `MockPaymentProvider`) initiating checkouts
+- `[x]` Reusable permission checks (`PortfolioLimitMixin`, `AILimitMixin`, `GitHubPublishLimitMixin`) gating views
+- `[x]` High-fidelity user billing dashboard template tracking limits usage percentages and disk size occupied
+- `[x]` Mock Stripe checkout session screen simulating Paid upgrade activations
+- `[x]` Admin console summaries card panel displaying subscribers count splits and revenues
+- `[x]` Added 7 payments mock unit tests (29 tests total passing OK)
+
+## Next: Module 11 — Custom Domain Mapping & Advanced Deployments
+- [ ] DNS configurations parser
+- [ ] SSL certificate automatic retrieval
+- [ ] Priority support queues
 
 ## Explicitly excluded from this phase (per brief)
-- Payment Gateway, Analytics, Custom Domains, Deployment Automation
+- Custom Domain automatic DNS verification, Mobile App wraps, Team Collaboration, Advanced Analytics
 

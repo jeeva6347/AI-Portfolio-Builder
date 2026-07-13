@@ -17,6 +17,7 @@ urlpatterns = [
     path("portfolio/", include("portfolio.urls")),
     path("ai/", include("ai.urls")),
     path("github/", include("github_integration.urls")),
+    path("billing/", include("payments.urls")),
 ]
 
 if settings.DEBUG:

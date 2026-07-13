@@ -33,7 +33,10 @@ def _base_context(request):
     }
 
 
-class ResumeImportView(LoginRequiredMixin, View):
+from payments.permissions import AILimitMixin
+
+
+class ResumeImportView(AILimitMixin, LoginRequiredMixin, View):
     """
     Handles secure resume upload (PDF/DOCX), runs validation (size, format, corruption),
     and initiates AI information extraction & content enrichment.

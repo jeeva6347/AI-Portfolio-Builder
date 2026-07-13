@@ -279,6 +279,13 @@ class PortfolioBuilderTestCase(TestCase):
     def test_portfolio_duplication_clones_all_child_records(self):
         """Verify portfolio clone action deep-copies flat properties and related list items."""
         self.client.login(username="testuser", password="testpassword")
+        
+        # Upgrade subscription to premium to bypass portfolio limit
+        from payments.models import SubscriptionPlan
+        premium_plan = SubscriptionPlan.objects.get(slug="premium")
+        self.user.subscription.plan = premium_plan
+        self.user.subscription.save()
+
         portfolio = Portfolio.objects.create(user=self.user, name="Original Portfolio", title="CTO")
         
         # Add related records

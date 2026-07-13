@@ -129,7 +129,10 @@ class ConfigureRepositoryView(LoginRequiredMixin, View):
         return redirect("github:dashboard", pk=portfolio.pk)
 
 
-class PublishPortfolioView(LoginRequiredMixin, View):
+from payments.permissions import GitHubPublishLimitMixin
+
+
+class PublishPortfolioView(GitHubPublishLimitMixin, LoginRequiredMixin, View):
     """
     Triggers the static export packaging compile and pushes changes
     directly via Git Data API commits.

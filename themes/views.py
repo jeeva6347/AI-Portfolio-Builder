@@ -345,6 +345,14 @@ class ThemePreviewView(LoginRequiredMixin, View):
 
     def get(self, request, slug):
         theme = get_object_or_404(Theme, slug=slug, status=Theme.Status.APPROVED)
+        
+        # Premium Theme Check
+        from payments.permissions import get_user_plan_benefits
+        plan = get_user_plan_benefits(request.user)
+        if theme.is_premium and not plan.premium_themes_enabled:
+            messages.error(request, f"Theme '{theme.name}' is a Premium Theme. Please upgrade to preview.")
+            return redirect("payments:billing")
+
         ctx = _base_context(request, [
             {"title": "Dashboard", "url": "#"},
             {"title": "Marketplace", "url": reverse_lazy("themes:marketplace")},
