@@ -1,5 +1,5 @@
 from django import forms
-from .models import Theme, ThemeCategory
+from .models import Theme, ThemeCategory, ThemeMapping
 from .services import MAX_ZIP_SIZE_BYTES
 
 
@@ -101,3 +101,19 @@ class MarketplaceFilterForm(forms.Form):
         initial="-created_at",
         label="Sort By",
     )
+
+
+class ThemeMappingForm(forms.ModelForm):
+    """
+    Form to create or update ThemeMapping profile metadata.
+    """
+    class Meta:
+        model = ThemeMapping
+        fields = ("name", "notes", "is_active")
+        widgets = {
+            "notes": forms.Textarea(attrs={"rows": 3}),
+        }
+        help_texts = {
+            "is_active": "If active, other profiles for this theme will be deactivated.",
+        }
+

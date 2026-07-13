@@ -1,0 +1,113 @@
+{% extends "dashboard/layouts/base.html" %}
+{% load static %}
+
+{% block title %}Mapping Live Preview | {{ mapping.name }} | AI Portfolio Builder{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+    {% include "dashboard/components/breadcrumb.html" %}
+    <div class="d-flex gap-2">
+        <a href="{% url 'themes:mapping_edit' mapping.pk %}" class="btn btn-outline-secondary rounded-pill px-3 d-flex align-items-center gap-2 text-sm">
+            <i class="bi bi-pencil-fill"></i> Back to Editor
+        </a>
+        <a href="{% url 'themes:mapping_list' theme.slug %}" class="btn btn-outline-primary rounded-pill px-3 d-flex align-items-center gap-2 text-sm">
+            <i class="bi bi-diagram-3-fill"></i> Mappings List
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    {# compiled iframe Preview #}
+    <div class="col-12 col-xl-9">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+            {# Browser chrome bar mockup #}
+            <div class="d-flex align-items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+                <span class="rounded-circle bg-red-400" style="width:10px;height:10px;"></span>
+                <span class="rounded-circle bg-yellow-400" style="width:10px;height:10px;"></span>
+                <span class="rounded-circle bg-green-400" style="width:10px;height:10px;"></span>
+                <div class="flex-grow-1 mx-3 bg-white dark:bg-gray-600 rounded px-3 py-1 text-xs text-gray-500 dark:text-gray-300 font-mono">
+                    preview / {{ theme.slug }}/index.html (Compiled with Mapping Profile: {{ mapping.name }})
+                </div>
+            </div>
+            
+            <div id="previewContainer" style="height: 600px; resize: vertical; overflow: hidden;">
+                <iframe
+                    id="themePreviewFrame"
+                    src="{% url 'themes:mapping_preview_compiled' mapping.pk %}"
+                    style="width: 100%; height: 100%; border: none;"
+                    sandbox="allow-scripts allow-same-origin"
+                    title="Compiled Theme Preview: {{ theme.name }}"
+                    loading="lazy"
+                ></iframe>
+            </div>
+        </div>
+
+        {# Viewport toggle #}
+        <div class="d-flex justify-content-center gap-3 mt-3">
+            <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="setViewport('100%')" id="btnDesktop">
+                <i class="bi bi-display me-1"></i>Desktop
+            </button>
+            <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="setViewport('768px')" id="btnTablet">
+                <i class="bi bi-tablet me-1"></i>Tablet
+            </button>
+            <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="setViewport('375px')" id="btnMobile">
+                <i class="bi bi-phone me-1"></i>Mobile
+            </button>
+        </div>
+    </div>
+
+    {# Theme & Mapping metadata #}
+    <div class="col-12 col-xl-3">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 mb-3">
+            <h5 class="fw-bold text-gray-900 dark:text-white mb-1">{{ theme.name }}</h5>
+            <p class="text-xs text-gray-400 mb-3">{{ theme.category.name|default:"—" }} · Version {{ theme.version }}</p>
+            
+            <div class="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg mb-3">
+                <h6 class="text-xs fw-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider mb-1">Mapping Profile</h6>
+                <p class="mb-0 fw-semibold text-gray-800 dark:text-gray-200 text-sm">{{ mapping.name }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-0">v{{ mapping.version }} ({{ mapping.fields.count }} mapped fields)</p>
+            </div>
+            
+            <p class="text-xs text-gray-500 dark:text-gray-400">
+                This preview is compiled dynamically in real-time by replacing mapped selectors and curly-brace placeholders with simulated portfolio mock data.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function setViewport(width) {
+    const frame = document.getElementById('themePreviewFrame');
+    const container = document.getElementById('previewContainer');
+    if (!frame) return;
+
+    // Reset active button states
+    ['btnDesktop','btnTablet','btnMobile'].forEach(id => {
+        document.getElementById(id)?.classList.remove('btn-primary', 'text-white');
+        document.getElementById(id)?.classList.add('btn-outline-secondary');
+    });
+
+    if (width === '100%') {
+        frame.style.width = '100%';
+        frame.style.transform = '';
+        frame.style.transformOrigin = '';
+        document.getElementById('btnDesktop')?.classList.replace('btn-outline-secondary', 'btn-primary');
+    } else {
+        const containerWidth = container.offsetWidth;
+        const targetWidth = parseInt(width);
+        const scale = Math.min(1, containerWidth / targetWidth);
+        frame.style.width = width;
+        frame.style.transform = `scale(${scale})`;
+        frame.style.transformOrigin = 'top left';
+        if (width === '768px') document.getElementById('btnTablet')?.classList.replace('btn-outline-secondary', 'btn-primary');
+        if (width === '375px') document.getElementById('btnMobile')?.classList.replace('btn-outline-secondary', 'btn-primary');
+    }
+}
+// Default to desktop active
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('btnDesktop')?.classList.replace('btn-outline-secondary', 'btn-primary');
+});
+</script>
+{% endblock %}

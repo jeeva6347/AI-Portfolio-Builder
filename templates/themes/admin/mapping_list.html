@@ -1,0 +1,186 @@
+{% extends "dashboard/layouts/base.html" %}
+{% load static %}
+
+{% block title %}Mapping Profiles | {{ theme.name }} | AI Portfolio Builder{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    {% include "dashboard/components/breadcrumb.html" %}
+    <div class="d-flex gap-2">
+        <a href="{% url 'themes:theme_detail_admin' theme.slug %}" class="btn btn-outline-secondary rounded-pill px-3 d-flex align-items-center gap-2">
+            <i class="bi bi-arrow-left"></i> Back to Detail
+        </a>
+        <button type="button" class="btn btn-primary rounded-pill px-4 d-flex align-items-center gap-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#createMappingModal">
+            <i class="bi bi-plus-circle-fill"></i> Create Profile
+        </button>
+    </div>
+</div>
+
+<div class="row g-4">
+    {# Left column: Profile list #}
+    <div class="col-12 col-lg-8">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+            <div class="p-4 border-b border-gray-100 dark:border-gray-700">
+                <h5 class="mb-0 fw-bold text-gray-900 dark:text-white">
+                    <i class="bi bi-diagram-3-fill text-blue-500 me-2"></i>Theme Mapping Profiles
+                    <span class="badge bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 ms-2">{{ mappings|length }}</span>
+                </h5>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-gray-50 dark:bg-gray-700/50">
+                        <tr class="text-gray-500 dark:text-gray-300 text-sm">
+                            <th class="ps-4 py-3">Profile Name</th>
+                            <th>Status</th>
+                            <th>Version</th>
+                            <th>Fields</th>
+                            <th>Updated</th>
+                            <th class="pe-4 text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for mapping in mappings %}
+                        <tr class="border-b border-gray-100 dark:border-gray-700">
+                            <td class="ps-4 py-3">
+                                <div>
+                                    <p class="mb-0 fw-semibold text-gray-900 dark:text-white">{{ mapping.name }}</p>
+                                    <p class="mb-0 text-xs text-gray-400">{{ mapping.notes|default:"No notes added."|truncatechars:50 }}</p>
+                                </div>
+                            </td>
+                            <td>
+                                {% if mapping.is_active %}
+                                <span class="badge bg-success rounded-pill px-2.5 py-1">Active</span>
+                                {% else %}
+                                <span class="badge bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-pill px-2.5 py-1">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-gray-600 dark:text-gray-300 font-semibold">v{{ mapping.version }}</td>
+                            <td class="text-gray-600 dark:text-gray-300">
+                                <span class="badge bg-blue-50 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400 rounded-pill px-2.5 py-1 font-semibold">
+                                    {{ mapping.fields.count }} mapped
+                                </span>
+                            </td>
+                            <td class="text-gray-400 text-sm">{{ mapping.updated_at|date:"M d, Y" }}</td>
+                            <td class="pe-4 text-end">
+                                <div class="d-inline-flex gap-1.5">
+                                    {% if not mapping.is_active %}
+                                    <form method="post" action="{% url 'themes:mapping_toggle_active' mapping.pk %}" class="m-0">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-success rounded-pill" title="Activate Mapping Profile">
+                                            Activate
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                    <a href="{% url 'themes:mapping_edit' mapping.pk %}" class="btn btn-sm btn-outline-primary rounded-pill" title="Edit Visual Map">
+                                        <i class="bi bi-pencil-fill"></i> Map
+                                    </a>
+                                    <a href="{% url 'themes:mapping_preview' mapping.pk %}" class="btn btn-sm btn-outline-info rounded-pill" title="Preview with simulated data">
+                                        <i class="bi bi-eye-fill"></i> Preview
+                                    </a>
+                                    
+                                    {# Duplicate Button trigger modal #}
+                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" data-bs-toggle="modal" data-bs-target="#duplicateModal{{ mapping.pk }}" title="Duplicate Profile">
+                                        <i class="bi bi-files"></i>
+                                    </button>
+                                    
+                                    {# Delete Button form #}
+                                    <form method="post" action="{% url 'themes:mapping_delete' mapping.pk %}" class="m-0" onsubmit="return confirm('Are you sure you want to permanently delete this mapping profile?');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill" title="Delete Profile">
+                                            <i class="bi bi-trash-fill"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        
+                        {# Duplicate Profile Modal #}
+                        <div class="modal fade" id="duplicateModal{{ mapping.pk }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content dark:bg-gray-800 border-0 shadow-xl rounded-xl">
+                                    <div class="modal-header border-bottom border-gray-100 dark:border-gray-700">
+                                        <h5 class="modal-title text-gray-900 dark:text-white fw-bold"><i class="bi bi-files text-primary me-2"></i>Duplicate Mapping</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <form method="post" action="{% url 'themes:mapping_duplicate' mapping.pk %}">
+                                        {% csrf_token %}
+                                        <div class="modal-body">
+                                            <div class="mb-3">
+                                                <label class="form-label fw-semibold text-gray-700 dark:text-gray-300">Name for new mapping profile</label>
+                                                <input type="text" name="name" class="form-control dark:bg-gray-700 dark:border-gray-600 dark:text-white" value="{{ mapping.name }} (Copy)" required>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer border-top border-gray-100 dark:border-gray-700">
+                                            <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Cancel</button>
+                                            <button type="submit" class="btn btn-primary rounded-pill px-4">Duplicate</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-gray-400">
+                                <i class="bi bi-diagram-3 text-4xl d-block mb-2"></i>
+                                No mapping profiles created for this theme.
+                                <br>
+                                <button type="button" class="btn type-sm btn-primary mt-3 rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#createMappingModal">
+                                    Create First Profile
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    {# Right column: Meta Info Card #}
+    <div class="col-12 col-lg-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4">
+            <h6 class="fw-bold text-gray-900 dark:text-white mb-3"><i class="bi bi-info-circle-fill text-blue-500 me-2"></i>What is Theme Mapping?</h6>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                Theme Mapping connects the visual elements of your uploaded HTML theme with dynamic database fields belonging to user portfolios.
+            </p>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-0">
+                You can create multiple mapping profiles (e.g., experimental versions or specific layouts) and choose one to be the <strong>Active Profile</strong>. The active profile is used by the rendering engine to compile and serve live portfolios.
+            </p>
+        </div>
+    </div>
+</div>
+
+{# Create Mapping Modal #}
+<div class="modal fade" id="createMappingModal" tabindex="-1" aria-labelledby="createMappingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content dark:bg-gray-800 border-0 shadow-xl rounded-xl">
+            <div class="modal-header border-bottom border-gray-100 dark:border-gray-700">
+                <h5 class="modal-title text-gray-900 dark:text-white fw-bold" id="createMappingModalLabel"><i class="bi bi-plus-circle-fill text-primary me-2"></i>New Mapping Profile</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'themes:mapping_create' theme.slug %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-gray-700 dark:text-gray-300">Profile Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="e.g. Default Mapping, Light Layout" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-gray-700 dark:text-gray-300">Notes / Description</label>
+                        <textarea name="notes" class="form-control dark:bg-gray-700 dark:border-gray-600 dark:text-white" rows="3" placeholder="Optional notes..."></textarea>
+                    </div>
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" name="is_active" id="id_is_active">
+                        <label class="form-check-label fw-semibold text-gray-700 dark:text-gray-300" for="id_is_active">Set as Active Profile</label>
+                    </div>
+                </div>
+                <div class="modal-footer border-top border-gray-100 dark:border-gray-700">
+                    <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4">Create & Map</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

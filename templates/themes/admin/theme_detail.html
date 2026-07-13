@@ -7,6 +7,9 @@
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
     {% include "dashboard/components/breadcrumb.html" %}
     <div class="d-flex flex-wrap gap-2">
+        <a href="{% url 'themes:mapping_list' theme.slug %}" class="btn btn-outline-primary rounded-pill px-3 d-flex align-items-center gap-2">
+            <i class="bi bi-diagram-3-fill"></i> Mappings
+        </a>
         {% if theme.status == "approved" %}
         <a href="{% url 'themes:theme_preview' theme.slug %}" target="_blank" class="btn btn-outline-info rounded-pill px-3 d-flex align-items-center gap-2">
             <i class="bi bi-eye-fill"></i> Preview

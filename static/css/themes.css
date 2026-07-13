@@ -55,3 +55,15 @@
     font-size: 0.78rem;
     word-break: break-all;
 }
+
+/* ── Visual Mapper styles ────────────────────────────────────────── */
+.text-xxs {
+    font-size: 0.65rem;
+}
+.pr-1 {
+    padding-right: 0.25rem;
+}
+.fs-7 {
+    font-size: 0.75rem;
+}
+

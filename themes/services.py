@@ -309,3 +309,89 @@ def process_theme_upload(theme: Theme, zip_file_obj) -> None:
         if os.path.exists(dest_dir):
             shutil.rmtree(dest_dir, ignore_errors=True)
         raise ThemeUploadError(f"Unexpected error during processing: {exc}") from exc
+
+
+# ── Mapping Compilation & Sanitization (Module 6) ────────────────────────────────
+
+def sanitize_html_string(html_str: str) -> str:
+    """
+    Remove potentially dangerous tags and event handlers to prevent XSS.
+    """
+    from bs4 import BeautifulSoup
+    soup = BeautifulSoup(html_str, "html.parser")
+    
+    # Remove executable/unwanted elements
+    for tag in soup(["script", "iframe", "object", "embed", "applet", "meta", "link"]):
+        # Keep CSS stylesheet links if they are local, but decomp script tags completely
+        if tag.name == "link" and tag.get("rel") == ["stylesheet"]:
+            continue
+        tag.decompose()
+        
+    # Remove javascript: hrefs and onload/onclick/onerror attribute execution
+    for tag in soup.find_all(True):
+        for attr in list(tag.attrs.keys()):
+            if attr.lower().startswith("on"):
+                del tag.attrs[attr]
+            elif attr.lower() == "href":
+                val = tag.attrs[attr].strip().lower()
+                if val.startswith("javascript:") or val.startswith("data:text/html"):
+                    tag.attrs[attr] = "#"
+                    
+    return str(soup)
+
+
+def apply_theme_mapping(html_content: str, mapping, portfolio_data: dict) -> str:
+    """
+    Inject portfolio_data into html_content based on mapping configuration.
+    Also handles standard template fallback if there are placeholder keys like {{personal.name}}.
+    """
+    from bs4 import BeautifulSoup
+    from .fields import MOCK_DATA
+    
+    # Pre-populate placeholders first (standard template replacement)
+    # We combine user data with mock data as fallback to ensure a fully populated preview
+    combined_data = MOCK_DATA.copy()
+    combined_data.update(portfolio_data)
+    
+    # 1. First apply visual CSS selector mappings using BeautifulSoup
+    soup = BeautifulSoup(html_content, "html.parser")
+    
+    # Get all active mapping fields for this mapping profile
+    mapping_fields = mapping.fields.all().order_by("order", "id")
+    
+    for field in mapping_fields:
+        val = combined_data.get(field.field_key)
+        if val is None:
+            continue
+            
+        elements = soup.select(field.selector)
+        for element in elements:
+            if field.attribute == "text":
+                element.string = str(val)
+            elif field.attribute == "html":
+                # Safely sanitize HTML to prevent custom script injection
+                sanitized = sanitize_html_string(str(val))
+                element.clear()
+                # Parse sanitized HTML and insert elements
+                val_soup = BeautifulSoup(sanitized, "html.parser")
+                element.append(val_soup)
+            elif field.attribute == "src":
+                element["src"] = str(val)
+            elif field.attribute == "href":
+                element["href"] = str(val)
+            elif field.attribute == "alt":
+                element["alt"] = str(val)
+            elif field.attribute == "placeholder":
+                element["placeholder"] = str(val)
+            elif field.attribute == "custom" and field.custom_attribute:
+                element[field.custom_attribute] = str(val)
+
+    # 2. Re-stringify and apply curly-braces regex replacement as a secondary layer
+    final_html = str(soup)
+    
+    # We can use scanner's placeholder replacer to handle any remaining {{personal.name}}
+    from .scanner import apply_placeholder_data
+    final_html = apply_placeholder_data(final_html, combined_data)
+    
+    return final_html
+

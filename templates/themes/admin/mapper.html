@@ -1,0 +1,201 @@
+{% extends "dashboard/layouts/base.html" %}
+{% load static %}
+
+{% block title %}Theme Mapper Workspace | {{ theme.name }} | AI Portfolio Builder{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/themes.css' %}">
+<style>
+    /* Mapper specific layout styles */
+    .mapper-workspace {
+        height: calc(100vh - 180px);
+        min-height: 500px;
+    }
+    .iframe-wrapper {
+        position: relative;
+        background: #f1f5f9;
+        transition: width 0.3s ease;
+        margin: 0 auto;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    }
+    .dark .iframe-wrapper {
+        background: #1e293b;
+    }
+    iframe.mapper-frame {
+        width: 100%;
+        height: 100%;
+        border: none;
+        background: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+    {% include "dashboard/components/breadcrumb.html" %}
+    <div class="d-flex align-items-center gap-2">
+        <a href="{% url 'themes:mapping_list' theme.slug %}" class="btn btn-outline-secondary rounded-pill px-3 py-1 text-sm">
+            <i class="bi bi-arrow-left"></i> Back to Profiles
+        </a>
+        <button id="saveBtn" class="btn btn-success rounded-pill px-4 py-1 text-sm shadow-sm d-flex align-items-center gap-2">
+            <i class="bi bi-check-lg"></i> Save Mapping
+        </button>
+        <a href="{% url 'themes:mapping_preview' mapping.pk %}" class="btn btn-outline-info rounded-pill px-3 py-1 text-sm">
+            <i class="bi bi-eye-fill"></i> Live Preview
+        </a>
+    </div>
+</div>
+
+<div class="row g-3 mapper-workspace overflow-hidden">
+    {# Left Sidebar: Registry and list of mapped items #}
+    <div class="col-12 col-lg-3 d-flex flex-column h-100 overflow-y-auto">
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 h-100 d-flex flex-column">
+            <h6 class="fw-bold text-gray-900 dark:text-white mb-2 d-flex align-items-center justify-content-between">
+                <span>Mapped Fields</span>
+                <span id="mappedCounter" class="badge bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-400 rounded-pill">0</span>
+            </h6>
+            <p class="text-xs text-gray-400 mb-3">Assign HTML elements to portfolio fields to populate them dynamically.</p>
+            
+            <div class="flex-grow-1 overflow-y-auto pr-1" id="mappedList" style="max-height: calc(100vh - 350px);">
+                <!-- Appended dynamically via javascript -->
+                <div class="text-center py-4 text-gray-400 text-sm" id="emptyMappedMsg">
+                    <i class="bi bi-diagram-3 text-2xl d-block mb-1"></i>
+                    No mappings created yet. Click any element in the template to start.
+                </div>
+            </div>
+            
+            <button id="autoSuggestBtn" class="btn btn-outline-primary btn-sm rounded-pill w-100 mt-3 d-flex align-items-center justify-content-center gap-1.5">
+                <i class="bi bi-magic"></i> Auto-Suggest Mappings
+            </button>
+        </div>
+    </div>
+
+    {# Central Panel: Visual Iframe viewports #}
+    <div class="col-12 col-lg-6 d-flex flex-column h-100">
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3 h-100 d-flex flex-column overflow-hidden">
+            {# Viewport Switcher Toolbar #}
+            <div class="d-flex align-items-center justify-content-between border-b border-gray-100 dark:border-gray-700 pb-2 mb-3 flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-primary rounded-pill px-2.5 py-1 fs-7">Editor Mode</span>
+                    <span class="text-xs text-gray-500 dark:text-gray-400">Click elements in the view below to map.</span>
+                </div>
+                <div class="btn-group btn-group-sm rounded-pill overflow-hidden" role="group" aria-label="Viewport size">
+                    <input type="radio" class="btn-check" name="viewport" id="vpDesktop" checked value="100%">
+                    <label class="btn btn-outline-secondary px-3" for="vpDesktop" title="Desktop"><i class="bi bi-display"></i></label>
+
+                    <input type="radio" class="btn-check" name="viewport" id="vpTablet" value="768px">
+                    <label class="btn btn-outline-secondary px-3" for="vpTablet" title="Tablet"><i class="bi bi-tablet"></i></label>
+
+                    <input type="radio" class="btn-check" name="viewport" id="vpMobile" value="375px">
+                    <label class="btn btn-outline-secondary px-3" for="vpMobile" title="Mobile"><i class="bi bi-phone"></i></label>
+                </div>
+            </div>
+
+            {# The actual HTML page iframe #}
+            <div class="flex-grow-1 overflow-auto bg-gray-100 dark:bg-gray-900 rounded-lg p-2 d-flex align-items-center justify-content-center">
+                <div class="iframe-wrapper w-100 h-100" id="iframeWrapper">
+                    {% if theme.index_html_url %}
+                    <iframe id="mapperFrame" src="{{ theme.index_html_url }}" class="mapper-frame rounded-lg"></iframe>
+                    {% else %}
+                    <div class="text-center py-5 text-gray-400">
+                        <i class="bi bi-exclamation-triangle-fill text-yellow-500 text-3xl"></i>
+                        <p class="mt-2">HTML index file is missing.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Right Sidebar: Inspector panel #}
+    <div class="col-12 col-lg-3 d-flex flex-column h-100 overflow-y-auto">
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 h-100 d-flex flex-column">
+            <h6 class="fw-bold text-gray-900 dark:text-white mb-3 d-flex align-items-center gap-2">
+                <i class="bi bi-sliders text-primary"></i> Element Inspector
+            </h6>
+            
+            <div class="flex-grow-1 d-flex flex-column gap-3" id="inspectorPanel">
+                <div class="text-center py-5 text-gray-400 text-sm flex-grow-1" id="noElementSelectedMsg">
+                    <i class="bi bi-cursor-fill text-2xl d-block mb-2"></i>
+                    Click on any element in the theme layout (middle panel) to map it.
+                </div>
+                
+                <div class="d-none d-flex flex-column gap-3 flex-grow-1" id="elementInspectorForm">
+                    <div class="p-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-100 dark:border-gray-700">
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                            <span class="badge bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 uppercase font-mono fs-7" id="inspectTag">TAG</span>
+                            <span class="text-xs text-gray-400 font-mono" id="inspectIndex">#0</span>
+                        </div>
+                        <p class="text-xs font-mono text-gray-600 dark:text-gray-400 text-break mb-0" id="inspectSelector">selector</p>
+                    </div>
+
+                    <div>
+                        <label class="form-label text-xs fw-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Text / Value Preview</label>
+                        <div class="p-2 border border-gray-200 dark:border-gray-700 rounded bg-gray-50 dark:bg-gray-900/50 max-h-24 overflow-y-auto text-xs font-mono text-gray-600 dark:text-gray-400" id="inspectValuePreview">
+                            content preview...
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="form-label text-xs fw-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1" for="fieldKeySelect">Map to Portfolio Field</label>
+                        <select id="fieldKeySelect" class="form-select form-select-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            <option value="">— Choose Field —</option>
+                            {% for group_label, field_list in field_choices %}
+                            <optgroup label="{{ group_label }}">
+                                {% for val, label in field_list %}
+                                <option value="{{ val }}">{{ label }}</option>
+                                {% endfor %}
+                            </optgroup>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text text-xs text-gray-400">Select which database value will fill this element.</div>
+                    </div>
+
+                    <div>
+                        <label class="form-label text-xs fw-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1" for="attributeSelect">Attribute Type</label>
+                        <select id="attributeSelect" class="form-select form-select-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            <option value="text">Inner Text (Clean string)</option>
+                            <option value="html">Inner HTML (Rich text)</option>
+                            <option value="src">Image src Attribute</option>
+                            <option value="href">Link href Attribute</option>
+                            <option value="alt">Image alt Description</option>
+                            <option value="placeholder">Input Placeholder</option>
+                            <option value="custom">Custom Attribute Name</option>
+                        </select>
+                    </div>
+                    
+                    <div id="customAttributeWrapper" style="display: none;">
+                        <label class="form-label text-xs fw-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1" for="customAttributeInput">Custom Attribute Name</label>
+                        <input type="text" id="customAttributeInput" class="form-control form-control-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="e.g. data-label">
+                    </div>
+
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" id="isRequiredCheck">
+                        <label class="form-check-label fw-semibold text-gray-700 dark:text-gray-300 text-sm" for="isRequiredCheck">Required field</label>
+                    </div>
+                    
+                    <div class="mt-auto pt-3 border-t border-gray-100 dark:border-gray-700">
+                        <button id="addMappingFieldBtn" class="btn btn-primary btn-sm rounded-pill w-100 py-1.5 d-flex align-items-center justify-content-center gap-1.5">
+                            <i class="bi bi-plus-lg"></i> Apply Mapping
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Hidden template inputs to serialize model IDs #}
+<input type="hidden" id="mappingId" value="{{ mapping.pk }}">
+<input type="hidden" id="themeSlug" value="{{ theme.slug }}">
+<script>
+    // Injected mapped fields and scan suggestions
+    const INITIAL_MAPPED_FIELDS = {{ mapped_fields_json|safe }};
+    const SCAN_SUGGESTIONS_URL = "{% url 'themes:theme_scan_api' theme.slug %}";
+    const SAVE_MAPPINGS_URL = "{% url 'themes:mapping_save_api' mapping.pk %}";
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/theme_mapper.js' %}"></script>
+{% endblock %}

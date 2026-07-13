@@ -1,6 +1,20 @@
 # Changelog
 
-## [Unreleased] - Module 5: Theme Engine + Pre-flight Fixes
+## [Unreleased] - Module 6: Theme Mapper
+### Added
+- Visual mapping interface (`templates/themes/admin/mapper.html`) allowing admins to visually map elements in theme templates.
+- Dotted portfolio mapping keys registry (`themes/fields.py`) containing 50+ normalized fields (Personal Info, Skills, Projects, Experience, Education, Socials, Footer, Contact, etc.).
+- Safe HTML scanner and parsing helper (`themes/scanner.py`) to auto-suggest element selectors using custom heuristics and detect curly-bracket template placeholders.
+- Real-time mapping compilation and injection (`apply_theme_mapping` inside `themes/services.py`).
+- Security Layer: HTML sanitization (`sanitize_html_string`) decomposing unsafe tags (e.g. `<script>`, inline event handlers) to prevent XSS.
+- Versioning and management actions: Create, duplicate/clone, delete, activate, list mappings.
+- Preview Page (`templates/themes/admin/mapper_preview.html`) containing desktop, tablet, and mobile viewport controls.
+- API endpoints: `ThemeScannerAPI` for recommendations, `MappingSaveAPI` for bulk mapping saving.
+- Mapping persistence: added `ThemeMapping` and `ThemeMappingField` models with migration `0003_thememapping`.
+- Comprehensive Unit Test Suite (`themes/tests.py`) covering all Module 6 features.
+- "Mappings" action trigger added to the Theme details view.
+
+## [Completed] - Module 5: Theme Engine + Pre-flight Fixes
 ### Fixed
 - Added `accounts/migrations/0002_user_theme_preference.py` — additive migration for the `theme_preference` field that was missing from `0001_initial.py`. Safe for both fresh and existing databases.
 - Fixed root URL `/` returning 404. Now redirects to `/accounts/login/`.

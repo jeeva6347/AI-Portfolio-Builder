@@ -1,14 +1,15 @@
 # Project Status
 
-**Completion:** Module 5 (Theme Engine) — complete. ~14% overall (3 of ~22 modules).
+**Completion:** Module 6 (Theme Mapper) — complete. ~18% overall (4 of ~22 modules).
 
 ## Completed
 - Module 1: Authentication (Custom User model, Email/Social Auth)
 - Module 2: Dashboard System (Super Admin, Admin, and User dashboards)
 - Module 5: Theme Engine (Upload, Validate, Extract, Marketplace, Preview, Admin)
+- Module 6: Theme Mapper (Visual element mapping workspace, HTML scanner & auto-suggest, compiled live iframe preview, duplication, XSS sanitization, tests)
 
 ## Not Started
-- Modules 6-22 (Theme Mapper, Portfolio Builder, GitHub Auto Publish, AI Content, Payments, Analytics, etc.)
+- Modules 7-22 (Portfolio Builder, Live Preview, Portfolio Export, Resume Import, AI Content, GitHub integration, Payments, Analytics, etc.)
 
 ## Folder Structure
 ```

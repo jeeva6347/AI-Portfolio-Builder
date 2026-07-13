@@ -1,21 +1,21 @@
 # Development Report
 
 ## Completion Percentage
-**~14%** (Modules 1, 2, and 5 out of ~22 completed).
+**~18%** (Modules 1, 2, 5, and 6 out of ~22 completed).
 
 ## Completed Modules
 1. **Module 1: Authentication** (Custom User model, Email/Social Auth, Sessions)
 2. **Module 2: Dashboard System** (Super Admin, Admin, User Dashboards, Dark/Light theme, Chart.js)
 3. **Module 5: Theme Engine** (Upload, Validation, Extraction, Marketplace, Preview, Admin)
+4. **Module 6: Theme Mapper** (Visual HTML Element Mapping Workspace, CSS Selector suggestions, Duplication, Versioning, XSS filtering, Viewport toggles)
 
-## Pre-flight Issues Fixed This Session
-- **Missing migration:** `accounts/migrations/0002_user_theme_preference.py` created. Adds `theme_preference` field additively — safe for fresh and existing databases.
+## Pre-flight Issues Fixed
+- **Missing migration:** `accounts/migrations/0002_user_theme_preference.py` created. Adds `theme_preference` field additively.
 - **Root URL 404:** `/` now redirects to `/accounts/login/`.
 
 ## Remaining Modules
-6. Theme Mapper (Visual section-to-data mapping)
-7. Portfolio Builder
-8. Live Preview (with injected data)
+7. Portfolio Builder (User portfolio database schema, entry forms, dynamic sections)
+8. Live Preview (with user data)
 9. Portfolio Export
 10. Resume Import
 11. AI Content Generator
@@ -29,52 +29,48 @@
 19. Settings
 20. Production Deployment
 
-## Created Files — Module 5
-- `themes/models.py` (ThemeCategory, Theme, ThemeAsset)
-- `themes/migrations/0001_initial.py`
-- `themes/migrations/0002_seed_categories.py` (10 default categories)
-- `themes/services.py` (ZIP validation + extraction + asset scanning + thumbnail)
-- `themes/forms.py` (ThemeUploadForm, CategoryForm, ThemeRejectForm, MarketplaceFilterForm)
-- `themes/views.py` (8 admin views + marketplace + preview)
-- `themes/urls.py` (12 routes)
-- `themes/admin.py` (ThemeAdmin, ThemeCategoryAdmin, ThemeAssetAdmin)
-- `templates/themes/admin/theme_list.html`
-- `templates/themes/admin/theme_upload.html`
-- `templates/themes/admin/theme_detail.html`
-- `templates/themes/admin/category_list.html`
-- `templates/themes/marketplace.html`
-- `templates/themes/preview.html`
-- `static/js/theme_upload.js`
-- `static/css/themes.css`
+## Created Files — Module 6
+- `themes/fields.py` (Centralized 50+ portfolio fields, mock data, and group mappings)
+- `themes/scanner.py` (HTML Parser for tag discovery, suggestion scoring, and regex placeholders)
+- `themes/migrations/0003_thememapping.py` (ThemeMapping and ThemeMappingField database tables)
+- `templates/themes/admin/mapping_list.html` (Mapping profiles dashboard list, actions modal)
+- `templates/themes/admin/mapper.html` (Interactive visual mapper template workspace)
+- `templates/themes/admin/mapper_preview.html` (Dynamic rendering template with viewport resizing)
+- `static/js/theme_mapper.js` (Iframe same-origin selector builder, click handler, highlight overlays, JSON API saver)
 
-## Modified Files — Module 5
-- `accounts/migrations/0002_user_theme_preference.py` (NEW — fix)
-- `aiportfoliobuilder/urls.py` (root redirect + themes include)
-- `dashboard/navigation.py` (Themes + Marketplace → live URLs)
-- `dashboard/views.py` (real theme counts in Super Admin dashboard)
+## Modified Files — Module 6
+- `themes/models.py` (ThemeMapping and ThemeMappingField models appended)
+- `themes/admin.py` (ThemeMappingAdmin and ThemeMappingFieldAdmin classes registered)
+- `themes/services.py` (added `apply_theme_mapping` and `sanitize_html_string` compilers)
+- `themes/forms.py` (added `ThemeMappingForm` metadata editor)
+- `themes/views.py` (added 9 mapping list, edit, preview, duplicate, toggle, delete views and API endpoints)
+- `themes/urls.py` (added 10 mapper paths)
+- `themes/tests.py` (fully populated with 6 test cases checking scanner, compiler, duplicate actions, and security mixins)
+- `templates/themes/admin/theme_detail.html` (added Mappings link)
+- `static/css/themes.css` (appended mapper utilities)
 - `CHANGELOG.md`, `TODO.md`, `PROJECT_STATUS.md`
 
-## Database Changes — Module 5
-- New tables: `themes_themecategory`, `themes_theme`, `themes_themeasset`
-- Modified: `accounts_user` → adds `theme_preference` column (via 0002 migration)
-- 10 default ThemeCategory rows seeded
+## Database Changes — Module 6
+- New tables: `themes_thememapping`, `themes_thememappingfield` (linked to `themes_theme` and `auth_user`)
+- Enforced constraint: At most one active mapping profile per theme (unique database constraint)
 
 ## Validation Note
-- Python/Django are not executable in this environment (missing `decouple` package)
-- Static code verification was performed: all imports, URL names, template references, and migration chains verified manually
-- Full live testing should be performed by the developer after running `migrate`
+- Local dependencies (`python-decouple`, `django-allauth`, `PyJWT`) successfully installed under Python 3.14.
+- All 6 unit tests successfully ran and passed via `py manage.py test themes` without warnings or runtime issues.
+- All migration chains verify to `OK`.
 
 ## Commands Required Before Running
 ```bash
-pip install -r requirements.txt  # if not already done
-python manage.py migrate          # applies all migrations including 0002 for accounts + themes
-python manage.py createsuperuser  # if not already done
+pip install -r requirements.txt  # Installs python-decouple, mysqlclient, django-allauth
+python manage.py migrate          # Applies all migrations including 0003_thememapping
+python manage.py test themes      # Runs test suite to verify project health
 python manage.py runserver
 ```
 
 ## Known Limitations
-- Thumbnail generation uses Pillow with system fonts. If `arial.ttf` is not available, falls back to the default bitmap font (which is smaller). Install fonts or swap to a bundled TTF for consistent thumbnails.
-- Preview iframe uses `sandbox="allow-scripts allow-same-origin"` — sufficient for basic themes; themes that make cross-origin requests will be blocked.
+- Rich visual loops/list duplication mapping (e.g. duplicating experience items) is compiled element-wise. Complex child templates are fully supported via raw HTML injection or placeholder keys.
+- Sandbox constraints are enforced on the preview iframe to protect against accidental clickjacking or page hijack scripts.
 
 ## Next Module
-**Module 6: Theme Mapper** — Connect theme HTML sections to user portfolio data fields.
+**Module 7: Portfolio Builder** — Implement the database schemas, user forms, and section mapping integration to save user portfolio content.
+
