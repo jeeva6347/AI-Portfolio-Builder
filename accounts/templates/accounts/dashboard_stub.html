@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="card shadow-sm">
+  <div class="card-body p-4">
+    <h3>Welcome, {{ user.username }} 👋</h3>
+    <p class="text-muted">Role: {{ user.get_role_display }}</p>
+    <p class="small text-secondary">
+      This is a placeholder. Role-based dashboards
+      (Super Admin / Admin / User) are built in the next module.
+    </p>
+    <div class="d-flex gap-2">
+      <a href="{% url 'accounts:profile' %}" class="btn btn-outline-primary btn-sm">Profile</a>
+      <form method="post" action="{% url 'accounts:logout' %}">
+        {% csrf_token %}
+        <button class="btn btn-outline-secondary btn-sm">Log out</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

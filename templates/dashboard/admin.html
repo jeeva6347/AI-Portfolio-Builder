@@ -1,0 +1,34 @@
+{% extends "dashboard/layouts/base.html" %}
+
+{% block title %}Admin Dashboard | AI Portfolio Builder{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    {% include "dashboard/components/breadcrumb.html" %}
+</div>
+
+<div class="row g-4 mb-5">
+    <div class="col-12 col-md-6 col-xl-3">
+        {% include "dashboard/components/cards/stat_card.html" with title="Managed Themes" value=managed_themes icon="bi-collection-fill" color="bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300" %}
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        {% include "dashboard/components/cards/stat_card.html" with title="Pending Themes" value=pending_themes icon="bi-hourglass-split" color="bg-yellow-100 text-yellow-600 dark:bg-yellow-900 dark:text-yellow-300" %}
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        {% include "dashboard/components/cards/stat_card.html" with title="Active Users" value=active_users icon="bi-person-check-fill" color="bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300" %}
+    </div>
+</div>
+
+<h5 class="mb-4 text-lg font-bold text-gray-900 dark:text-white">Quick Actions</h5>
+<div class="row g-4 mb-4">
+    <div class="col-6 col-md-3">
+        {% include "dashboard/components/cards/quick_action.html" with title="Upload Theme" icon="bi-upload" url="#" icon_color="text-purple-500" %}
+    </div>
+    <div class="col-6 col-md-3">
+        {% include "dashboard/components/cards/quick_action.html" with title="Approve Theme" icon="bi-check-circle" url="#" icon_color="text-green-500" %}
+    </div>
+    <div class="col-6 col-md-3">
+        {% include "dashboard/components/cards/quick_action.html" with title="Manage Categories" icon="bi-tags" url="#" icon_color="text-blue-500" %}
+    </div>
+</div>
+{% endblock %}

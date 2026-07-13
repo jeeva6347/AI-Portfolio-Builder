@@ -1,0 +1,72 @@
+<header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky-top z-30 transition-colors duration-200 shadow-sm">
+    <div class="px-4 py-3 d-flex align-items-center justify-content-between">
+        
+        <!-- Left: Sidebar Toggle (Mobile) & Search -->
+        <div class="d-flex align-items-center gap-3">
+            <button class="btn btn-light d-lg-none dark:bg-gray-700 dark:text-white dark:border-gray-600" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas" aria-controls="sidebarOffcanvas">
+                <i class="bi bi-list"></i>
+            </button>
+            
+            <!-- Global Search (UI Only) -->
+            <div class="d-none d-md-flex position-relative">
+                <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-gray-400"></i>
+                <input type="text" class="form-control ps-5 bg-gray-100 border-0 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 rounded-full w-64 transition-all" placeholder="Search...">
+            </div>
+        </div>
+
+        <!-- Right: Theme, Notifications, Profile -->
+        <div class="d-flex align-items-center gap-3">
+            
+            <!-- Theme Toggle -->
+            <button id="themeToggleBtn" class="btn btn-link text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white p-2">
+                <i class="bi bi-sun-fill hidden dark:inline-block text-xl"></i>
+                <i class="bi bi-moon-stars-fill inline-block dark:hidden text-xl"></i>
+            </button>
+
+            <!-- Notifications Dropdown -->
+            <div class="dropdown">
+                <button class="btn btn-link text-gray-500 dark:text-gray-400 p-2 position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-bell-fill text-xl"></i>
+                    <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
+                        <span class="visually-hidden">New alerts</span>
+                    </span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 dark:bg-gray-800 p-0 overflow-hidden w-72">
+                    <li class="bg-gray-50 dark:bg-gray-700 px-4 py-2 border-b border-gray-200 dark:border-gray-600 font-semibold text-gray-700 dark:text-gray-200">Notifications</li>
+                    <li><a class="dropdown-item py-3 px-4 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 dark:text-gray-300" href="#"><i class="bi bi-person-plus text-blue-500 me-2"></i> New user signed up</a></li>
+                    <li><a class="dropdown-item py-3 px-4 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 dark:text-gray-300" href="#"><i class="bi bi-palette text-green-500 me-2"></i> Theme approved</a></li>
+                    <li><a class="dropdown-item text-center py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700" href="#">View All</a></li>
+                </ul>
+            </div>
+
+            <!-- Profile Dropdown -->
+            <div class="dropdown">
+                <button class="btn btn-light rounded-pill p-1 d-flex align-items-center gap-2 dark:bg-gray-700 dark:text-white dark:border-gray-600 border" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    {% if user.avatar %}
+                    <img src="{{ user.avatar.url }}" alt="Profile" class="rounded-circle" width="32" height="32">
+                    {% else %}
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                        {{ user.username|make_list|first|upper }}
+                    </div>
+                    {% endif %}
+                    <span class="d-none d-md-inline pe-2 font-medium">{{ user.username }}</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 dark:bg-gray-800">
+                    <li class="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
+                        <p class="mb-0 text-sm font-medium text-gray-900 dark:text-white">{{ user.email }}</p>
+                        <p class="mb-0 text-xs text-gray-500 dark:text-gray-400">{{ user.get_role_display }}</p>
+                    </li>
+                    <li><a class="dropdown-item mt-2 dark:text-gray-300 dark:hover:bg-gray-700" href="{% url 'accounts:profile' %}"><i class="bi bi-person me-2"></i> Profile</a></li>
+                    <li><a class="dropdown-item dark:text-gray-300 dark:hover:bg-gray-700" href="{% url 'accounts:sessions' %}"><i class="bi bi-shield-lock me-2"></i> Security</a></li>
+                    <li><hr class="dropdown-divider dark:border-gray-700"></li>
+                    <li>
+                        <form action="{% url 'accounts:logout' %}" method="post" class="m-0">
+                            {% csrf_token %}
+                            <button type="submit" class="dropdown-item text-danger dark:hover:bg-gray-700"><i class="bi bi-box-arrow-right me-2"></i> Log out</button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</header>

@@ -1,0 +1,17 @@
+{% extends "dashboard/layouts/base.html" %}
+
+{% block title %}{{ page_title }} | AI Portfolio Builder{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    {% include "dashboard/components/breadcrumb.html" %}
+</div>
+
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 text-center py-5 my-5 max-w-2xl mx-auto">
+    <div class="d-inline-flex align-items-center justify-content-center bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-circle mb-4 transition-transform hover:scale-110 duration-300" style="width: 100px; height: 100px;">
+        <i class="bi bi-cone-striped" style="font-size: 3rem;"></i>
+    </div>
+    <h2 class="h3 font-bold text-gray-900 dark:text-white mb-3">{{ page_title }} is Coming Soon</h2>
+    <p class="text-gray-500 dark:text-gray-400 mb-0">We are currently working hard to bring you this feature. Stay tuned for the next module release!</p>
+</div>
+{% endblock %}

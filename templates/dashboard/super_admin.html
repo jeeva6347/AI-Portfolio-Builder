@@ -1,0 +1,96 @@
+{% extends "dashboard/layouts/base.html" %}
+
+{% block title %}Super Admin Dashboard | AI Portfolio Builder{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    {% include "dashboard/components/breadcrumb.html" %}
+    <div class="d-flex gap-2">
+        {% include "dashboard/components/cards/quick_action.html" with title="Add Admin" icon="bi-person-plus-fill" url="#" color="bg-blue-50 text-blue-700 dark:bg-blue-900/50 dark:text-blue-400" icon_color="text-blue-500" %}
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-12 col-md-6 col-xl-3">
+        {% include "dashboard/components/cards/stat_card.html" with title="Total Users" value=total_users icon="bi-people-fill" color="bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300" growth="5.2" %}
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        {% include "dashboard/components/cards/stat_card.html" with title="Premium Users" value=premium_users icon="bi-star-fill" color="bg-yellow-100 text-yellow-600 dark:bg-yellow-900 dark:text-yellow-300" growth="12.4" %}
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        {% include "dashboard/components/cards/stat_card.html" with title="Themes" value=total_themes icon="bi-palette-fill" color="bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300" %}
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        {% include "dashboard/components/cards/stat_card.html" with title="Monthly Revenue" value=monthly_revenue icon="bi-currency-dollar" color="bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300" %}
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-12 col-lg-8">
+        {% include "dashboard/components/cards/chart_card.html" with title="User Growth" chart_id="userGrowthChart" chart_type="line" %}
+    </div>
+    <div class="col-12 col-lg-4">
+        {% include "dashboard/components/cards/chart_card.html" with title="Theme Usage" chart_id="themeUsageChart" chart_type="doughnut" %}
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <!-- Reusable table_card component requires rows block which include can't pass nicely. So we inline the table using the same styles. -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+            <div class="p-4 border-b border-gray-100 dark:border-gray-700">
+                <h5 class="text-lg font-bold text-gray-900 dark:text-white mb-0">Recent Users</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light dark:bg-gray-700 dark:text-gray-300">
+                        <tr>
+                            <th class="ps-4">User</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th class="pe-4">Joined</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-gray-700 dark:text-gray-300">
+                        {% for u in recent_users %}
+                        <tr>
+                            <td class="ps-4 fw-medium">{{ u.username }}</td>
+                            <td>{{ u.email }}</td>
+                            <td>
+                                {% if u.is_super_admin %}
+                                <span class="badge bg-danger rounded-pill">Super Admin</span>
+                                {% elif u.is_platform_admin %}
+                                <span class="badge bg-warning text-dark rounded-pill">Admin</span>
+                                {% elif u.is_premium %}
+                                <span class="badge bg-success rounded-pill">Premium</span>
+                                {% else %}
+                                <span class="badge bg-secondary rounded-pill">Free</span>
+                                {% endif %}
+                            </td>
+                            <td class="pe-4">{{ u.created_at|date:"M d, Y" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted py-4">No users found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    DashboardCharts.initLineChart('userGrowthChart', ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], [
+        { label: 'Free Users', data: [12, 19, 3, 5, 2, 3], borderColor: '#6b7280', backgroundColor: 'transparent' },
+        { label: 'Premium Users', data: [2, 3, 20, 5, 1, 4], borderColor: '#0d6efd', backgroundColor: 'transparent' }
+    ]);
+    
+    DashboardCharts.initDoughnutChart('themeUsageChart', ['Modern', 'Classic', 'Minimalist'], [
+        { data: [300, 50, 100], backgroundColor: ['#0d6efd', '#10b981', '#f59e0b'], borderWidth: 0 }
+    ]);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,6 @@
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-100 dark:border-gray-700 h-full flex flex-col">
+    <h5 class="text-lg font-bold text-gray-900 dark:text-white mb-4">{{ title }}</h5>
+    <div class="flex-grow relative" style="min-height: 300px;">
+        <canvas id="{{ chart_id }}" data-chart-type="{{ chart_type|default:'line' }}"></canvas>
+    </div>
+</div>

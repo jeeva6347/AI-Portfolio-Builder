@@ -1,0 +1,13 @@
+/* Dashboard specific utility styles that shouldn't be handled by Tailwind */
+/* e.g., Bootstrap overrides or custom z-indexes */
+
+.z-index-toast {
+    z-index: 9999;
+}
+
+/* Ensure the canvas wrapper doesn't overflow its card container */
+.chart-container {
+    position: relative;
+    height: 100%;
+    width: 100%;
+}

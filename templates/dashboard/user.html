@@ -1,0 +1,37 @@
+{% extends "dashboard/layouts/base.html" %}
+
+{% block title %}My Dashboard | AI Portfolio Builder{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    {% include "dashboard/components/breadcrumb.html" %}
+    <a href="#" class="btn btn-primary d-flex align-items-center gap-2 shadow-sm rounded-pill px-4">
+        <i class="bi bi-plus-lg"></i> Create Portfolio
+    </a>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-12 col-md-6 col-xl-3">
+        {% include "dashboard/components/cards/stat_card.html" with title="My Portfolios" value=my_portfolios icon="bi-briefcase-fill" color="bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300" %}
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        {% include "dashboard/components/cards/stat_card.html" with title="Drafts" value=drafts icon="bi-file-earmark-text-fill" color="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300" %}
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        {% include "dashboard/components/cards/stat_card.html" with title="Published" value=published icon="bi-globe" color="bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300" %}
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        {% include "dashboard/components/cards/stat_card.html" with title="GitHub Projects" value=github_projects icon="bi-github" color="bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300" %}
+    </div>
+</div>
+
+<!-- Placeholder for empty state -->
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 text-center py-5">
+    <div class="d-inline-flex align-items-center justify-content-center bg-blue-50 dark:bg-blue-900/30 text-blue-500 rounded-circle mb-4" style="width: 80px; height: 80px;">
+        <i class="bi bi-rocket-takeoff-fill text-4xl"></i>
+    </div>
+    <h3 class="h4 font-bold text-gray-900 dark:text-white mb-2">You haven't created a portfolio yet</h3>
+    <p class="text-gray-500 dark:text-gray-400 mb-4 max-w-md mx-auto">Get started by choosing a theme and generating your first AI-powered portfolio in minutes.</p>
+    <a href="#" class="btn btn-primary rounded-pill px-4 py-2"><i class="bi bi-magic me-2"></i>Start building</a>
+</div>
+{% endblock %}

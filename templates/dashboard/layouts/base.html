@@ -1,0 +1,79 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Dashboard | AI Portfolio Builder{% endblock %}</title>
+    
+    <!-- Bootstrap CSS for Layout/Grid/Components -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <!-- Tailwind CSS for Utilities/Cards/Animations -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#0d6efd',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    
+    <!-- Theme setup script (run immediately to prevent flash) -->
+    <script>
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-vh-100 d-flex flex-column transition-colors duration-200">
+    
+    <!-- Wrapper -->
+    <div class="d-flex flex-grow-1 overflow-hidden h-100">
+        
+        <!-- Sidebar -->
+        {% include "dashboard/components/sidebar.html" %}
+        
+        <!-- Main Content Wrapper -->
+        <div class="d-flex flex-column flex-grow-1 overflow-auto w-100" id="mainContentWrapper">
+            <!-- Top Navbar -->
+            {% include "dashboard/components/navbar.html" %}
+            
+            <!-- Main Content Area -->
+            <main class="p-4 p-lg-5 flex-grow-1">
+                {% include "dashboard/components/toast.html" %}
+                {% block content %}{% endblock %}
+            </main>
+            
+            <!-- Footer -->
+            {% include "dashboard/components/footer.html" %}
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script src="{% static 'js/dashboard.js' %}"></script>
+    
+    <!-- Chart.js and Custom Chart JS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{% static 'js/charts.js' %}"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
