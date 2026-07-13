@@ -1,13 +1,14 @@
 # Project Status
 
-**Completion:** Module 2 (Dashboard System) — complete. Modules 1-4 are effectively scaffolded or completed. Modules 5-22 not started.
+**Completion:** Module 5 (Theme Engine) — complete. ~14% overall (3 of ~22 modules).
 
 ## Completed
-- Module 1: Authentication (see CHANGELOG.md for full detail)
-- Module 2: Dashboard System (Super Admin, Admin, and User dashboards with shared architecture)
+- Module 1: Authentication (Custom User model, Email/Social Auth)
+- Module 2: Dashboard System (Super Admin, Admin, and User dashboards)
+- Module 5: Theme Engine (Upload, Validate, Extract, Marketplace, Preview, Admin)
 
 ## Not Started
-- Modules 5-22 (Theme Engine, Marketplace, Portfolio Builder, GitHub Auto Publish, AI Content, Payments, Analytics, etc.)
+- Modules 6-22 (Theme Mapper, Portfolio Builder, GitHub Auto Publish, AI Content, Payments, Analytics, etc.)
 
 ## Folder Structure
 ```

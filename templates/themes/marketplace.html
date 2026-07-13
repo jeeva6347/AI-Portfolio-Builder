@@ -1,0 +1,124 @@
+{% extends "dashboard/layouts/base.html" %}
+{% load static %}
+
+{% block title %}Theme Marketplace | AI Portfolio Builder{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/themes.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    {% include "dashboard/components/breadcrumb.html" %}
+    <p class="text-sm text-gray-500 dark:text-gray-400 mb-0">
+        <span class="fw-bold text-gray-900 dark:text-white">{{ total_themes }}</span> theme{{ total_themes|pluralize }} available
+    </p>
+</div>
+
+{# ── Filter Bar ── #}
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 mb-4">
+    <form method="get" class="d-flex flex-wrap gap-3 align-items-end">
+        <div class="flex-grow-1" style="min-width: 200px;">
+            <label class="form-label text-xs fw-semibold text-gray-500 dark:text-gray-400 text-uppercase mb-1">Search</label>
+            <div class="input-group">
+                <span class="input-group-text bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600"><i class="bi bi-search text-gray-400"></i></span>
+                <input type="text" name="q" class="form-control dark:bg-gray-700 dark:border-gray-600 dark:text-white" value="{{ form.q.value|default:'' }}" placeholder="Search themes...">
+            </div>
+        </div>
+        <div>
+            <label class="form-label text-xs fw-semibold text-gray-500 dark:text-gray-400 text-uppercase mb-1">Category</label>
+            <select name="category" class="form-select dark:bg-gray-700 dark:border-gray-600 dark:text-white" style="min-width:150px;">
+                <option value="">All Categories</option>
+                {% for cat in categories %}
+                <option value="{{ cat.pk }}" {% if form.category.value == cat.pk|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="form-label text-xs fw-semibold text-gray-500 dark:text-gray-400 text-uppercase mb-1">Pricing</label>
+            <select name="pricing" class="form-select dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                <option value="" {% if not form.pricing.value %}selected{% endif %}>Any</option>
+                <option value="free" {% if form.pricing.value == "free" %}selected{% endif %}>Free</option>
+                <option value="premium" {% if form.pricing.value == "premium" %}selected{% endif %}>Premium</option>
+            </select>
+        </div>
+        <div>
+            <label class="form-label text-xs fw-semibold text-gray-500 dark:text-gray-400 text-uppercase mb-1">Sort By</label>
+            <select name="sort" class="form-select dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                <option value="-created_at" {% if form.sort.value == "-created_at" or not form.sort.value %}selected{% endif %}>Latest</option>
+                <option value="-downloads" {% if form.sort.value == "-downloads" %}selected{% endif %}>Most Downloaded</option>
+                <option value="name" {% if form.sort.value == "name" %}selected{% endif %}>Name A-Z</option>
+                <option value="price" {% if form.sort.value == "price" %}selected{% endif %}>Price Low-High</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary rounded-pill px-4 d-flex align-items-center gap-2">
+            <i class="bi bi-funnel-fill"></i> Filter
+        </button>
+        {% if request.GET %}
+        <a href="{% url 'themes:marketplace' %}" class="btn btn-outline-secondary rounded-pill px-3">Clear</a>
+        {% endif %}
+    </form>
+</div>
+
+{# ── Theme Grid ── #}
+{% if themes %}
+<div class="row g-4">
+    {% for theme in themes %}
+    <div class="col-12 col-sm-6 col-xl-4">
+        <div class="theme-card bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden h-100 d-flex flex-column transition-all hover:shadow-md hover:-translate-y-0.5">
+            {# Thumbnail #}
+            <div class="position-relative" style="height: 180px; overflow: hidden;">
+                {% if theme.thumbnail %}
+                <img src="{{ theme.thumbnail.url }}" alt="{{ theme.name }}" class="w-100 h-100" style="object-fit: cover;">
+                {% else %}
+                <div class="w-100 h-100 d-flex align-items-center justify-content-center text-white fw-bold fs-3" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);">
+                    {{ theme.name|slice:":2"|upper }}
+                </div>
+                {% endif %}
+                {# Badges #}
+                <div class="position-absolute top-0 start-0 p-2 d-flex gap-1 flex-wrap">
+                    {% if theme.is_premium %}
+                    <span class="badge bg-yellow-400 text-yellow-900 rounded-pill shadow-sm"><i class="bi bi-star-fill me-1"></i>Premium</span>
+                    {% else %}
+                    <span class="badge bg-green-500 text-white rounded-pill shadow-sm">Free</span>
+                    {% endif %}
+                    {% if theme.category %}
+                    <span class="badge bg-white/90 text-gray-700 rounded-pill shadow-sm text-xs">{{ theme.category.name }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            {# Body #}
+            <div class="p-4 flex-grow-1 d-flex flex-column">
+                <h6 class="fw-bold text-gray-900 dark:text-white mb-1">{{ theme.name }}</h6>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-3 flex-grow-1">{{ theme.description|truncatechars:80|default:"A professional portfolio theme." }}</p>
+                <div class="d-flex flex-wrap gap-1 mb-3">
+                    {% for tag in theme.tag_list|slice:":3" %}
+                    <span class="badge bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-pill text-xs">{{ tag }}</span>
+                    {% endfor %}
+                </div>
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="text-xs text-gray-400"><i class="bi bi-download me-1"></i>{{ theme.downloads }}</span>
+                    <a href="{% url 'themes:theme_preview' theme.slug %}" class="btn btn-sm btn-primary rounded-pill px-3 d-flex align-items-center gap-1">
+                        <i class="bi bi-eye-fill"></i> Preview
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-5 my-4">
+    <div class="d-inline-flex align-items-center justify-content-center bg-gray-100 dark:bg-gray-700 text-gray-400 rounded-circle mb-4" style="width:80px;height:80px;">
+        <i class="bi bi-palette" style="font-size: 2.5rem;"></i>
+    </div>
+    <h4 class="text-gray-700 dark:text-gray-300 mb-2">No themes found</h4>
+    <p class="text-gray-400 mb-4">
+        {% if request.GET %}Try adjusting your filters, or {% endif %}check back soon for new themes.
+    </p>
+    {% if request.GET %}
+    <a href="{% url 'themes:marketplace' %}" class="btn btn-outline-primary rounded-pill px-4">Clear Filters</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,57 @@
+/* themes.css — Module 5: Theme Engine
+   Supplement to dashboard.css for marketplace grid and upload UX.
+   Does NOT duplicate any Bootstrap or Tailwind utilities. */
+
+/* ── Marketplace Theme Cards ─────────────────────────────────────── */
+
+.theme-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.theme-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.10) !important;
+}
+
+/* ── Drop zone drag-active state ─────────────────────────────────── */
+
+#dropZone {
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+    cursor: pointer;
+    border: 2px dashed #d1d5db; /* gray-300 */
+}
+
+#dropZone.drag-active,
+#dropZone:hover {
+    border-color: #3b82f6; /* blue-500 */
+    background-color: rgba(59, 130, 246, 0.04);
+}
+
+/* ── Spinning animation for processing indicator ─────────────────── */
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+.spin-animation {
+    display: inline-block;
+    animation: spin 1s linear infinite;
+}
+
+/* ── iframe preview resize handle ────────────────────────────────── */
+
+#previewContainer {
+    resize: vertical;
+    overflow: hidden;
+    min-height: 400px;
+    max-height: 90vh;
+}
+
+/* ── Asset list monospace paths ──────────────────────────────────── */
+
+.asset-path {
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 0.78rem;
+    word-break: break-all;
+}

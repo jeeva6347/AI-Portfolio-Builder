@@ -9,6 +9,11 @@ from .navigation import get_sidebar_navigation
 
 User = get_user_model()
 
+# Lazy import to avoid circular dependency at module load time
+def _get_theme_model():
+    from themes.models import Theme
+    return Theme
+
 class DashboardBaseView(TemplateView):
     """Base view for dashboards to inject common context."""
     def get_context_data(self, **kwargs):
@@ -21,24 +26,26 @@ class SuperAdminDashboardView(SuperAdminRequiredMixin, DashboardBaseView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        Theme = _get_theme_model()
         # Real statistics
         context['total_users'] = User.objects.count()
         context['premium_users'] = User.objects.filter(role=User.Role.PREMIUM_USER).count()
         context['free_users'] = User.objects.filter(role=User.Role.FREE_USER).count()
         context['admin_users'] = User.objects.filter(role__in=[User.Role.ADMIN, User.Role.SUPER_ADMIN]).count()
-        
+
         # Recent users table
         context['recent_users'] = User.objects.order_by('-created_at')[:5]
-        
-        # Placeholders
-        context['total_themes'] = 0
-        context['premium_themes'] = 0
+
+        # Real theme stats
+        context['total_themes'] = Theme.objects.count()
+        context['premium_themes'] = Theme.objects.filter(is_premium=True, status=Theme.Status.APPROVED).count()
         context['published_portfolios'] = 0
         context['monthly_revenue'] = "$0.00"
         context['github_connections'] = User.objects.exclude(github_username="").count()
-        
+
         context['breadcrumbs'] = [{'title': 'Dashboard', 'url': '#'}]
         return context
+
 
 class AdminDashboardView(AdminRequiredMixin, DashboardBaseView):
     template_name = "dashboard/admin.html"

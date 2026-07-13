@@ -22,14 +22,28 @@
 - [x] Theme Toggle (Light/Dark) & Responsive Collapsible Sidebar
 - [x] Security Mixins and Custom 403 Page
 
-## Next: Module 5-8 — Theme Engine & Marketplace
-- [ ] Support uploading `theme.zip` (index.html, style.css, script.js, assets)
-- [ ] Extract, validate, and store theme files
-- [ ] Visual Theme Mapper (map sections to dynamic data)
-- [ ] Theme Marketplace for users to browse and select
+## Module 5 — Theme Engine (COMPLETE)
+- [x] ThemeCategory, Theme, ThemeAsset models + migrations
+- [x] 10 default categories seeded via data migration
+- [x] ZIP upload with 6-layer validation (format, size, zip-slip, whitelist, count, index.html)
+- [x] Atomic processing pipeline (extract → scan → thumbnail → rollback on failure)
+- [x] Admin: theme list, upload, detail, approve, reject, submit, delete
+- [x] Admin: category list, add, delete
+- [x] Public Marketplace: search, filter, sort
+- [x] Theme preview: sandboxed iframe + desktop/tablet/mobile viewport toggle
+- [x] Django Admin registration for all models
+- [x] Sidebar navigation updated (Themes & Marketplace live)
+- [x] Super Admin Dashboard now shows real theme counts
+- [x] Fixed: `theme_preference` migration gap (0002_user_theme_preference.py)
+- [x] Fixed: Root URL / returning 404 (redirects to login)
 
-## Then: Modules 5-9 — Theme Engine, Marketplace, Categories, Preview, DB polish
-## Then: Module 10 — UI pass (dark mode, animations, toasts, skeletons)
+## Next: Module 6 — Theme Mapper
+- [ ] Visual section mapper: connect theme HTML sections to portfolio data fields
+- [ ] Map `{{name}}`, `{{bio}}`, `{{projects}}` etc. to user profile fields
+- [ ] Store mapping config per theme in DB
+- [ ] Preview with real user data injected
+
+## Then: Modules 7-9
 
 ## Explicitly excluded from this phase (per brief)
 - Portfolio Builder logic, GitHub Auto Publish, Payments, Premium

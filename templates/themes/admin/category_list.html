@@ -1,0 +1,106 @@
+{% extends "dashboard/layouts/base.html" %}
+{% load static %}
+
+{% block title %}Theme Categories | AI Portfolio Builder{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    {% include "dashboard/components/breadcrumb.html" %}
+</div>
+
+<div class="row g-4">
+    {# ── Category List ── #}
+    <div class="col-12 col-lg-8">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+            <div class="p-4 border-b border-gray-100 dark:border-gray-700">
+                <h5 class="mb-0 fw-bold text-gray-900 dark:text-white">
+                    <i class="bi bi-tags-fill text-blue-500 me-2"></i>Theme Categories
+                    <span class="badge bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 ms-2">{{ categories.count }}</span>
+                </h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-gray-50 dark:bg-gray-700">
+                        <tr class="text-gray-500 dark:text-gray-300 text-sm">
+                            <th class="ps-4 py-3">Category</th>
+                            <th>Icon</th>
+                            <th>Themes</th>
+                            <th class="pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cat in categories %}
+                        <tr>
+                            <td class="ps-4 py-3">
+                                <p class="mb-0 fw-semibold text-gray-900 dark:text-white">{{ cat.name }}</p>
+                                <p class="mb-0 text-xs text-gray-400">{{ cat.description|truncatechars:50|default:"—" }}</p>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi {{ cat.icon }} text-blue-500 text-xl"></i>
+                                    <code class="text-xs text-gray-400">{{ cat.icon }}</code>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 rounded-pill">{{ cat.theme_count }}</span>
+                            </td>
+                            <td class="pe-4">
+                                <form method="post" action="{% url 'themes:category_delete' cat.slug %}" class="d-inline" onsubmit="return confirm('Delete category \'{{ cat.name }}\'? Themes in this category will become uncategorised.');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill">
+                                        <i class="bi bi-trash3"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center py-5 text-gray-400">
+                                No categories yet. Add one using the form →
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {# ── Add Category Form ── #}
+    <div class="col-12 col-lg-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4">
+            <h5 class="mb-3 fw-bold text-gray-900 dark:text-white"><i class="bi bi-plus-circle-fill text-green-500 me-2"></i>Add Category</h5>
+            <form method="post">
+                {% csrf_token %}
+                {% for field in form %}
+                <div class="mb-3">
+                    <label class="form-label fw-semibold text-gray-700 dark:text-gray-300 text-sm" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    <div class="{% if field.errors %}is-invalid{% endif %}">
+                        {% if field.field.widget.input_type == 'textarea' %}
+                        <textarea name="{{ field.html_name }}" id="{{ field.id_for_label }}" class="form-control form-control-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white{% if field.errors %} is-invalid{% endif %}" rows="2">{{ field.value|default:'' }}</textarea>
+                        {% else %}
+                        <input type="{{ field.field.widget.input_type|default:'text' }}" name="{{ field.html_name }}" id="{{ field.id_for_label }}" class="form-control form-control-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white{% if field.errors %} is-invalid{% endif %}" value="{{ field.value|default:'' }}" placeholder="{{ field.field.widget.attrs.placeholder|default:'' }}">
+                        {% endif %}
+                    </div>
+                    {% if field.help_text %}<div class="form-text text-gray-400 text-xs">{{ field.help_text }}</div>{% endif %}
+                    {% if field.errors %}<div class="invalid-feedback d-block">{{ field.errors.0 }}</div>{% endif %}
+                </div>
+                {% endfor %}
+                <button type="submit" class="btn btn-primary w-100 rounded-pill">Add Category</button>
+            </form>
+        </div>
+
+        {# Quick icon reference #}
+        <div class="bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-700 p-4 mt-3">
+            <h6 class="fw-bold text-gray-700 dark:text-gray-300 mb-2 text-sm">Suggested Icons</h6>
+            <div class="d-flex flex-wrap gap-2 text-gray-500 dark:text-gray-400">
+                {% for icon in suggested_icons %}
+                <span class="d-flex align-items-center gap-1 text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded px-2 py-1 cursor-pointer" onclick="document.querySelector('[name=icon]').value='{{ icon }}'">
+                    <i class="bi {{ icon }}"></i> <code class="text-xs">{{ icon }}</code>
+                </span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

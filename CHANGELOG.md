@@ -1,6 +1,29 @@
 # Changelog
 
-## [Unreleased] - Module 2: Dashboard System
+## [Unreleased] - Module 5: Theme Engine + Pre-flight Fixes
+### Fixed
+- Added `accounts/migrations/0002_user_theme_preference.py` — additive migration for the `theme_preference` field that was missing from `0001_initial.py`. Safe for both fresh and existing databases.
+- Fixed root URL `/` returning 404. Now redirects to `/accounts/login/`.
+
+### Added
+- Full Theme Engine in the `themes` app:
+  - Models: `ThemeCategory`, `Theme`, `ThemeAsset` with proper migrations.
+  - Data migration seeding 10 default categories (Developer, Portfolio, Resume, Minimal, Corporate, Creative, Business, Landing Page, Dark, Light).
+  - ZIP upload pipeline with 6-layer validation: format, 50MB size limit, zip-slip protection, file type whitelist, 500-file count limit, required `index.html`.
+  - Atomic transaction — any processing failure rolls back DB and removes extracted files.
+  - Asset scanner: classifies HTML, CSS, JS, images, fonts, and stores per-file records.
+  - Placeholder thumbnail generator using Pillow.
+  - Admin views: theme list (with status filter), upload, detail, approve, reject, submit for review, delete.
+  - Category management: list + add + delete categories.
+  - Public Marketplace with search, category filter, pricing filter, and sort.
+  - Theme preview via sandboxed iframe with desktop/tablet/mobile viewport toggles.
+  - Django Admin integration for all three models.
+- Connected real theme counts to Super Admin Dashboard stats.
+- Replaced sidebar Themes and Marketplace placeholder links with live URLs.
+- `static/js/theme_upload.js` — drag-and-drop UX with client-side validation and progress bar.
+- `static/css/themes.css` — marketplace cards, drop zone, and preview styling.
+
+## [Completed] - Module 2: Dashboard System
 ### Added
 - Dashboard architecture with reusable components (`sidebar`, `navbar`, `cards`, `toast`, `breadcrumb`, `footer`).
 - Implemented Super Admin Dashboard, Admin Dashboard, and User Dashboard templates.

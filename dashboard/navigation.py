@@ -13,10 +13,10 @@ SIDEBAR_NAVIGATION = [
     {
         "title": "Themes",
         "icon": "bi-palette-fill",
-        "url": "dashboard:themes_placeholder",
+        "url": "themes:theme_list_admin",
         "required_role": ["SUPER_ADMIN", "ADMIN"],
         "badge": None,
-        "coming_soon": True,
+        "coming_soon": False,
         "name": "themes",
     },
     {
@@ -31,10 +31,10 @@ SIDEBAR_NAVIGATION = [
     {
         "title": "Marketplace",
         "icon": "bi-shop",
-        "url": "dashboard:marketplace_placeholder",
-        "required_role": ["SUPER_ADMIN", "PREMIUM_USER", "FREE_USER"],
+        "url": "themes:marketplace",
+        "required_role": ["SUPER_ADMIN", "ADMIN", "PREMIUM_USER", "FREE_USER"],
         "badge": None,
-        "coming_soon": True,
+        "coming_soon": False,
         "name": "marketplace",
     },
     {

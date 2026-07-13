@@ -2,12 +2,18 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.views.generic import RedirectView
 
 urlpatterns = [
+    # Root: redirect unauthenticated → login; authenticated users will
+    # be picked up by dashboard_redirect after login completes.
+    path("", RedirectView.as_view(url="/accounts/login/", permanent=False), name="root"),
+
     path("admin/", admin.site.urls),
     path("accounts/", include("accounts.urls")),
     path("accounts/social/", include("allauth.urls")),
     path("dashboard/", include("dashboard.urls")),
+    path("themes/", include("themes.urls")),
 ]
 
 if settings.DEBUG:
