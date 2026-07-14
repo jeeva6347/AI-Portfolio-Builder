@@ -31,3 +31,5 @@ if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 handler403 = 'dashboard.views.custom_permission_denied_view'
+handler404 = 'dashboard.views.custom_page_not_found_view'
+handler500 = 'dashboard.views.custom_server_error_view'

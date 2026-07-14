@@ -584,7 +584,19 @@ class UserPortfolioPreview(LoginRequiredMixin, View):
     Restricts access to owner unless the status is PUBLISHED.
     """
     def get(self, request, pk):
-        portfolio = get_object_or_404(Portfolio, pk=pk)
+        portfolio = get_object_or_404(
+            Portfolio.objects.select_related("selected_theme", "user")
+            .prefetch_related(
+                "skills",
+                "projects",
+                "experiences",
+                "education",
+                "certificates",
+                "services",
+                "testimonials",
+            ),
+            pk=pk
+        )
         
         # Security Access check: if unpublished, restrict to owner or org viewer
         has_access = True

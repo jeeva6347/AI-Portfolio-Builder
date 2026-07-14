@@ -131,12 +131,23 @@ class ResumeParserService:
             method="POST"
         )
         
-        with urllib.request.urlopen(req, timeout=15) as response:
-            res_body = json.loads(response.read().decode("utf-8"))
-            content = res_body["candidates"][0]["content"]["parts"][0]["text"]
-            # Clean possible markdown wrap
-            content_clean = content.strip().lstrip("```json").rstrip("```").strip()
-            return json.loads(content_clean)
+        import time
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                with urllib.request.urlopen(req, timeout=15) as response:
+                    res_body = json.loads(response.read().decode("utf-8"))
+                    content = res_body["candidates"][0]["content"]["parts"][0]["text"]
+                    # Clean possible markdown wrap
+                    content_clean = content.strip().lstrip("```json").rstrip("```").strip()
+                    return json.loads(content_clean)
+            except Exception as e:
+                # If rate-limited (HTTP 429) or server error (5xx), wait and retry
+                status_code = getattr(e, "code", None)
+                if status_code in [429, 500, 502, 503, 504] and attempt < max_retries - 1:
+                    time.sleep(1.5 ** attempt)
+                    continue
+                raise e
 
     @classmethod
     def parse_resume_data_heuristics(cls, text: str) -> dict:

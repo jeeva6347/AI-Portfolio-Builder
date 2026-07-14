@@ -30,6 +30,7 @@ SECRET_KEY = config("DJANGO_SECRET_KEY", default="django-insecure-change-me-in-.
 DEBUG = config("DJANGO_DEBUG", default=True, cast=bool)
 ALLOWED_HOSTS = config("DJANGO_ALLOWED_HOSTS", default="127.0.0.1,localhost", cast=Csv())
 CSRF_TRUSTED_ORIGINS = config("CSRF_TRUSTED_ORIGINS", default="http://127.0.0.1:8000,http://localhost:8000", cast=Csv())
+CSRF_FAILURE_VIEW = "dashboard.views.custom_csrf_failure_view"
 
 SITE_ID = 1
 
@@ -91,6 +92,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "core.context_processors.analytics_context",
             ],
         },
     },
@@ -241,3 +243,24 @@ if not DEBUG:
     if SECRET_KEY.startswith("django-insecure-") or len(SECRET_KEY) < 30:
         import secrets
         SECRET_KEY = secrets.token_urlsafe(50)
+
+# ---------------------------------------------------------------------------
+# Analytics & Monitoring Configurations
+# ---------------------------------------------------------------------------
+GOOGLE_ANALYTICS_ID = config("GOOGLE_ANALYTICS_ID", default="")
+MICROSOFT_CLARITY_ID = config("MICROSOFT_CLARITY_ID", default="")
+
+SENTRY_DSN = config("SENTRY_DSN", default="")
+
+if SENTRY_DSN and not DEBUG:
+    try:
+        import sentry_sdk
+        from sentry_sdk.integrations.django import DjangoIntegration
+        sentry_sdk.init(
+            dsn=SENTRY_DSN,
+            integrations=[DjangoIntegration()],
+            traces_sample_rate=0.2,
+            send_default_pii=True,
+        )
+    except ImportError:
+        pass

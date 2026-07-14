@@ -148,3 +148,20 @@ def custom_permission_denied_view(request, exception=None):
         context['sidebar_nav'] = get_sidebar_navigation(request.user)
     
     return render(request, "403.html", context, status=403)
+
+def custom_page_not_found_view(request, exception=None):
+    """Custom 404 error handler."""
+    context = {}
+    if request.user.is_authenticated:
+        context['sidebar_nav'] = get_sidebar_navigation(request.user)
+    return render(request, "404.html", context, status=404)
+
+def custom_server_error_view(request):
+    """Custom 500 error handler."""
+    context = {}
+    return render(request, "500.html", context, status=500)
+
+def custom_csrf_failure_view(request, reason=""):
+    """Custom CSRF failure handler."""
+    context = {'reason': reason}
+    return render(request, "csrf_failure.html", context, status=403)

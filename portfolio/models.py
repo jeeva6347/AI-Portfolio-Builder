@@ -122,12 +122,13 @@ class Portfolio(models.Model):
         }
 
         # Retrieve related lists
-        # Skills
-        data["skills.technical"] = ", ".join([s.name for s in self.skills.filter(skill_type="technical")])
-        data["skills.soft"] = ", ".join([s.name for s in self.skills.filter(skill_type="soft")])
-        data["skills.languages"] = ", ".join([s.name for s in self.skills.filter(skill_type="language")])
-        data["skills.frameworks"] = ", ".join([s.name for s in self.skills.filter(skill_type="framework")])
-        data["skills.tools"] = ", ".join([s.name for s in self.skills.filter(skill_type="tool")])
+        # Skills (Optimized to filter in-memory, avoiding extra queries if prefetched)
+        all_skills = list(self.skills.all())
+        data["skills.technical"] = ", ".join([s.name for s in all_skills if s.skill_type == "technical"])
+        data["skills.soft"] = ", ".join([s.name for s in all_skills if s.skill_type == "soft"])
+        data["skills.languages"] = ", ".join([s.name for s in all_skills if s.skill_type == "language"])
+        data["skills.frameworks"] = ", ".join([s.name for s in all_skills if s.skill_type == "framework"])
+        data["skills.tools"] = ", ".join([s.name for s in all_skills if s.skill_type == "tool"])
 
         # Dynamic lists for visual repeating mapping structures
         data["projects.list"] = [
