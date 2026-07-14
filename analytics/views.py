@@ -1,3 +1,9 @@
+"""
+Analytics views for Module 11: Analytics, SEO & Performance.
+
+Provides traffic dashboards, SEO configuration, performance diagnostics,
+sitemap.xml, and robots.txt endpoints.
+"""
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -21,6 +27,8 @@ from .services.seo_service import calculate_seo_score
 
 
 class PortfolioSEOForm(forms.ModelForm):
+    """Form for editing portfolio SEO metadata."""
+
     class Meta:
         model = PortfolioSEO
         fields = [
@@ -43,6 +51,7 @@ class PortfolioSEOForm(forms.ModelForm):
 
 
 def _base_context(request, active_tab="analytics"):
+    """Return consistent navigation context for analytics views."""
     return {
         "sidebar_nav": get_sidebar_navigation(request.user),
         "active_tab": active_tab,
@@ -53,6 +62,9 @@ class AnalyticsDashboardView(LoginRequiredMixin, View):
     """
     Core Analytics page visualizing visits charts, referrers, and geography.
     Gated to PREMIUM_USER and SUPER_ADMIN roles.
+
+    Performance: Uses select_related + prefetch_related to avoid N+1 queries
+    when loading per-portfolio metrics.
     """
     template_name = "analytics/dashboard.html"
 
@@ -66,18 +78,33 @@ class AnalyticsDashboardView(LoginRequiredMixin, View):
             return redirect("payments:billing")
 
         user = request.user
-        portfolios = Portfolio.objects.filter(user=user)
-        
-        # Calculate totals across all user portfolios
+
+        # Use select_related/prefetch_related to load metrics in a single pass (avoids N+1)
+        portfolios = list(
+            Portfolio.objects.filter(user=user)
+            .select_related("selected_theme")
+            .prefetch_related("metric", "seo")
+        )
+
+        # Compute totals in Python — metrics already prefetched
         total_views = 0
         total_uniques = 0
         total_returning = 0
-        
+
         portfolio_stats = []
-        recent_visits = PortfolioVisit.objects.filter(portfolio__user=user).order_by("-timestamp")[:10]
+        recent_visits = (
+            PortfolioVisit.objects
+            .filter(portfolio__user=user)
+            .select_related("portfolio")
+            .order_by("-timestamp")[:10]
+        )
 
         for p in portfolios:
-            metric, _ = PortfolioMetric.objects.get_or_create(portfolio=p)
+            # Access the pre-fetched metric via reverse OneToOne (may not exist yet)
+            try:
+                metric = p.metric
+            except PortfolioMetric.DoesNotExist:
+                metric = PortfolioMetric.objects.create(portfolio=p)
             total_views += metric.total_visits
             total_uniques += metric.unique_visitors
             total_returning += metric.returning_visitors
@@ -90,16 +117,19 @@ class AnalyticsDashboardView(LoginRequiredMixin, View):
         today = timezone.now().date()
         date_list = [today - timedelta(days=x) for x in range(30)]
         date_list.reverse()
-        
+
         chart_labels = [d.strftime("%b %d") for d in date_list]
         chart_data = []
-        
-        all_user_visits = PortfolioVisit.objects.filter(portfolio__user=user, timestamp__date__gte=today - timedelta(days=30))
+
+        all_user_visits = PortfolioVisit.objects.filter(
+            portfolio__user=user,
+            timestamp__date__gte=today - timedelta(days=30)
+        )
         visits_by_date = {}
         for v in all_user_visits:
             v_date = v.timestamp.date()
             visits_by_date[v_date] = visits_by_date.get(v_date, 0) + 1
-            
+
         for d in date_list:
             chart_data.append(visits_by_date.get(d, 0))
 
@@ -115,7 +145,7 @@ class AnalyticsDashboardView(LoginRequiredMixin, View):
 
         # Referrers splits
         referrer_stats = all_user_visits.values("referrer").annotate(count=Count("id")).order_by("-count")[:5]
-        
+
         # Geography splits
         country_stats = all_user_visits.values("country").annotate(count=Count("id")).order_by("-count")[:5]
 
@@ -198,13 +228,13 @@ class PortfolioSEOConfigView(LoginRequiredMixin, View):
 
         seo, _ = PortfolioSEO.objects.get_or_create(portfolio=portfolio)
         form = PortfolioSEOForm(request.POST, request.FILES, instance=seo)
-        
+
         if form.is_valid():
             form.save()
-            
+
             # Recalculate SEO Score
             calculate_seo_score(portfolio)
-            
+
             messages.success(request, f"SEO Meta Config for '{portfolio.name}' updated successfully.")
             return redirect("analytics:seo_config", pk=portfolio.pk)
 
@@ -250,12 +280,12 @@ class SitemapView(View):
     """
     def get(self, request):
         portfolios = Portfolio.objects.filter(status=Portfolio.Status.PUBLISHED).select_related("user")
-        
+
         xml_lines = [
             '<?xml version="1.0" encoding="UTF-8"?>',
             '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
         ]
-        
+
         for p in portfolios:
             url = request.build_absolute_uri(reverse("portfolio:preview", kwargs={"pk": p.pk}))
             xml_lines.append("  <url>")
@@ -264,7 +294,7 @@ class SitemapView(View):
             xml_lines.append("    <changefreq>weekly</changefreq>")
             xml_lines.append("    <priority>0.8</priority>")
             xml_lines.append("  </url>")
-            
+
         xml_lines.append("</urlset>")
         return HttpResponse("\n".join(xml_lines), content_type="application/xml")
 

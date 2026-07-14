@@ -278,9 +278,12 @@ class PortfolioUpdateAPI(LoginRequiredMixin, View):
     """
     AJAX endpoint validating and auto-saving individual fields
     to support real-time preview updates without page reload.
+    Returns 403 if the portfolio belongs to a different user.
     """
     def post(self, request, pk):
-        portfolio = get_object_or_404(Portfolio, pk=pk, user=request.user)
+        portfolio = get_object_or_404(Portfolio, pk=pk)
+        if portfolio.user != request.user:
+            return HttpResponseForbidden("You do not have permission to edit this portfolio.")
         form = PortfolioForm(request.POST, request.FILES, instance=portfolio)
         if form.is_valid():
             form.save()

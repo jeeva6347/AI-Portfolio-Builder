@@ -44,7 +44,7 @@ class AuthenticationTestCase(TestCase):
         """Verify authentication login page loads fine."""
         res = self.client.get(reverse("account_login"))
         self.assertEqual(res.status_code, 200)
-        self.assertContains(res, "Log In")
+        self.assertContains(res, "Sign In")  # allauth renders "Sign In" not "Log In"
 
     def test_authenticated_user_redirects_to_dashboard(self):
         """Verify that logged-in users hitting root are redirected to dashboard."""

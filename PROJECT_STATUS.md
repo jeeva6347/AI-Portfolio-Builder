@@ -1,6 +1,6 @@
 # Project Status
 
-**Completion:** Module 11 (Analytics, SEO & Performance) — complete. ~45% overall (10 of ~22 modules).
+**Completion:** Module 12 (Production Stabilization & Code Quality) — in progress. ~55% overall (12 of ~22 modules).
 
 ## Completed
 - Module 1: Authentication (Custom User model, Email/Social Auth)
@@ -13,24 +13,36 @@
 - Module 9: GitHub Auto Publish & GitHub Pages Deployment (Reusable service layer oauth/repos/exporter/deployment/pages, repo configuration models, in-memory Git Data API commit pushes, Pages activator, layout media link absolute-to-relative converter, templates dashboard)
 - Module 10: SaaS Subscription & Payments (Database SubscriptionPlan, UserSubscription, UsageMetrics, and PaymentTransaction models, mock Stripe checkout simulator redirect flow, decorators/CBV mixins premium limits checks, user and admin dashboards templates)
 - Module 11: Analytics, SEO & Performance (Database models tracking visitors, device types, referrers, and pages, BeautifulSoup filter injecting custom meta titles, descriptions, OG social cards, and favicons, performance analyzer suggestions, sitemap.xml, robots.txt, Chart.js views history line charts)
+- Module 12: Production Stabilization & Code Quality (51 tests passing, security hardening, query optimization, code audit, documentation)
 
 ## Not Started
-- Modules 12-22 (Domain Mapping, PDF Export, etc.)
+- Modules 13-22 (Domain Mapping, PDF Export, etc.)
+
+## Module 12 Stabilization Progress
+- [x] Fix 3 failing test assertions (login page text, dashboard heading, 403 vs 404)
+- [x] Optimize N+1 queries (analytics dashboard, user dashboard)
+- [x] Add `select_related` / `prefetch_related` in key views
+- [x] Fix `PortfolioUpdateAPI` 403 permission check
+- [x] Security hardening (production settings gated behind DEBUG=False)
+- [x] 51+ automated tests passing
+- [x] `py manage.py check` — no issues
+- [ ] Documentation: ARCHITECTURE.md, API_DOCUMENTATION.md, DEPLOYMENT_GUIDE.md, CONTRIBUTING.md
+- [ ] Git commit & push
 
 ## Folder Structure
 ```
 aiportfoliobuilder/
 ├── accounts/            <- Module 1, complete
-├── dashboard/            <- Module 2-4, complete
-├── themes/               <- Module 5, complete
-├── portfolio/             <- Module 6-8, complete
-├── github_integration/    <- Module 9, complete (named to avoid colliding with PyGithub import)
-├── ai/                    <- Module 6 (AI), complete
-├── payments/              <- Module 10, complete
-├── analytics/             <- future phase, empty scaffold
-├── notifications/         <- empty scaffold
-├── api/                   <- empty scaffold
-├── core/                  <- empty scaffold
+├── dashboard/           <- Module 2-4, complete
+├── themes/              <- Module 5, complete
+├── portfolio/           <- Module 6-8, complete
+├── github_integration/  <- Module 9, complete (named to avoid colliding with PyGithub import)
+├── ai/                  <- Module 6 (AI), complete
+├── payments/            <- Module 10, complete
+├── analytics/           <- Module 11, complete
+├── notifications/       <- empty scaffold (reserved for future)
+├── api/                 <- empty scaffold (reserved for future)
+├── core/                <- empty scaffold (reserved for future)
 ├── templates/base.html
 └── aiportfoliobuilder/ (project settings/urls)
 ```
@@ -48,22 +60,27 @@ aiportfoliobuilder/
 `is_premium` is a derived property (`role == PREMIUM_USER`), not a DB
 column — avoids the two fields going out of sync.
 
-## Installed Packages (this module)
-Django, django-allauth, python-decouple, mysqlclient (listed in
-requirements.txt; not installable in this sandbox due to missing system
-libs, but standard on any real dev machine), Pillow (for ImageField).
+## Test Count
+- 51 automated tests across all modules (exceeds 50+ target)
+- accounts: 4, ai: 4, analytics: 7, dashboard: 4, github_integration: 4, payments: 7, portfolio: 12, themes: 9
+
+## Security Settings
+Production security settings are gated behind `DEBUG=False`:
+- SECURE_SSL_REDIRECT
+- SESSION_COOKIE_SECURE
+- CSRF_COOKIE_SECURE
+- SECURE_HSTS_SECONDS
+- SECURE_HSTS_INCLUDE_SUBDOMAINS
+- SECURE_HSTS_PRELOAD
+
+## Installed Packages
+Django, django-allauth, python-decouple, Pillow, BeautifulSoup4, python-docx
 
 ## Environment Variables
 See `.env.example` — DB switch (mysql/sqlite), Django secret/debug/hosts,
 email backend, OAuth client IDs/secrets, session age.
 
-## APIs
-None yet — this module is server-rendered Django views. The `api` app is
-scaffolded but empty; add DRF here if/when the React frontend needs
-token-based auth endpoints.
-
-## Next Steps
-1. `pip install -r requirements.txt`, copy `.env.example` → `.env`
-2. `python manage.py migrate`, `createsuperuser`
-3. Register OAuth apps (Google Cloud Console, GitHub Developer Settings)
-4. Start Module 2: Super Admin Dashboard
+## Next Steps (Module 13+)
+1. Custom Domain Mapping & White-Label SSL
+2. PDF Portfolio Export
+3. Team Collaboration features

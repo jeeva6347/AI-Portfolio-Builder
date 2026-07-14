@@ -72,29 +72,36 @@ class UserDashboardView(LoginRequiredMixin, DashboardBaseView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         from portfolio.models import Portfolio
-        portfolios = list(Portfolio.objects.filter(user=self.request.user).select_related("selected_theme"))
+        # Use select_related + prefetch to avoid N+1 queries
+        portfolios = list(
+            Portfolio.objects.filter(user=self.request.user)
+            .select_related("selected_theme")
+            .prefetch_related("metric")
+        )
         primary_portfolio = sorted(portfolios, key=lambda p: p.updated_at or p.created_at, reverse=True)[0] if portfolios else None
-        
+
         context['my_portfolios'] = len(portfolios)
         context['selected_theme_name'] = primary_portfolio.selected_theme.name if primary_portfolio and primary_portfolio.selected_theme else "None"
-        
+
         context['drafts'] = sum(1 for p in portfolios if p.status == Portfolio.Status.DRAFT)
         context['published'] = sum(1 for p in portfolios if p.status == Portfolio.Status.PUBLISHED)
         context['archived'] = sum(1 for p in portfolios if p.status == Portfolio.Status.ARCHIVED)
         context['github_projects'] = primary_portfolio.projects.exclude(github_url="").count() if primary_portfolio else 0
-        
-        # Traffic aggregates
+
+        # Traffic aggregates — use annotation to avoid N+1 per portfolio
         from analytics.models import PortfolioMetric, PortfolioVisit
-        metrics = PortfolioMetric.objects.filter(portfolio__user=self.request.user)
-        total_views = 0
-        avg_seo = 100
-        avg_perf = 100
-        
-        if metrics.exists():
-            total_views = sum(m.total_visits for m in metrics)
-            avg_seo = round(sum(m.seo_score for m in metrics) / metrics.count())
-            avg_perf = round(sum(m.performance_score for m in metrics) / metrics.count())
-            
+        from django.db.models import Sum as DbSum, Avg
+        metrics_qs = PortfolioMetric.objects.filter(portfolio__user=self.request.user)
+
+        totals = metrics_qs.aggregate(
+            total_visits=DbSum("total_visits"),
+            avg_seo=Avg("seo_score"),
+            avg_perf=Avg("performance_score"),
+        )
+        total_views = totals["total_visits"] or 0
+        avg_seo = round(totals["avg_seo"] or 100)
+        avg_perf = round(totals["avg_perf"] or 100)
+
         context['total_views'] = total_views
         context['avg_seo'] = avg_seo
         context['avg_perf'] = avg_perf
@@ -105,7 +112,7 @@ class UserDashboardView(LoginRequiredMixin, DashboardBaseView):
         today = timezone.now().date()
         date_list = [today - timedelta(days=x) for x in range(30)]
         date_list.reverse()
-        
+
         context['chart_labels'] = [d.strftime("%b %d") for d in date_list]
         all_user_visits = PortfolioVisit.objects.filter(
             portfolio__user=self.request.user,
@@ -115,7 +122,7 @@ class UserDashboardView(LoginRequiredMixin, DashboardBaseView):
         for v in all_user_visits:
             v_date = v.timestamp.date()
             visits_by_date[v_date] = visits_by_date.get(v_date, 0) + 1
-            
+
         context['chart_data'] = [visits_by_date.get(d, 0) for d in date_list]
 
         context['breadcrumbs'] = [{'title': 'My Dashboard', 'url': '#'}]

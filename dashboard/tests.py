@@ -46,4 +46,4 @@ class DashboardTestCase(TestCase):
         self.client.login(username="adminuser", password="pwd")
         res = self.client.get(reverse("dashboard:super_admin"))
         self.assertEqual(res.status_code, 200)
-        self.assertContains(res, "Admin Console Summary")
+        self.assertContains(res, "Super Admin Dashboard")  # page title text
