@@ -5,14 +5,11 @@
 - [x] Email signup + login, with Remember Me
 - [x] Google OAuth, GitHub OAuth
 - [x] Forgot / reset password
-- [x] Email verification (via allauth, ACCOUNT_EMAIL_VERIFICATION=optional
-      by default — set to "mandatory" in .env for production)
+- [x] Email verification (via allauth, ACCOUNT_EMAIL_VERIFICATION=optional by default — set to "mandatory" in .env for production)
 - [x] Profile picture
 - [x] Session management (list + revoke-others)
 - [x] Role-based dashboard redirect stub
-- [x] End-to-end tested: signup, login, logout, password reset round
-      trip, profile access, session listing — all verified live, not
-      just read through.
+- [x] End-to-end tested: signup, login, logout, password reset round trip, profile access, session listing — all verified live, not just read through.
 
 ## Module 2-4 — Dashboard System (COMPLETE)
 - [x] Shared Dashboard Layouts (Sidebar, Navbar, Components)
@@ -89,64 +86,41 @@
 
 ## Module 10 — SaaS Subscription & Payments (COMPLETE)
 - [x] Reusable `SubscriptionPlan` model with dynamic database admin editable limits
-- `[x]` Provisioned automatic Free subscription and UsageMetrics profile on account creations
-- `[x]` Modular provider services (`BasePaymentProvider`, `MockPaymentProvider`) initiating checkouts
-- `[x]` Reusable permission checks (`PortfolioLimitMixin`, `AILimitMixin`, `GitHubPublishLimitMixin`) gating views
-- `[x]` High-fidelity user billing dashboard template tracking limits usage percentages and disk size occupied
-- `[x]` Mock Stripe checkout session screen simulating Paid upgrade activations
-- `[x]` Admin console summaries card panel displaying subscribers count splits and revenues
-- `[x]` Added 7 payments mock unit tests (29 tests total passing OK)
+- [x] Provisioned automatic Free subscription and UsageMetrics profile on account creations
+- [x] Modular provider services (`BasePaymentProvider`, `MockPaymentProvider`) initiating checkouts
+- [x] Reusable permission checks (`PortfolioLimitMixin`, `AILimitMixin`, `GitHubPublishLimitMixin`) gating views
+- [x] High-fidelity user billing dashboard template tracking limits usage percentages and disk size occupied
+- [x] Mock Stripe checkout session screen simulating Paid upgrade activations
+- [x] Admin console summaries card panel displaying subscribers count splits and revenues
+- [x] Added 7 payments mock unit tests (29 tests total passing OK)
 
 ## Module 11 — Analytics, SEO & Performance (COMPLETE)
 - [x] Mapped `PortfolioVisit`, `PortfolioMetric`, and `PortfolioSEO` database models with automatic signals
-- `[x]` Parsed browser user-agents, device categories, referrers, and geography in `tracking_service.py`
-- `[x]` Created BeautifulSoup filter parser injecting dynamic meta descriptors, titles overrides, Open Graph, and favicons
-- `[x]` Written `performance_service.py` calculating theme css, js, and images size weight penalty suggestions
-- `[x]` Designed premium traffic analytics metrics dashboard including 30-day Chart.js line charts
-- `[x]` Implemented interactive SEO editor form featuring robots crawler rules and SERP Google/Social share mock cards
-- `[x]` Implemented speedometer gauges scorecards on speed diagnostics templates
-- `[x]` Mounted dynamic XML sitemaps generator at `/sitemap.xml` and plain text robot parameters at `/robots.txt`
-- `[x]` Expanded tests suite by adding 7 comprehensive tests (36 unit tests total passing OK)
+- [x] Parsed browser user-agents, device categories, referrers, and geography in `tracking_service.py`
+- [x] Created BeautifulSoup filter parser injecting dynamic meta descriptors, titles overrides, Open Graph, and favicons
+- [x] Written `performance_service.py` calculating theme css, js, and images size weight penalty suggestions
+- [x] Designed premium traffic analytics metrics dashboard including 30-day Chart.js line charts
+- [x] Implemented interactive SEO editor form featuring robots crawler rules and SERP Google/Social share mock cards
+- [x] Implemented speedometer gauges scorecards on speed diagnostics templates
+- [x] Mounted dynamic XML sitemaps generator at `/sitemap.xml` and plain text robot parameters at `/robots.txt`
+- [x] Expanded tests suite by adding 7 comprehensive tests (36 unit tests total passing OK)
 
-## Module 12 — Production Stabilization & Code Quality (IN PROGRESS)
-### Code Audit
+## Module 12 — Production Stabilization & Code Quality (COMPLETE)
 - [x] Fixed 3 failing test assertions (login page text, dashboard heading, 403 vs 404 permission check)
 - [x] Fixed `PortfolioUpdateAPI` to return `403 Forbidden` instead of `404 Not Found` for unauthorized access
-- [x] Removed escaped `\n` corruption from analytics views after bad edit
-
-### Performance Optimization
 - [x] Eliminated N+1 query in `AnalyticsDashboardView` (used `prefetch_related("metric", "seo")`)
 - [x] Eliminated N+1 aggregation in `UserDashboardView` (used Django `.aggregate()`)
-- [x] Added `select_related("portfolio")` on PortfolioVisit querysets
-- [x] Existing `select_related("selected_theme")` on portfolio lists verified
+- [x] Configured production security settings (HSTS, SSL redirect, secure cookies)
+- [x] Set up API, Architecture, deployment, and contributing guidelines documentation
 
-### Security Hardening
-- [x] `py manage.py check` — 0 issues
-- [x] `py manage.py check --deploy` — 6 standard warnings, all gated behind `DEBUG=False`
-- [x] Production security settings (HSTS, SSL redirect, secure cookies) configured
+## Module 13 — Custom Domains (COMPLETE)
+- [x] Created CustomDomain and DomainVerificationLog models and applied migrations
+- [x] Built TXT and CNAME DNS lookup service checkers with mock resolvers for local dev environments
+- [x] Set up SSL check hook simulators (auto transitions active domains to HTTPS SSL issued status)
+- [x] Created CustomDomainMiddleware handling routing and compiling resolved portfolio pages
+- [x] Mapped domains list, adding form, instructions instructions setup guides, verify retry checks, make primary and deletion actions
+- [x] Increased test coverage to 62 passing automated tests (added 11 tests)
 
-### Testing
-- [x] 51 automated tests passing (exceeds 50+ target)
-- [x] Fixed 3 previously failing tests
-
-### Code Quality
-- [x] Added module docstrings to analytics views
-- [x] Improved inline comments in optimization sections
-
-### Documentation
-- [x] Created `ARCHITECTURE.md`
-- [x] Created `API_DOCUMENTATION.md`
-- [x] Created `DEPLOYMENT_GUIDE.md`
-- [x] Created `CONTRIBUTING.md`
-- [x] Updated `PROJECT_STATUS.md`
-- [x] Updated `CHANGELOG.md`
-- [x] Updated `CONTINUE_PROMPT.md`
-- [ ] Git commit & push (final step)
-
-## Explicitly excluded from this phase (per brief)
-- Custom Domain automatic DNS verification, Mobile App wraps, Team Collaboration
-
-## Next: Module 13 — Custom Domain Mapping & White-Label SSL
-- [ ] Custom Domains mapping config
-- [ ] CNAME validation scripts
-- [ ] Automated Let's Encrypt SSL certificate provisioning hooks
+## Next: Module 14 — PDF Portfolio Export
+- [ ] Mapped PDF renderer service configuration
+- [ ] Export portfolio layout template as compiled static PDF download

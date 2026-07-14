@@ -1,0 +1,95 @@
+{% extends "dashboard/layouts/base.html" %}
+{% load static %}
+
+{% block title %}Add Custom Domain | AI Portfolio Builder{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    {% include "dashboard/components/breadcrumb.html" %}
+    <a href="{% url 'domains:list' %}" class="btn btn-outline-secondary d-flex align-items-center gap-2 rounded-pill px-4">
+        <i class="bi bi-arrow-left"></i> Back to Domains
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-12 col-lg-8 mx-auto">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-4 p-md-5">
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <div class="bg-blue-50 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400 rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                    <i class="bi bi-globe fs-4"></i>
+                </div>
+                <div>
+                    <h4 class="fw-bold text-gray-900 dark:text-white mb-1">Add Custom Domain</h4>
+                    <p class="text-gray-500 dark:text-gray-400 mb-0 text-sm">Link your portfolio to a custom domain name you own.</p>
+                </div>
+            </div>
+
+            <form method="post" action="{% url 'domains:add' %}" novalidate>
+                {% csrf_token %}
+
+                {# Portfolio Selection #}
+                <div class="mb-4">
+                    <label for="portfolio_pk" class="form-label font-semibold text-gray-700 dark:text-gray-300">Map to Portfolio</label>
+                    <select name="portfolio_pk" id="portfolio_pk" class="form-select rounded-lg" required>
+                        <option value="" disabled selected>— Select a Portfolio —</option>
+                        {% for p in portfolios %}
+                        <option value="{{ p.pk }}" {% if selected_portfolio.pk == p.pk %}selected{% endif %}>
+                            {{ p.name }} ({{ p.get_status_display }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text">Choose which portfolio visitors will see when browsing this domain.</div>
+                </div>
+
+                {# Subdomain & Root Domain inputs side by side #}
+                <div class="row g-3 mb-4">
+                    <div class="col-12 col-md-4">
+                        <label for="{{ form.subdomain.id_for_label }}" class="form-label font-semibold text-gray-700 dark:text-gray-300">Subdomain Prefix</label>
+                        {{ form.subdomain }}
+                        <div class="form-text">e.g. <code>www</code> or <code>portfolio</code>. Leave blank for root domain.</div>
+                        {{ form.subdomain.errors }}
+                    </div>
+                    <div class="col-12 col-md-8">
+                        <label for="{{ form.domain_name.id_for_label }}" class="form-label font-semibold text-gray-700 dark:text-gray-300">Root Domain Name</label>
+                        {{ form.domain_name }}
+                        <div class="form-text">e.g. <code>myname.com</code>. Do not include http:// or slashes.</div>
+                        {{ form.domain_name.errors }}
+                    </div>
+                </div>
+
+                {# DNS Provider Selection #}
+                <div class="mb-4">
+                    <label for="{{ form.provider.id_for_label }}" class="form-label font-semibold text-gray-700 dark:text-gray-300">DNS Provider</label>
+                    {{ form.provider }}
+                    <div class="form-text">Where is your domain registered? This helps us customize setup instructions.</div>
+                    {{ form.provider.errors }}
+                </div>
+
+                {# Verification Method Radio Buttons #}
+                <div class="mb-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl p-4 border border-gray-100 dark:border-gray-700/50">
+                    <label class="form-label font-bold text-gray-900 dark:text-white d-block mb-3">Verification Method</label>
+                    {% for radio in form.verification_method %}
+                    <div class="form-check mb-2">
+                        {{ radio.tag }}
+                        <label class="form-check-label text-gray-700 dark:text-gray-300 text-sm font-semibold" for="{{ radio.id_for_label }}">
+                            {{ radio.choice_label }}
+                        </label>
+                        {% if radio.data.value == 'txt' %}
+                        <div class="text-xs text-gray-400 ms-4 mt-0.5">Recommended. Create a TXT record containing a unique verification token.</div>
+                        {% elif radio.data.value == 'cname' %}
+                        <div class="text-xs text-gray-400 ms-4 mt-0.5">Alternative. Map your domain via a CNAME record pointing to our server.</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    {{ form.verification_method.errors }}
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700/50 d-flex justify-content-end gap-3">
+                    <a href="{% url 'domains:list' %}" class="btn btn-light rounded-pill px-4">Cancel</a>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4">Link Custom Domain</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

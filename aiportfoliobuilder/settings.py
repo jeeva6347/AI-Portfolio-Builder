@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "payments",
     "github_integration",
     "ai",
+    "domains",
 ]
 
 MIDDLEWARE = [
@@ -59,6 +60,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    "domains.middleware.CustomDomainMiddleware",
 ]
 
 ROOT_URLCONF = "aiportfoliobuilder.urls"

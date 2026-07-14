@@ -1,6 +1,14 @@
 # Changelog
 
-## [In Progress] - Module 12: Production Stabilization & Code Quality
+## [Completed] - Module 13: Custom Domains
+### Added
+- Mapped `CustomDomain` and `DomainVerificationLog` database models with automatic tokens generation logic.
+- Built reusable service checkers `dns_service.py` and `domain_service.py` resolving TXT and CNAME records, utilizing a local mock resolver for dev environments.
+- Implemented `CustomDomainMiddleware` resolving and dynamically rendering published mapped portfolios directly on active custom domains.
+- Designed Custom Domain management dashboard (listing registered domains, configuration instructions setups, check retries, primary setting, deletion).
+- Expanded unit tests suite by adding 11 tests inside `domains/tests.py` (62 automated tests total passing OK).
+
+## [Completed] - Module 12: Production Stabilization & Code Quality
 ### Fixed
 - Fixed 3 failing automated tests: `test_login_page_renders_successfully` (expected "Log In" but allauth renders "Sign In"), `test_super_admin_dashboard_allows_super_admin` (wrong text assertion), and `test_user_cannot_update_other_user_portfolio_api` (was returning 404 instead of 403).
 - Fixed `PortfolioUpdateAPI` to return `403 Forbidden` when another user attempts to edit a portfolio they don't own (previously returned 404 via `get_object_or_404`).

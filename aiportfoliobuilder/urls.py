@@ -19,6 +19,7 @@ urlpatterns = [
     path("github/", include("github_integration.urls")),
     path("billing/", include("payments.urls")),
     path("analytics/", include("analytics.urls")),
+    path("domains/", include("domains.urls")),
     
     # Root level SEO files
     path("sitemap.xml", RedirectView.as_view(url="/analytics/sitemap.xml", permanent=True)),

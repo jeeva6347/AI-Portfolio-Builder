@@ -1,0 +1,201 @@
+{% extends "dashboard/layouts/base.html" %}
+{% load static %}
+
+{% block title %}Setup DNS: {{ domain.full_domain }} | AI Portfolio Builder{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    {% include "dashboard/components/breadcrumb.html" %}
+    <a href="{% url 'domains:list' %}" class="btn btn-outline-secondary d-flex align-items-center gap-2 rounded-pill px-4">
+        <i class="bi bi-arrow-left"></i> Back to Domains
+    </a>
+</div>
+
+<div class="row g-4">
+    {# Left Panel: DNS configuration details #}
+    <div class="col-12 col-lg-8">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-4 p-md-5 mb-4">
+            <h4 class="fw-bold text-gray-900 dark:text-white mb-2">Configure DNS Settings</h4>
+            <p class="text-gray-500 dark:text-gray-400 mb-4">
+                To connect <strong>{{ domain.full_domain }}</strong>, log in to your DNS provider (e.g. {{ domain.get_provider_display }}) and add the following record.
+            </p>
+
+            {% if domain.verification_method == 'txt' %}
+            {# TXT Setup Instructions #}
+            <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-4 border border-gray-100 dark:border-gray-700 mb-4">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <span class="badge bg-primary text-white rounded-pill px-2.5">TXT Record Required</span>
+                    <span class="text-xxs text-muted uppercase font-semibold">Verification Token</span>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Host / Name</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control bg-white dark:bg-gray-800 font-mono text-xs text-gray-800 dark:text-gray-200" id="txtHost" readonly value="{{ txt_record_name }}">
+                        <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('txtHost')">
+                            <i class="bi bi-clipboard"></i> Copy
+                        </button>
+                    </div>
+                    <div class="form-text text-xxs mt-1">If your provider doesn't accept the full name, enter <code>_aiportfolio-verify</code> or <code>@</code> if applying to root.</div>
+                </div>
+
+                <div>
+                    <label class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Value / Content</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control bg-white dark:bg-gray-800 font-mono text-xs text-gray-800 dark:text-gray-200" id="txtVal" readonly value="{{ txt_record_value }}">
+                        <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('txtVal')">
+                            <i class="bi bi-clipboard"></i> Copy
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            {# CNAME Setup Instructions #}
+            <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-4 border border-gray-100 dark:border-gray-700 mb-4">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <span class="badge bg-primary text-white rounded-pill px-2.5">CNAME Record Required</span>
+                    <span class="text-xxs text-muted uppercase font-semibold">DNS Mapping</span>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Host / Name / Alias</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control bg-white dark:bg-gray-800 font-mono text-xs text-gray-800 dark:text-gray-200" id="cnameHost" readonly value="{{ cname_record_name }}">
+                        <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('cnameHost')">
+                            <i class="bi bi-clipboard"></i> Copy
+                        </button>
+                    </div>
+                    <div class="form-text text-xxs mt-1">e.g. <code>www</code> or <code>portfolio</code>. Enter your subdomain value.</div>
+                </div>
+
+                <div>
+                    <label class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Points to / Target</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control bg-white dark:bg-gray-800 font-mono text-xs text-gray-800 dark:text-gray-200" id="cnameVal" readonly value="{{ cname_record_value }}">
+                        <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('cnameVal')">
+                            <i class="bi bi-clipboard"></i> Copy
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="border-t border-gray-100 dark:border-gray-700/50 pt-4 mt-4 text-sm text-gray-500 dark:text-gray-400">
+                <h6 class="font-bold text-gray-800 dark:text-white mb-2">Important Notes:</h6>
+                <ul class="ps-4 mb-0">
+                    <li class="mb-1">DNS changes can take up to 24–48 hours to propagate worldwide, though they usually resolve in under an hour.</li>
+                    <li>SSL certificates are automatically generated and applied via Let's Encrypt once your domain resolves successfully.</li>
+                </ul>
+            </div>
+        </div>
+
+        {# Audit Verification Logs #}
+        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-4 p-md-5">
+            <h5 class="fw-bold text-gray-900 dark:text-white mb-3">Verification History & Logs</h5>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                    <thead class="text-gray-400 text-xs">
+                        <tr>
+                            <th>Checked At</th>
+                            <th>Method</th>
+                            <th>Status</th>
+                            <th>Response Detail</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm">
+                        {% for log in domain.verification_logs.all|slice:":10" %}
+                        <tr>
+                            <td class="font-mono text-xs text-muted">{{ log.checked_at|date:"Y-m-d H:i:s" }}</td>
+                            <td><span class="badge bg-light text-dark rounded">{{ log.method|upper }}</span></td>
+                            <td>
+                                {% if log.success %}
+                                <span class="text-success font-semibold"><i class="bi bi-check-circle-fill"></i> Passed</span>
+                                {% else %}
+                                <span class="text-danger font-semibold"><i class="bi bi-x-circle-fill"></i> Failed</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-muted text-xs truncate" style="max-width: 250px;">{{ log.detail }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-3">No verification logs recorded yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {# Right Panel: Actions & verification summary state card #}
+    <div class="col-12 col-lg-4">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-4 text-center">
+            <h5 class="fw-bold text-gray-900 dark:text-white mb-3">Domain Status</h5>
+            
+            <div class="my-4">
+                {% if domain.status == 'active' %}
+                <div class="bg-success/10 text-success rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 70px; height: 70px;">
+                    <i class="bi bi-check-circle-fill fs-2"></i>
+                </div>
+                <h4 class="fw-bold text-success">Verified & Active</h4>
+                <p class="text-gray-500 dark:text-gray-400 text-xs px-2">Your custom domain is active and serving traffic.</p>
+                {% elif domain.status == 'verifying' %}
+                <div class="bg-info/10 text-info rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 70px; height: 70px;">
+                    <i class="bi bi-arrow-repeat spin fs-2"></i>
+                </div>
+                <h4 class="fw-bold text-info">Verifying</h4>
+                <p class="text-gray-500 dark:text-gray-400 text-xs px-2">Currently checking DNS resolver. Please wait...</p>
+                {% elif domain.status == 'failed' %}
+                <div class="bg-danger/10 text-danger rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 70px; height: 70px;">
+                    <i class="bi bi-exclamation-triangle-fill fs-2"></i>
+                </div>
+                <h4 class="fw-bold text-danger">Verification Failed</h4>
+                <p class="text-gray-500 dark:text-gray-400 text-xs px-2">We couldn't resolve the required DNS records yet.</p>
+                {% else %}
+                <div class="bg-warning/10 text-warning rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 70px; height: 70px;">
+                    <i class="bi bi-clock-fill fs-2"></i>
+                </div>
+                <h4 class="fw-bold text-warning">Pending Configuration</h4>
+                <p class="text-gray-500 dark:text-gray-400 text-xs px-2">Add the DNS record to start serving your portfolio.</p>
+                {% endif %}
+            </div>
+
+            <div class="border-t border-gray-100 dark:border-gray-700/50 pt-3 mt-4 d-grid gap-2">
+                <form method="post" action="{% url 'domains:verify' domain.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary rounded-pill w-100 d-flex align-items-center justify-content-center gap-2">
+                        <i class="bi bi-arrow-repeat"></i> Verify DNS Records
+                    </button>
+                </form>
+                <a href="{% url 'domains:list' %}" class="btn btn-light rounded-pill w-100">Manage Domains</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Copy Toast Success Toast Indicator #}
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="copyToast" class="toast align-items-center text-white bg-success border-0 rounded-lg" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="bi bi-clipboard-check-fill me-2"></i> DNS configuration copied to clipboard!
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyToClipboard(inputId) {
+    const copyText = document.getElementById(inputId);
+    copyText.select();
+    copyText.setSelectionRange(0, 99999); // For mobile devices
+    navigator.clipboard.writeText(copyText.value);
+    
+    // Trigger bootstrap toast
+    const toastEl = document.getElementById('copyToast');
+    const toast = new bootstrap.Toast(toastEl);
+    toast.show();
+}
+</script>
+{% endblock %}

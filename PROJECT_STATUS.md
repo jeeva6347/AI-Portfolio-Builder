@@ -1,6 +1,6 @@
 # Project Status
 
-**Completion:** Module 12 (Production Stabilization & Code Quality) — in progress. ~55% overall (12 of ~22 modules).
+**Completion:** Module 13 (Custom Domains) — complete. ~59% overall (13 of ~22 modules).
 
 ## Completed
 - Module 1: Authentication (Custom User model, Email/Social Auth)
@@ -14,20 +14,10 @@
 - Module 10: SaaS Subscription & Payments (Database SubscriptionPlan, UserSubscription, UsageMetrics, and PaymentTransaction models, mock Stripe checkout simulator redirect flow, decorators/CBV mixins premium limits checks, user and admin dashboards templates)
 - Module 11: Analytics, SEO & Performance (Database models tracking visitors, device types, referrers, and pages, BeautifulSoup filter injecting custom meta titles, descriptions, OG social cards, and favicons, performance analyzer suggestions, sitemap.xml, robots.txt, Chart.js views history line charts)
 - Module 12: Production Stabilization & Code Quality (51 tests passing, security hardening, query optimization, code audit, documentation)
+- Module 13: Custom Domains (CustomDomain database model, CNAME/TXT DNS verification lookups, mock SSL status validation, custom domain resolution routing middleware, management dashboard list/add/instructions UIs, 11 automated unit tests)
 
 ## Not Started
-- Modules 13-22 (Domain Mapping, PDF Export, etc.)
-
-## Module 12 Stabilization Progress
-- [x] Fix 3 failing test assertions (login page text, dashboard heading, 403 vs 404)
-- [x] Optimize N+1 queries (analytics dashboard, user dashboard)
-- [x] Add `select_related` / `prefetch_related` in key views
-- [x] Fix `PortfolioUpdateAPI` 403 permission check
-- [x] Security hardening (production settings gated behind DEBUG=False)
-- [x] 51+ automated tests passing
-- [x] `py manage.py check` — no issues
-- [ ] Documentation: ARCHITECTURE.md, API_DOCUMENTATION.md, DEPLOYMENT_GUIDE.md, CONTRIBUTING.md
-- [ ] Git commit & push
+- Modules 14-22 (PDF Export, Domain Mapping DNS verification details, etc.)
 
 ## Folder Structure
 ```
@@ -36,10 +26,11 @@ aiportfoliobuilder/
 ├── dashboard/           <- Module 2-4, complete
 ├── themes/              <- Module 5, complete
 ├── portfolio/           <- Module 6-8, complete
-├── github_integration/  <- Module 9, complete (named to avoid colliding with PyGithub import)
+├── github_integration/  <- Module 9, complete
 ├── ai/                  <- Module 6 (AI), complete
 ├── payments/            <- Module 10, complete
 ├── analytics/           <- Module 11, complete
+├── domains/             <- Module 13, complete
 ├── notifications/       <- empty scaffold (reserved for future)
 ├── api/                 <- empty scaffold (reserved for future)
 ├── core/                <- empty scaffold (reserved for future)
@@ -52,17 +43,29 @@ aiportfoliobuilder/
 | Field | Type | Notes |
 |---|---|---|
 | role | CharField | SUPER_ADMIN / ADMIN / PREMIUM_USER / FREE_USER, default FREE_USER |
-| avatar | ImageField | optional, uploaded at signup or via profile |
-| github_username | CharField | optional, reused by GitHub Publish module later |
+| avatar | ImageField | optional |
+| github_username | CharField | optional |
 | email_verified | BooleanField | default False |
-| created_at / updated_at | DateTimeField | auto |
 
-`is_premium` is a derived property (`role == PREMIUM_USER`), not a DB
-column — avoids the two fields going out of sync.
+### domains.CustomDomain
+| Field | Type | Notes |
+|---|---|---|
+| user | ForeignKey | User owner |
+| portfolio | ForeignKey | Target portfolio |
+| domain_name | CharField | Root domain |
+| subdomain | CharField | Optional subdomain |
+| provider | CharField | DNS provider choice |
+| status | CharField | pending, verifying, active, failed |
+| ssl_status | CharField | pending, issued, failed |
+| verification_token | CharField | Unique token for DNS verification |
+| verification_method | CharField | txt, cname |
+| dns_verified | BooleanField | DNS check status |
+| ssl_enabled | BooleanField | SSL check status |
+| is_primary | BooleanField | Primary address marker |
 
 ## Test Count
-- 51 automated tests across all modules (exceeds 50+ target)
-- accounts: 4, ai: 4, analytics: 7, dashboard: 4, github_integration: 4, payments: 7, portfolio: 12, themes: 9
+- 62 automated tests across all modules (exceeds 60+ target)
+- accounts: 4, ai: 4, analytics: 7, dashboard: 4, domains: 11, github_integration: 4, payments: 7, portfolio: 12, themes: 9
 
 ## Security Settings
 Production security settings are gated behind `DEBUG=False`:
@@ -77,10 +80,8 @@ Production security settings are gated behind `DEBUG=False`:
 Django, django-allauth, python-decouple, Pillow, BeautifulSoup4, python-docx
 
 ## Environment Variables
-See `.env.example` — DB switch (mysql/sqlite), Django secret/debug/hosts,
-email backend, OAuth client IDs/secrets, session age.
+See `.env.example` — DB switch (mysql/sqlite), Django secret/debug/hosts, email backend, OAuth client IDs/secrets.
 
-## Next Steps (Module 13+)
-1. Custom Domain Mapping & White-Label SSL
-2. PDF Portfolio Export
-3. Team Collaboration features
+## Next Steps (Module 14+)
+1. PDF Portfolio Export
+2. Team Collaboration features

@@ -1,145 +1,68 @@
-# Module 12 Development Report: Production Stabilization & Code Quality
+# Module 13 Development Report: Custom Domains
 
-This report covers the work completed during **Module 12: Production Stabilization & Code Quality** — a dedicated stabilization milestone focused on improving code quality, performance, security, and documentation without introducing new end-user features.
-
----
-
-## 1. Test Suite Fixes
-
-Three automated tests were failing from previous sessions:
-
-### `test_login_page_renders_successfully` (accounts)
-- **Root Cause**: Test asserted `"Log In"` but django-allauth renders `"Sign In"`.
-- **Fix**: Updated assertion to `self.assertContains(res, "Sign In")`.
-
-### `test_super_admin_dashboard_allows_super_admin` (dashboard)
-- **Root Cause**: Test asserted `"Admin Console Summary"` — a string that does not appear in the template.
-- **Fix**: Updated assertion to `self.assertContains(res, "Super Admin Dashboard")` which is in the page `<title>`.
-
-### `test_user_cannot_update_other_user_portfolio_api` (portfolio)
-- **Root Cause**: `PortfolioUpdateAPI` used `get_object_or_404(Portfolio, pk=pk, user=request.user)` which returns `404 Not Found` when the portfolio exists but belongs to another user. The test expected `403 Forbidden`.
-- **Fix**: Separated the lookup from the permission check:
-  ```python
-  portfolio = get_object_or_404(Portfolio, pk=pk)
-  if portfolio.user != request.user:
-      return HttpResponseForbidden("You do not have permission to edit this portfolio.")
-  ```
-
-**Result**: All 51 tests now pass.
+This report covers the design, implementation, testing, and verification of **Module 13: Custom Domains**.
 
 ---
 
-## 2. Performance Optimizations
-
-### AnalyticsDashboardView — N+1 Query Elimination
-
-**Before**: For each portfolio in the user's list, a separate `get_or_create` database query was issued inside the loop.
-
-```python
-for p in portfolios:
-    metric, _ = PortfolioMetric.objects.get_or_create(portfolio=p)  # N queries!
-```
-
-**After**: Used Django's `prefetch_related()` to fetch all metrics in a single query:
-
-```python
-portfolios = list(
-    Portfolio.objects.filter(user=user)
-    .select_related("selected_theme")
-    .prefetch_related("metric", "seo")
-)
-
-for p in portfolios:
-    try:
-        metric = p.metric  # Already in cache
-    except PortfolioMetric.DoesNotExist:
-        metric = PortfolioMetric.objects.create(portfolio=p)
-```
-
-**Impact**: Reduces from N+1 to 3 queries regardless of portfolio count.
-
-### UserDashboardView — Aggregate Instead of Python Loop
-
-**Before**: Python-side loop iterating all metrics to calculate totals:
-
-```python
-total_views = sum(m.total_visits for m in metrics)
-avg_seo = round(sum(m.seo_score for m in metrics) / metrics.count())
-```
-
-**After**: Single-query database aggregation:
-
-```python
-totals = metrics_qs.aggregate(
-    total_visits=Sum("total_visits"),
-    avg_seo=Avg("seo_score"),
-    avg_perf=Avg("performance_score"),
-)
-```
-
-**Impact**: Reduces from 3+ queries to 1 for aggregate calculation.
-
-### Additional select_related Improvements
-- `PortfolioVisit.objects.select_related("portfolio")` added to recent visits queries.
-- `prefetch_related("metric")` added to portfolio queryset in UserDashboardView.
+## 1. Objectives & Requirements
+Premium and Enterprise users are permitted to link their custom domains or subdomains to their published portfolios.
+- **Plan Limits**: Free users cannot link domains. Premium users get up to 5 domains. Enterprise/Admins get unlimited (999) domains.
+- **Verification Modes**: Support TXT and CNAME ownership verification methods.
+- **SSL Security**: Automate white-label SSL generation status tracking (Pending → Issued → Failed).
+- **Domain Middleware**: Resolves incoming HTTP requests on active custom domains and serves the compiled mapped portfolio preview seamlessly.
+- **UI Panels**: List, Add, DNS setup instructions UIs matching the SaaS visual layout.
+- **Tests**: Targets 60+ total passing automated tests.
 
 ---
 
-## 3. Security Verification
+## 2. Architecture & Design
 
-### `py manage.py check`
-```
-System check identified no issues (0 silenced).
-```
+### Models (`domains/models.py`)
+- `CustomDomain`: Tracks target portfolio, domain name, subdomain prefix, provider (Namecheap, Cloudflare, GoDaddy, etc.), verification token, verification method, status choices (Pending, Verifying, Active, Failed), SSL status choices, and primary marker flag.
+- `DomainVerificationLog`: Captures check history, success status, timestamp, and raw resolver responses.
 
-### `py manage.py check --deploy`
-6 warnings, all standard and addressed via `settings.py` production gating:
+### Services (`domains/services/`)
+- `dns_service.py`: Provides TXT lookup (`_mock_txt_lookup`) and CNAME lookup (`_mock_cname_lookup`) functions. Uses a mock resolver for local development settings (`DOMAIN_DNS_MOCK=True`) and has hooks for real Resolver clients.
+- `domain_service.py`: Handles high-level logic (validations, domain creations, primary switches, deletes, quota limits queries).
 
-| Warning | Resolution |
-|---|---|
-| `W004` SECURE_HSTS_SECONDS | Set to 31536000 when DEBUG=False |
-| `W008` SECURE_SSL_REDIRECT | Set to True when DEBUG=False |
-| `W009` SECRET_KEY insecure | Auto-generates secure key when default detected |
-| `W012` SESSION_COOKIE_SECURE | Set to True when DEBUG=False |
-| `W016` CSRF_COOKIE_SECURE | Set to True when DEBUG=False |
-| `W018` DEBUG=True | Development mode only |
-
-The `if not DEBUG:` block in `settings.py` activates all production security settings automatically.
+### Middleware (`domains/middleware.py`)
+- `CustomDomainMiddleware`: Intercepts requests on custom domains, looks up active `CustomDomain` records matching the HTTP host, maps parameters, compiles theme templates via BeautifulSoup auto-mapping, logs traffic visits, and returns raw compiled HTML directly.
 
 ---
 
-## 4. Documentation Created
-
-| File | Purpose |
-|---|---|
-| `ARCHITECTURE.md` | Full system architecture, design patterns, data flow, security model |
-| `API_DOCUMENTATION.md` | Internal AJAX endpoints, portfolio schema, payment/GitHub flows |
-| `DEPLOYMENT_GUIDE.md` | Step-by-step production deployment (Nginx + Gunicorn + SSL) |
-| `CONTRIBUTING.md` | Dev setup, coding standards, testing requirements, git workflow |
-
-Updated files:
-- `PROJECT_STATUS.md` — reflects 51 tests and Module 12 progress
-- `CHANGELOG.md` — Module 12 entries added
-- `TODO.md` — Module 12 tasks tracked with completion status
-- `CONTINUE_PROMPT.md` — updated for Module 13
+## 3. UI Implementation
+Created templates in `templates/domains/`:
+- `list.html`: Interactive list with status badges, primary toggles, SSL status indicators, disconnect confirmation modals, and limits check warning banners.
+- `add.html`: Form to associate domains to portfolios, enter subdomain/root details, choose provider, and select verification method.
+- `instructions.html`: Copy-to-clipboard DNS instructions with Toast notifications and logs history table.
 
 ---
 
-## 5. Test Results
+## 4. Test Coverage & Verification
 
+Added 11 comprehensive unit and integration tests in `domains/tests.py`:
+1. `test_domain_validation_and_creation` — Validates structural generation and hex token sizes.
+2. `test_invalid_domain_name_rejected` — Rejects bad domain formats (missing dots, double-dots).
+3. `test_domain_plan_limits` — Validates role-based limits (Free=0, Premium=5, Admin=999).
+4. `test_txt_verification_workflow` — Verifies successful TXT checks transition state to Active, logs entries, and auto-issues SSL.
+5. `test_cname_verification_workflow` — Validates CNAME matches and status mappings.
+6. `test_primary_domain_switching` — Assures setting primary clears flags on other domains.
+7. `test_primary_promotion_on_deletion` — Promotes next active domain as primary if current primary is deleted.
+8. `test_get_portfolio_primary_url` — Checks resolution priority chain (Custom Domain > GitHub Pages > Platform URL).
+9. `test_anonymous_redirect_on_dashboard` — Restricts anonymous access.
+10. `test_free_user_gated_billing` — Redirects Free tier requests to payments billing.
+11. `test_premium_user_access_dashboard` — Grants access to subscribers.
+
+### Automated Test Output
+All 62 automated unit tests across all modules pass:
 ```
-Ran 51 tests in 59.041s
+Ran 62 tests in 69.870s
 OK
 ```
 
-Test distribution:
-- accounts: 4
-- ai: 4
-- analytics: 7
-- dashboard: 4
-- github_integration: 4
-- payments: 7
-- portfolio: 12
-- themes: 9
+---
 
-**Total: 51 (exceeds 50+ target)**
+## 5. Deployment Gating & Security Checks
+- Gated behind standard checks.
+- `py manage.py check` returns `0 issues`.
+- Gated security settings (SSL redirect, HSTS, secure cookies) automatically enable when `DEBUG=False`.
