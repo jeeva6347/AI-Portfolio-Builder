@@ -48,9 +48,9 @@ INSTALLED_APPS = [
     "payments",
     "github_integration",
     "ai",
-    "domains",
-    "organizations",
-    "core",
+    "domains.apps.DomainsConfig",
+    "organizations.apps.OrganizationsConfig",
+    "core.apps.CoreConfig",
 ]
 
 MIDDLEWARE = [
