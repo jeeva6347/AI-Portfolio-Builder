@@ -8,6 +8,7 @@ variables only — never hardcoded here.
 
 from pathlib import Path
 from decouple import config, Csv
+import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -17,6 +18,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config("DJANGO_SECRET_KEY", default="django-insecure-change-me-in-.env")
 DEBUG = config("DJANGO_DEBUG", default=True, cast=bool)
 ALLOWED_HOSTS = config("DJANGO_ALLOWED_HOSTS", default="127.0.0.1,localhost", cast=Csv())
+CSRF_TRUSTED_ORIGINS = config("CSRF_TRUSTED_ORIGINS", default="http://127.0.0.1:8000,http://localhost:8000", cast=Csv())
 
 SITE_ID = 1
 
@@ -55,6 +57,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -86,10 +89,19 @@ WSGI_APPLICATION = "aiportfoliobuilder.wsgi.application"
 
 # ---------------------------------------------------------------------------
 # Database
-# MySQL in production per SRS; falls back to sqlite for zero-setup local
-# dev when DB_ENGINE is not set in .env.
+# Supports Neon PostgreSQL if DATABASE_URL is set; falls back to MySQL or SQLite.
 # ---------------------------------------------------------------------------
-if config("DB_ENGINE", default="sqlite") == "mysql":
+DATABASE_URL = config("DATABASE_URL", default="")
+
+if DATABASE_URL:
+    DATABASES = {
+        "default": dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
+    }
+elif config("DB_ENGINE", default="sqlite") == "mysql":
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.mysql",
@@ -166,6 +178,9 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# WhiteNoise storage configuration for compression and caching
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"

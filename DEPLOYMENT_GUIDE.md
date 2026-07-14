@@ -1,15 +1,34 @@
 # Deployment Guide
 
-## Prerequisites
-
-- Python 3.10+
-- pip
-- Git
-- A server (VPS, cloud VM, PaaS like Heroku/Railway)
-- (Optional) MySQL database for production
-- A domain name (optional, for custom domains)
+This guide details steps to deploy **AI Portfolio Builder** on **Render & Neon PostgreSQL** (Recommended for cloud PaaS) and on a custom **Linux VPS (Gunicorn + Nginx)**.
 
 ---
+
+## Deploying to Render & Neon PostgreSQL (PaaS)
+
+### 1. Database Setup (Neon PostgreSQL)
+1. Go to [Neon Console](https://neon.tech/) and sign up.
+2. Create a new project and select the latest **PostgreSQL** version.
+3. In the project dashboard, locate the **Connection String** dropdown (select **Pooled connection** for better performance).
+4. Copy the connection URI starting with `postgres://` or `postgresql://`. This will be your `DATABASE_URL` environment variable.
+
+### 2. Deployment on Render
+1. Sign up on [Render Console](https://render.com/).
+2. Click **New** -> **Blueprint** (highly recommended as we have provided a `render.yaml` template in the root directory).
+3. Connect your GitHub repository.
+4. Render will read the `render.yaml` file and automatically configure:
+   - A free Web Service (`aiportfoliobuilder`) running on Gunicorn.
+   - A free PostgreSQL database.
+   - Set build command to `bash build.sh` and start command to `gunicorn aiportfoliobuilder.wsgi:application`.
+5. Under the environment variables check dashboard, customize:
+   - `DJANGO_ALLOWED_HOSTS`: set to your specific `.onrender.com` URL or custom domain name.
+   - `CSRF_TRUSTED_ORIGINS`: set to `https://your-app-name.onrender.com` or custom domain.
+   - `DATABASE_URL`: if using Neon, edit the environment variable to overwrite Render's database with your Neon Connection String.
+6. Click **Deploy**.
+
+---
+
+## Deploying to Linux VPS (Self-hosted)
 
 ## 1. Clone the Repository
 
