@@ -5,7 +5,18 @@ Module 1: Authentication (Email + Google + GitHub OAuth, role-based users).
 Per the SRS "Development Rules": secrets are read from environment
 variables only — never hardcoded here.
 """
+import sentry_sdk
+from decouple import config
+import sentry_sdk
 
+SENTRY_DSN = config("SENTRY_DSN", default="")
+
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        send_default_pii=True,
+        traces_sample_rate=1.0,
+    )
 from pathlib import Path
 from decouple import config, Csv
 import dj_database_url
