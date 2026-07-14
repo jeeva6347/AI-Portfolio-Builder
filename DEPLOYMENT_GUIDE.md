@@ -246,7 +246,7 @@ sudo systemctl start aiportfolio
 python manage.py test
 ```
 
-All 51 tests should pass.
+All 75 tests should pass.
 
 ---
 

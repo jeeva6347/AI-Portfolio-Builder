@@ -74,6 +74,24 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{% static 'js/charts.js' %}"></script>
     
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            document.querySelectorAll("form").forEach(form => {
+                form.addEventListener("submit", function() {
+                    const btn = form.querySelector("button[type='submit']");
+                    if (btn && !btn.classList.contains("no-disable")) {
+                        if (form.checkValidity ? form.checkValidity() : true) {
+                            setTimeout(() => {
+                                btn.disabled = true;
+                                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1.5" role="status" aria-hidden="true"></span> Saving...';
+                            }, 50);
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+    
     {% block extra_js %}{% endblock %}
 </body>
 </html>

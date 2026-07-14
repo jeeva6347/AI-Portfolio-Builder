@@ -4,16 +4,121 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}AI Portfolio Builder{% endblock %}</title>
+  
+  <!-- Google Fonts & Bootstrap Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#3b82f6',
+          }
+        }
+      }
+    }
+  </script>
+  
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0b0f19;
+      background-image: radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.08) 0%, rgba(11, 15, 25, 0) 60%);
+      background-attachment: fixed;
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-card input[type="text"], 
+    .glass-card input[type="email"], 
+    .glass-card input[type="password"],
+    .glass-card input[type="file"],
+    .glass-card select,
+    .glass-card textarea {
+      display: block;
+      width: 100%;
+      padding: 0.625rem 0.875rem;
+      font-size: 0.875rem;
+      font-weight: 400;
+      line-height: 1.5;
+      color: #f8fafc;
+      background-color: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 0.75rem;
+      transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+      outline: none;
+    }
+    .glass-card input[type="checkbox"] {
+      width: 1rem;
+      height: 1rem;
+      background-color: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 0.25rem;
+    }
+    .glass-card input:focus, .glass-card select:focus, .glass-card textarea:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    }
+    .glass-card label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #94a3b8;
+    }
+  </style>
 </head>
-<body class="bg-light">
-  <div class="container py-5" style="max-width: 480px;">
+<body class="text-gray-100 min-h-screen flex items-center justify-center py-10 px-4">
+  <div class="w-full max-w-[460px]">
+    {# Title / Logo Header #}
+    <div class="text-center mb-6">
+      <a href="/" class="inline-flex items-center gap-2 font-bold text-white text-xl tracking-tight no-underline">
+        <div class="bg-blue-600 rounded-lg p-1.5 flex items-center justify-center">
+          <i class="bi bi-robot text-lg text-white"></i>
+        </div>
+        AI Portfolio Builder
+      </a>
+    </div>
+
     {% if messages %}
-      {% for message in messages %}
-        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-      {% endfor %}
+      <div class="space-y-2 mb-4">
+        {% for message in messages %}
+          <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} text-xs rounded-xl py-3 px-4 border-0 shadow-md">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
     {% endif %}
+
     {% block content %}{% endblock %}
   </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+      document.addEventListener("DOMContentLoaded", function() {
+          document.querySelectorAll("form").forEach(form => {
+              form.addEventListener("submit", function() {
+                  const btn = form.querySelector("button[type='submit']");
+                  if (btn && !btn.classList.contains("no-disable")) {
+                      if (form.checkValidity ? form.checkValidity() : true) {
+                          setTimeout(() => {
+                              btn.disabled = true;
+                              btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1.5" role="status" aria-hidden="true"></span> Processing...';
+                          }, 50);
+                      }
+                  }
+              });
+          });
+      });
+  </script>
 </body>
 </html>

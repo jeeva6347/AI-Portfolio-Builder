@@ -71,3 +71,15 @@ OK
 ## 5. Deployment Gating & Security Checks
 - `py manage.py check` returns `0 issues`.
 - Mapped secure cookies, HSTS headers, and SSL redirects gate behind `DEBUG=False`.
+
+---
+
+## 6. Version 2.0 Product Polish & Production Readiness
+To prepare the application for a commercial launch:
+1. **SaaS Landing Page**: Designed a modern public home page mounted at the root (`/`) featuring a radial gradient layout, Hero action prompts, feature card grids, live showcases, pricing tiers, FAQs, and footers.
+2. **Auth Styling Upgrade**: Modified `templates/base.html` incorporating Tailwind CSS and Google Fonts. Configured dark radial gradient backgrounds and input styles globally.
+3. **Password Security**: Created real-time password strength meter indicator checks during user signups.
+4. **Form Submit Loaders**: Wrote a global vanilla JS form submit hook preventing double form submissions and giving visual spinner feedback status updates (Processing / Saving).
+5. **Polished Empty States**: Created animated responsive empty list placeholders with help text illustrations and dynamic call-to-actions buttons.
+6. **75 Passing Automated Tests**: Maintained and verified the full automated test suite containing 75 passing tests.
+

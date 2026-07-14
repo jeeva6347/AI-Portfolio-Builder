@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "ai",
     "domains",
     "organizations",
+    "core",
 ]
 
 MIDDLEWARE = [

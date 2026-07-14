@@ -4,10 +4,10 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import RedirectView
 
+from core.views import LandingPageView
+
 urlpatterns = [
-    # Root: redirect unauthenticated → login; authenticated users will
-    # be picked up by dashboard_redirect after login completes.
-    path("", RedirectView.as_view(url="/accounts/login/", permanent=False), name="root"),
+    path("", LandingPageView.as_view(), name="root"),
 
     path("admin/", admin.site.urls),
     path("accounts/", include("accounts.urls")),
