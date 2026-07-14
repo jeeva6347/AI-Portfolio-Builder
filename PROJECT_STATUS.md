@@ -1,6 +1,6 @@
 # Project Status
 
-**Completion:** Module 13 (Custom Domains) — complete. ~59% overall (13 of ~22 modules).
+**Completion:** Module 14 (Team Collaboration & Organization Workspace) — complete. ~63% overall (14 of ~22 modules).
 
 ## Completed
 - Module 1: Authentication (Custom User model, Email/Social Auth)
@@ -15,9 +15,10 @@
 - Module 11: Analytics, SEO & Performance (Database models tracking visitors, device types, referrers, and pages, BeautifulSoup filter injecting custom meta titles, descriptions, OG social cards, and favicons, performance analyzer suggestions, sitemap.xml, robots.txt, Chart.js views history line charts)
 - Module 12: Production Stabilization & Code Quality (51 tests passing, security hardening, query optimization, code audit, documentation)
 - Module 13: Custom Domains (CustomDomain database model, CNAME/TXT DNS verification lookups, mock SSL status validation, custom domain resolution routing middleware, management dashboard list/add/instructions UIs, 11 automated unit tests)
+- Module 14: Team Collaboration & Organization Workspace (Organization, OrganizationMember, Invitation, and ActivityLog models, role-based collaborator permissions checks for shared portfolios, link/unlink portfolios, accept invites, transfer ownerships, and leave workspaces views, 13 automated unit tests)
 
 ## Not Started
-- Modules 14-22 (PDF Export, Domain Mapping DNS verification details, etc.)
+- Modules 15-22 (PDF Export, etc.)
 
 ## Folder Structure
 ```
@@ -31,6 +32,7 @@ aiportfoliobuilder/
 ├── payments/            <- Module 10, complete
 ├── analytics/           <- Module 11, complete
 ├── domains/             <- Module 13, complete
+├── organizations/       <- Module 14, complete
 ├── notifications/       <- empty scaffold (reserved for future)
 ├── api/                 <- empty scaffold (reserved for future)
 ├── core/                <- empty scaffold (reserved for future)
@@ -57,15 +59,30 @@ aiportfoliobuilder/
 | provider | CharField | DNS provider choice |
 | status | CharField | pending, verifying, active, failed |
 | ssl_status | CharField | pending, issued, failed |
-| verification_token | CharField | Unique token for DNS verification |
-| verification_method | CharField | txt, cname |
-| dns_verified | BooleanField | DNS check status |
-| ssl_enabled | BooleanField | SSL check status |
-| is_primary | BooleanField | Primary address marker |
+
+### organizations.Organization
+| Field | Type | Notes |
+|---|---|---|
+| name | CharField | Organization name |
+| slug | SlugField | Unique workspace identifier |
+| owner | ForeignKey | User owner |
+| logo | ImageField | Workspace avatar |
+| description | TextField | Description text |
+| plan | ForeignKey | Subscription plan ForeignKey |
+
+### organizations.OrganizationMember
+| Field | Type | Notes |
+|---|---|---|
+| organization | ForeignKey | Parent Organization |
+| user | ForeignKey | User member |
+| role | CharField | OWNER, ADMIN, EDITOR, VIEWER |
+| joined_at | DateTimeField | Creation date |
+| invited_by | ForeignKey | User who invited them |
+| active | BooleanField | Is membership active |
 
 ## Test Count
-- 62 automated tests across all modules (exceeds 60+ target)
-- accounts: 4, ai: 4, analytics: 7, dashboard: 4, domains: 11, github_integration: 4, payments: 7, portfolio: 12, themes: 9
+- 75 automated tests across all modules (exceeds 70+ target)
+- accounts: 4, ai: 4, analytics: 7, dashboard: 4, domains: 11, github_integration: 4, organizations: 13, payments: 7, portfolio: 12, themes: 9
 
 ## Security Settings
 Production security settings are gated behind `DEBUG=False`:
@@ -82,6 +99,6 @@ Django, django-allauth, python-decouple, Pillow, BeautifulSoup4, python-docx
 ## Environment Variables
 See `.env.example` — DB switch (mysql/sqlite), Django secret/debug/hosts, email backend, OAuth client IDs/secrets.
 
-## Next Steps (Module 14+)
+## Next Steps (Module 15+)
 1. PDF Portfolio Export
 2. Team Collaboration features

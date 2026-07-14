@@ -20,6 +20,7 @@ urlpatterns = [
     path("billing/", include("payments.urls")),
     path("analytics/", include("analytics.urls")),
     path("domains/", include("domains.urls")),
+    path("organizations/", include("organizations.urls")),
     
     # Root level SEO files
     path("sitemap.xml", RedirectView.as_view(url="/analytics/sitemap.xml", permanent=True)),

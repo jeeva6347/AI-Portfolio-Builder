@@ -1,5 +1,14 @@
 # Changelog
 
+## [Completed] - Module 14: Team Collaboration & Organization Workspace
+### Added
+- Created `Organization`, `OrganizationMember`, `Invitation`, and `ActivityLog` models with complete database migration schemes.
+- Built high-fidelity collaboration views (`OrganizationListView`, `OrganizationCreateView`, `OrganizationDashboardView`, `AcceptInviteView`) matching system visuals.
+- Designed dynamic dashboard panels for Portfolios linking/unlinking, team Member tables (role modifications, ownership transfer, leaves), Invitations copy link URLs, and historical Activity Logs.
+- Formulated `org_service.py` mapping transaction-wrapped collaboration logic operations (removes, demotions, promotions, leaves, transfers).
+- Integrated `get_portfolio_for_user` helper checks across all portfolio views and edit actions protecting shared portfolio access.
+- Wrote 13 automated tests inside `organizations/tests.py` verifying workspace rules, permissions hierarchy, and unauthorized access rejections (75 total passing tests).
+
 ## [Completed] - Module 13: Custom Domains
 ### Added
 - Mapped `CustomDomain` and `DomainVerificationLog` database models with automatic tokens generation logic.

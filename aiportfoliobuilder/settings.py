@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "github_integration",
     "ai",
     "domains",
+    "organizations",
 ]
 
 MIDDLEWARE = [

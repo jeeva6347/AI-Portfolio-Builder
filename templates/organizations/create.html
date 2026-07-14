@@ -1,0 +1,61 @@
+{% extends "dashboard/layouts/base.html" %}
+{% load static %}
+
+{% block title %}Create Organization Workspace | AI Portfolio Builder{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    {% include "dashboard/components/breadcrumb.html" %}
+    <a href="{% url 'organizations:list' %}" class="btn btn-outline-secondary d-flex align-items-center gap-2 rounded-pill px-4">
+        <i class="bi bi-arrow-left"></i> Back to Teams
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-12 col-lg-8 mx-auto">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-4 p-md-5">
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <div class="bg-blue-50 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400 rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                    <i class="bi bi-people-fill fs-4"></i>
+                </div>
+                <div>
+                    <h4 class="fw-bold text-gray-900 dark:text-white mb-1">Create Organization Workspace</h4>
+                    <p class="text-gray-500 dark:text-gray-400 mb-0 text-sm">Create a new team workspace to collaborate on shared portfolios.</p>
+                </div>
+            </div>
+
+            <form method="post" enctype="multipart/form-validate" novalidate>
+                {% csrf_token %}
+
+                {# Name #}
+                <div class="mb-4">
+                    <label for="{{ form.name.id_for_label }}" class="form-label font-semibold text-gray-700 dark:text-gray-300">Workspace / Team Name</label>
+                    {{ form.name }}
+                    {{ form.name.errors }}
+                    <div class="form-text">e.g. <code>Acme Marketing Team</code> or <code>Design Studio</code>.</div>
+                </div>
+
+                {# Description #}
+                <div class="mb-4">
+                    <label for="{{ form.description.id_for_label }}" class="form-label font-semibold text-gray-700 dark:text-gray-300">Description</label>
+                    {{ form.description }}
+                    {{ form.description.errors }}
+                </div>
+
+                {# Logo #}
+                <div class="mb-4">
+                    <label for="{{ form.logo.id_for_label }}" class="form-label font-semibold text-gray-700 dark:text-gray-300">Workspace Logo</label>
+                    {{ form.logo }}
+                    {{ form.logo.errors }}
+                    <div class="form-text">Supports JPG, PNG, GIF. Max size 2MB.</div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700/50 d-flex justify-content-end gap-3">
+                    <a href="{% url 'organizations:list' %}" class="btn btn-light rounded-pill px-4">Cancel</a>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4">Setup Workspace</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

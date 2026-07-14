@@ -32,6 +32,13 @@ class Portfolio(models.Model):
         blank=True,
         related_name="portfolios",
     )
+    organization = models.ForeignKey(
+        "organizations.Organization",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="portfolios",
+    )
     
     # Personal Info
     name = models.CharField(max_length=150, blank=True)

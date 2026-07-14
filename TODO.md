@@ -121,6 +121,14 @@
 - [x] Mapped domains list, adding form, instructions instructions setup guides, verify retry checks, make primary and deletion actions
 - [x] Increased test coverage to 62 passing automated tests (added 11 tests)
 
-## Next: Module 14 — PDF Portfolio Export
+## Module 14 — Team Collaboration & Organization Workspace (COMPLETE)
+- [x] Implemented Organization, OrganizationMember, Invitation, and ActivityLog database models
+- [x] Developed modular `org_service.py` orchestrating team actions (creations, role changes, leaves, invites, deletes, transfers)
+- [x] Refactored all portfolio views and sub-item actions to use custom permission checker helper (`get_portfolio_for_user`)
+- [x] Designed organizational listings, setup create form, multi-tab dashboard workspace, and accept invite review panels
+- [x] Injected activity logging and mock email notifications support triggers
+- [x] Added 13 automated tests inside `organizations/tests.py` bringing the total passing tests count to 75 tests
+
+## Next: Module 15 — PDF Portfolio Export
 - [ ] Mapped PDF renderer service configuration
 - [ ] Export portfolio layout template as compiled static PDF download

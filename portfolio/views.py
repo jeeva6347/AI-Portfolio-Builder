@@ -33,6 +33,32 @@ from .forms import (
 )
 
 
+from django.core.exceptions import PermissionDenied
+
+def get_portfolio_for_user(pk, user, required_role="VIEWER"):
+    """
+    Retrieves a portfolio by PK and verifies the user has the required permission role.
+    If the portfolio is personal, the user must be the owner.
+    If the portfolio belongs to an organization, the user must be a member with
+    at least the required role (OWNER, ADMIN, EDITOR, VIEWER).
+    """
+    portfolio = get_object_or_404(Portfolio, pk=pk)
+    if not portfolio.organization:
+        if portfolio.user == user:
+            return portfolio
+        raise PermissionDenied("You do not have permission to access this portfolio.")
+    
+    try:
+        from organizations.services.org_service import check_portfolio_collaboration_permission as check_perm
+        has_perm = check_perm(portfolio, user, required_role)
+    except Exception:
+        has_perm = (portfolio.user == user)
+        
+    if has_perm:
+        return portfolio
+    raise PermissionDenied("You do not have permission to perform this action on this shared portfolio.")
+
+
 def _base_context(request, active_tab="personal"):
     """Helper to return consistent navigation context for portfolio views."""
     return {
@@ -50,7 +76,20 @@ class PortfolioListView(LoginRequiredMixin, View):
     template_name = "portfolio/list.html"
 
     def get(self, request):
-        portfolios = list(Portfolio.objects.filter(user=request.user).select_related("selected_theme").order_by("-updated_at"))
+        from django.db.models import Q
+        try:
+            from organizations.models import OrganizationMember
+            org_ids = OrganizationMember.objects.filter(user=request.user, active=True).values_list('organization_id', flat=True)
+        except Exception:
+            org_ids = []
+
+        portfolios = list(
+            Portfolio.objects.filter(
+                Q(user=request.user) | Q(organization_id__in=org_ids)
+            )
+            .select_related("selected_theme", "organization")
+            .order_by("-updated_at")
+        )
         ctx = _base_context(request, "list")
         ctx.update({
             "portfolios": portfolios,
@@ -88,7 +127,7 @@ class PortfolioCreateView(PortfolioLimitMixin, LoginRequiredMixin, View):
 class PortfolioDeleteView(LoginRequiredMixin, View):
     """Deletes a portfolio record."""
     def post(self, request, pk):
-        portfolio = get_object_or_404(Portfolio, pk=pk, user=request.user)
+        portfolio = get_portfolio_for_user(pk, request.user, "ADMIN")
         name = portfolio.name
         portfolio.delete()
         messages.success(request, f"Deleted portfolio '{name}'.")
@@ -101,7 +140,7 @@ class PortfolioDuplicateView(PortfolioLimitMixin, LoginRequiredMixin, View):
     experience, education, and testimonials.
     """
     def post(self, request, pk):
-        portfolio = get_object_or_404(Portfolio, pk=pk, user=request.user)
+        portfolio = get_portfolio_for_user(pk, request.user, "EDITOR")
         
         # 1. Duplicate top-level model
         clone = copy.copy(portfolio)
@@ -169,7 +208,7 @@ class PortfolioDuplicateView(PortfolioLimitMixin, LoginRequiredMixin, View):
 
 class PortfolioPublishView(LoginRequiredMixin, View):
     def post(self, request, pk):
-        portfolio = get_object_or_404(Portfolio, pk=pk, user=request.user)
+        portfolio = get_portfolio_for_user(pk, request.user, "EDITOR")
         portfolio.status = Portfolio.Status.PUBLISHED
         portfolio.save(update_fields=["status"])
         messages.success(request, f"Published portfolio '{portfolio.name}' successfully!")
@@ -178,7 +217,7 @@ class PortfolioPublishView(LoginRequiredMixin, View):
 
 class PortfolioArchiveView(LoginRequiredMixin, View):
     def post(self, request, pk):
-        portfolio = get_object_or_404(Portfolio, pk=pk, user=request.user)
+        portfolio = get_portfolio_for_user(pk, request.user, "EDITOR")
         portfolio.status = Portfolio.Status.ARCHIVED
         portfolio.save(update_fields=["status"])
         messages.success(request, f"Archived portfolio '{portfolio.name}'.")
@@ -187,7 +226,7 @@ class PortfolioArchiveView(LoginRequiredMixin, View):
 
 class PortfolioRestoreView(LoginRequiredMixin, View):
     def post(self, request, pk):
-        portfolio = get_object_or_404(Portfolio, pk=pk, user=request.user)
+        portfolio = get_portfolio_for_user(pk, request.user, "EDITOR")
         portfolio.status = Portfolio.Status.DRAFT
         portfolio.save(update_fields=["status"])
         messages.success(request, f"Restored portfolio '{portfolio.name}' back to draft.")
@@ -205,7 +244,7 @@ class PortfolioBuilderView(LoginRequiredMixin, View):
     login_url = "/accounts/login/"
 
     def get(self, request, pk):
-        portfolio = get_object_or_404(Portfolio, pk=pk, user=request.user)
+        portfolio = get_portfolio_for_user(pk, request.user, "EDITOR")
         active_tab = request.GET.get("tab", "personal")
         
         ctx = _base_context(request, active_tab)
@@ -238,7 +277,7 @@ class PortfolioBuilderView(LoginRequiredMixin, View):
 
     def post(self, request, pk):
         """Standard POST fallback handling if javascript is disabled."""
-        portfolio = get_object_or_404(Portfolio, pk=pk, user=request.user)
+        portfolio = get_portfolio_for_user(pk, request.user, "EDITOR")
         active_tab = request.POST.get("tab", "personal")
         form = PortfolioForm(request.POST, request.FILES, instance=portfolio)
         
@@ -281,8 +320,9 @@ class PortfolioUpdateAPI(LoginRequiredMixin, View):
     Returns 403 if the portfolio belongs to a different user.
     """
     def post(self, request, pk):
-        portfolio = get_object_or_404(Portfolio, pk=pk)
-        if portfolio.user != request.user:
+        try:
+            portfolio = get_portfolio_for_user(pk, request.user, "EDITOR")
+        except PermissionDenied:
             return HttpResponseForbidden("You do not have permission to edit this portfolio.")
         form = PortfolioForm(request.POST, request.FILES, instance=portfolio)
         if form.is_valid():
@@ -295,7 +335,7 @@ class PortfolioUpdateAPI(LoginRequiredMixin, View):
 
 class SkillCreateView(LoginRequiredMixin, View):
     def post(self, request, pk):
-        portfolio = get_object_or_404(Portfolio, pk=pk, user=request.user)
+        portfolio = get_portfolio_for_user(pk, request.user, "EDITOR")
         form = PortfolioSkillForm(request.POST)
         if form.is_valid():
             skill = form.save(commit=False)
@@ -309,7 +349,7 @@ class SkillCreateView(LoginRequiredMixin, View):
 
 class ProjectCreateView(LoginRequiredMixin, View):
     def post(self, request, pk):
-        portfolio = get_object_or_404(Portfolio, pk=pk, user=request.user)
+        portfolio = get_portfolio_for_user(pk, request.user, "EDITOR")
         form = PortfolioProjectForm(request.POST, request.FILES)
         if form.is_valid():
             project = form.save(commit=False)
@@ -323,7 +363,7 @@ class ProjectCreateView(LoginRequiredMixin, View):
 
 class ExperienceCreateView(LoginRequiredMixin, View):
     def post(self, request, pk):
-        portfolio = get_object_or_404(Portfolio, pk=pk, user=request.user)
+        portfolio = get_portfolio_for_user(pk, request.user, "EDITOR")
         form = PortfolioExperienceForm(request.POST)
         if form.is_valid():
             experience = form.save(commit=False)
@@ -337,7 +377,7 @@ class ExperienceCreateView(LoginRequiredMixin, View):
 
 class EducationCreateView(LoginRequiredMixin, View):
     def post(self, request, pk):
-        portfolio = get_object_or_404(Portfolio, pk=pk, user=request.user)
+        portfolio = get_portfolio_for_user(pk, request.user, "EDITOR")
         form = PortfolioEducationForm(request.POST)
         if form.is_valid():
             edu = form.save(commit=False)
@@ -351,7 +391,7 @@ class EducationCreateView(LoginRequiredMixin, View):
 
 class CertificateCreateView(LoginRequiredMixin, View):
     def post(self, request, pk):
-        portfolio = get_object_or_404(Portfolio, pk=pk, user=request.user)
+        portfolio = get_portfolio_for_user(pk, request.user, "EDITOR")
         form = PortfolioCertificateForm(request.POST)
         if form.is_valid():
             cert = form.save(commit=False)
@@ -365,7 +405,7 @@ class CertificateCreateView(LoginRequiredMixin, View):
 
 class ServiceCreateView(LoginRequiredMixin, View):
     def post(self, request, pk):
-        portfolio = get_object_or_404(Portfolio, pk=pk, user=request.user)
+        portfolio = get_portfolio_for_user(pk, request.user, "EDITOR")
         form = PortfolioServiceForm(request.POST)
         if form.is_valid():
             service = form.save(commit=False)
@@ -379,7 +419,7 @@ class ServiceCreateView(LoginRequiredMixin, View):
 
 class TestimonialCreateView(LoginRequiredMixin, View):
     def post(self, request, pk):
-        portfolio = get_object_or_404(Portfolio, pk=pk, user=request.user)
+        portfolio = get_portfolio_for_user(pk, request.user, "EDITOR")
         form = PortfolioTestimonialForm(request.POST)
         if form.is_valid():
             test = form.save(commit=False)
@@ -396,7 +436,9 @@ class TestimonialCreateView(LoginRequiredMixin, View):
 class SkillDeleteView(LoginRequiredMixin, View):
     def post(self, request, pk):
         skill = get_object_or_404(PortfolioSkill, pk=pk)
-        if skill.portfolio.user != request.user:
+        try:
+            get_portfolio_for_user(skill.portfolio.pk, request.user, "EDITOR")
+        except PermissionDenied:
             return HttpResponseForbidden()
         portfolio_id = skill.portfolio.pk
         name = skill.name
@@ -408,7 +450,9 @@ class SkillDeleteView(LoginRequiredMixin, View):
 class ProjectDeleteView(LoginRequiredMixin, View):
     def post(self, request, pk):
         project = get_object_or_404(PortfolioProject, pk=pk)
-        if project.portfolio.user != request.user:
+        try:
+            get_portfolio_for_user(project.portfolio.pk, request.user, "EDITOR")
+        except PermissionDenied:
             return HttpResponseForbidden()
         portfolio_id = project.portfolio.pk
         title = project.title
@@ -420,7 +464,9 @@ class ProjectDeleteView(LoginRequiredMixin, View):
 class ExperienceDeleteView(LoginRequiredMixin, View):
     def post(self, request, pk):
         exp = get_object_or_404(PortfolioExperience, pk=pk)
-        if exp.portfolio.user != request.user:
+        try:
+            get_portfolio_for_user(exp.portfolio.pk, request.user, "EDITOR")
+        except PermissionDenied:
             return HttpResponseForbidden()
         portfolio_id = exp.portfolio.pk
         company = exp.company
@@ -432,7 +478,9 @@ class ExperienceDeleteView(LoginRequiredMixin, View):
 class EducationDeleteView(LoginRequiredMixin, View):
     def post(self, request, pk):
         edu = get_object_or_404(PortfolioEducation, pk=pk)
-        if edu.portfolio.user != request.user:
+        try:
+            get_portfolio_for_user(edu.portfolio.pk, request.user, "EDITOR")
+        except PermissionDenied:
             return HttpResponseForbidden()
         portfolio_id = edu.portfolio.pk
         degree = edu.degree
@@ -444,7 +492,9 @@ class EducationDeleteView(LoginRequiredMixin, View):
 class CertificateDeleteView(LoginRequiredMixin, View):
     def post(self, request, pk):
         cert = get_object_or_404(PortfolioCertificate, pk=pk)
-        if cert.portfolio.user != request.user:
+        try:
+            get_portfolio_for_user(cert.portfolio.pk, request.user, "EDITOR")
+        except PermissionDenied:
             return HttpResponseForbidden()
         portfolio_id = cert.portfolio.pk
         name = cert.name
@@ -456,7 +506,9 @@ class CertificateDeleteView(LoginRequiredMixin, View):
 class ServiceDeleteView(LoginRequiredMixin, View):
     def post(self, request, pk):
         service = get_object_or_404(PortfolioService, pk=pk)
-        if service.portfolio.user != request.user:
+        try:
+            get_portfolio_for_user(service.portfolio.pk, request.user, "EDITOR")
+        except PermissionDenied:
             return HttpResponseForbidden()
         portfolio_id = service.portfolio.pk
         title = service.title
@@ -468,7 +520,9 @@ class ServiceDeleteView(LoginRequiredMixin, View):
 class TestimonialDeleteView(LoginRequiredMixin, View):
     def post(self, request, pk):
         test = get_object_or_404(PortfolioTestimonial, pk=pk)
-        if test.portfolio.user != request.user:
+        try:
+            get_portfolio_for_user(test.portfolio.pk, request.user, "EDITOR")
+        except PermissionDenied:
             return HttpResponseForbidden()
         portfolio_id = test.portfolio.pk
         name = test.reviewer_name
@@ -487,7 +541,7 @@ class SelectThemeView(LoginRequiredMixin, View):
     template_name = "portfolio/select_theme.html"
 
     def get(self, request, pk):
-        portfolio = get_object_or_404(Portfolio, pk=pk, user=request.user)
+        portfolio = get_portfolio_for_user(pk, request.user, "EDITOR")
         themes = Theme.objects.filter(status=Theme.Status.APPROVED)
         ctx = _base_context(request, "theme")
         ctx.update({
@@ -501,7 +555,7 @@ class SelectThemeView(LoginRequiredMixin, View):
         return render(request, self.template_name, ctx)
 
     def post(self, request, pk):
-        portfolio = get_object_or_404(Portfolio, pk=pk, user=request.user)
+        portfolio = get_portfolio_for_user(pk, request.user, "EDITOR")
         theme_id = request.POST.get("theme_id")
         if theme_id:
             theme = get_object_or_404(Theme, pk=theme_id, status=Theme.Status.APPROVED)
@@ -532,8 +586,14 @@ class UserPortfolioPreview(LoginRequiredMixin, View):
     def get(self, request, pk):
         portfolio = get_object_or_404(Portfolio, pk=pk)
         
-        # Security Access check: if unpublished, restrict to owner
-        if portfolio.status != Portfolio.Status.PUBLISHED and portfolio.user != request.user:
+        # Security Access check: if unpublished, restrict to owner or org viewer
+        has_access = True
+        if portfolio.status != Portfolio.Status.PUBLISHED:
+            try:
+                get_portfolio_for_user(pk, request.user, "VIEWER")
+            except PermissionDenied:
+                has_access = False
+        if not has_access:
             return HttpResponseForbidden("This portfolio draft is unpublished and private.")
 
         theme = portfolio.selected_theme
