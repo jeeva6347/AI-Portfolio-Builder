@@ -158,6 +158,7 @@ ACCOUNT_EMAIL_VERIFICATION = config("ACCOUNT_EMAIL_VERIFICATION", default="optio
 LOGIN_REDIRECT_URL = "accounts:dashboard_redirect"
 LOGOUT_REDIRECT_URL = "accounts:login"
 SOCIALACCOUNT_LOGIN_ON_GET = True
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = config("ACCOUNT_DEFAULT_HTTP_PROTOCOL", default="https" if not DEBUG else "http")
 
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
@@ -230,6 +231,7 @@ SESSION_SAVE_EVERY_REQUEST = True
 if not DEBUG:
     # SSL and Redirection
     SECURE_SSL_REDIRECT = config("SECURE_SSL_REDIRECT", default=True, cast=bool)
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     
     # Cookies Security
     SESSION_COOKIE_SECURE = config("SESSION_COOKIE_SECURE", default=True, cast=bool)
