@@ -1,12 +1,12 @@
-{% extends "base.html" %}
+{% extends "account/base.html" %}
 {% load i18n %}
 
 {% block title %}{% trans "Sign Out" %}{% endblock %}
 
-{% block content %}
-<div class="glass-card rounded-2xl p-6 shadow-xl text-center">
+{% block account_content %}
+<div class="glass-card rounded-2xl p-6 shadow-xl text-center animate__animated animate__fadeIn">
     <div class="inline-flex align-items-center justify-content-center bg-red-950/40 text-red-400 rounded-full mb-4 flex items-center justify-center mx-auto" style="width: 80px; height: 80px;">
-        <i class="bi bi-box-arrow-right text-3xl"></i>
+        <i class="bi bi-box-arrow-right text-3xl text-white"></i>
     </div>
     <h2 class="text-xl font-bold text-white mb-2">{% trans "Sign Out" %}</h2>
     <p class="text-gray-400 text-sm mb-5">{% trans "Are you sure you want to sign out?" %}</p>

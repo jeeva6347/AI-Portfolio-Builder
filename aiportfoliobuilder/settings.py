@@ -157,6 +157,7 @@ ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
 ACCOUNT_EMAIL_VERIFICATION = config("ACCOUNT_EMAIL_VERIFICATION", default="optional")
 LOGIN_REDIRECT_URL = "accounts:dashboard_redirect"
 LOGOUT_REDIRECT_URL = "accounts:login"
+SOCIALACCOUNT_LOGIN_ON_GET = True
 
 SOCIALACCOUNT_PROVIDERS = {
     "google": {

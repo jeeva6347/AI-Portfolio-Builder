@@ -1,0 +1,31 @@
+{% extends "account/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Social Network Login Failure" %}{% endblock %}
+
+{% block account_content %}
+<div class="glass-card rounded-2xl p-6 shadow-xl text-center animate__animated animate__fadeIn">
+    <div class="inline-flex align-items-center justify-content-center bg-red-900/40 text-red-400 rounded-full mb-4 flex items-center justify-center mx-auto" style="width: 80px; height: 80px;">
+        <i class="bi bi-exclamation-triangle text-3xl text-white"></i>
+    </div>
+    <h2 class="text-xl font-bold text-white mb-2">{% trans "Authentication Error" %}</h2>
+    <p class="text-gray-400 text-sm mb-5">
+        {% trans "An error occurred while attempting to sign in using your social network account." %}
+    </p>
+
+    {% if auth_error %}
+        <div class="alert alert-danger text-xs rounded-xl border-0 p-3 bg-red-500/10 text-red-400 text-left mb-5">
+            <strong>Error Details:</strong> {{ auth_error.code }} - {{ auth_error.exception }}
+        </div>
+    {% endif %}
+
+    <div class="flex flex-col gap-2">
+        <a href="{% url 'account_login' %}" class="w-full btn btn-primary py-2.5 rounded-xl text-sm font-semibold tracking-wide shadow-lg">
+            {% trans "Return to Login" %}
+        </a>
+        <a href="mailto:support@aiportfoliobuilder.com" class="text-xs text-gray-500 hover:text-white mt-2 no-underline">
+            {% trans "Contact Support" %}
+        </a>
+    </div>
+</div>
+{% endblock %}

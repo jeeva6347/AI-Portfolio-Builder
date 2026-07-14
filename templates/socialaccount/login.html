@@ -1,13 +1,13 @@
-{% extends "base.html" %}
+{% extends "account/base.html" %}
 {% load i18n %}
 {% load socialaccount %}
 
 {% block title %}{% trans "Sign In" %}{% endblock %}
 
-{% block content %}
-<div class="glass-card rounded-2xl p-6 shadow-xl text-center">
+{% block account_content %}
+<div class="glass-card rounded-2xl p-6 shadow-xl text-center animate__animated animate__fadeIn">
     <div class="inline-flex align-items-center justify-content-center bg-blue-900/40 text-blue-400 rounded-full mb-4 flex items-center justify-center mx-auto" style="width: 80px; height: 80px;">
-        <i class="bi bi-github text-4xl text-white"></i>
+        <i class="bi bi-shield-check text-4xl text-white"></i>
     </div>
     
     {% if process == "connect" %}

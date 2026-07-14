@@ -1,0 +1,33 @@
+{% extends "account/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Confirm Email Address" %}{% endblock %}
+
+{% block account_content %}
+<div class="glass-card rounded-2xl p-6 shadow-xl text-center animate__animated animate__fadeIn">
+    <div class="inline-flex align-items-center justify-content-center bg-blue-900/40 text-blue-400 rounded-full mb-4 flex items-center justify-center mx-auto" style="width: 80px; height: 80px;">
+        <i class="bi bi-shield-check text-3xl text-white"></i>
+    </div>
+    <h2 class="text-xl font-bold text-white mb-2">{% trans "Confirm Email Address" %}</h2>
+
+    {% if confirmation %}
+        <p class="text-gray-400 text-sm mb-5">
+            {% blocktrans with email=confirmation.email_address.email %}Please confirm that <span class="text-white font-semibold">{{ email }}</span> is an email address for your account.{% endblocktrans %}
+        </p>
+
+        <form method="post" action="{% url 'account_confirm_email' confirmation.key %}">
+            {% csrf_token %}
+            <button type="submit" class="w-full btn btn-primary py-2.5 rounded-xl text-sm font-semibold tracking-wide shadow-lg">
+                {% trans "Confirm" %}
+            </button>
+        </form>
+    {% else %}
+        <p class="text-gray-400 text-sm mb-5">
+            {% trans "This email confirmation link has expired or is invalid. Please request a new verification link." %}
+        </p>
+        <a href="{% url 'account_email' %}" class="w-full btn btn-primary py-2.5 rounded-xl text-sm font-semibold shadow-md inline-block">
+            {% trans "Manage Emails" %}
+        </a>
+    {% endif %}
+</div>
+{% endblock %}
