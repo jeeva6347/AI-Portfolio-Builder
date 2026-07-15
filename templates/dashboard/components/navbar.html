@@ -1,72 +1,130 @@
-<header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky-top z-30 transition-colors duration-200 shadow-sm">
-    <div class="px-4 py-3 d-flex align-items-center justify-content-between">
-        
-        <!-- Left: Sidebar Toggle (Mobile) & Search -->
+<header id="mainNavbar" class="d-flex align-items-center px-4">
+    <div class="d-flex align-items-center justify-content-between w-100 gap-3">
+
+        <!-- Left: Mobile toggle + Search -->
         <div class="d-flex align-items-center gap-3">
-            <button class="btn btn-light d-lg-none dark:bg-gray-700 dark:text-white dark:border-gray-600" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas" aria-controls="sidebarOffcanvas">
+            <button class="nav-icon-btn d-lg-none"
+                    type="button"
+                    data-bs-toggle="offcanvas"
+                    data-bs-target="#sidebarOffcanvas"
+                    aria-controls="sidebarOffcanvas">
                 <i class="bi bi-list"></i>
             </button>
-            
-            <!-- Global Search (UI Only) -->
-            <div class="d-none d-md-flex position-relative">
-                <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-gray-400"></i>
-                <input type="text" class="form-control ps-5 bg-gray-100 border-0 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 rounded-full w-64 transition-all" placeholder="Search...">
+
+            <!-- Search -->
+            <div class="nav-search-wrap d-none d-md-block">
+                <i class="bi bi-search nav-search-icon"></i>
+                <input type="text"
+                       class="nav-search-input"
+                       placeholder="Search..."
+                       id="navSearchInput">
             </div>
         </div>
 
-        <!-- Right: Theme, Notifications, Profile -->
-        <div class="d-flex align-items-center gap-3">
-            
+        <!-- Right: actions -->
+        <div class="d-flex align-items-center gap-2">
+
             <!-- Theme Toggle -->
-            <button id="themeToggleBtn" class="btn btn-link text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white p-2">
-                <i class="bi bi-sun-fill hidden dark:inline-block text-xl"></i>
-                <i class="bi bi-moon-stars-fill inline-block dark:hidden text-xl"></i>
+            <button id="themeToggleBtn" class="nav-icon-btn" title="Toggle theme">
+                <i class="bi bi-sun-fill d-none dark-icon" style="display:none!important"></i>
+                <i class="bi bi-moon-stars-fill light-icon"></i>
             </button>
 
-            <!-- Notifications Dropdown -->
+            <!-- Notifications -->
             <div class="dropdown">
-                <button class="btn btn-link text-gray-500 dark:text-gray-400 p-2 position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="bi bi-bell-fill text-xl"></i>
-                    <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
-                        <span class="visually-hidden">New alerts</span>
-                    </span>
+                <button class="nav-icon-btn position-relative"
+                        type="button"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false"
+                        id="notifDropdownBtn">
+                    <i class="bi bi-bell"></i>
+                    <span class="notif-dot"></span>
                 </button>
-                <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 dark:bg-gray-800 p-0 overflow-hidden w-72">
-                    <li class="bg-gray-50 dark:bg-gray-700 px-4 py-2 border-b border-gray-200 dark:border-gray-600 font-semibold text-gray-700 dark:text-gray-200">Notifications</li>
-                    <li><a class="dropdown-item py-3 px-4 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 dark:text-gray-300" href="#"><i class="bi bi-person-plus text-blue-500 me-2"></i> New user signed up</a></li>
-                    <li><a class="dropdown-item py-3 px-4 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 dark:text-gray-300" href="#"><i class="bi bi-palette text-green-500 me-2"></i> Theme approved</a></li>
-                    <li><a class="dropdown-item text-center py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700" href="#">View All</a></li>
+                <ul class="dropdown-menu dropdown-menu-end p-0 border-0 overflow-hidden"
+                    style="min-width:280px; background:var(--bg-card); border:1px solid var(--border-color) !important; border-radius:var(--radius-md); box-shadow:var(--shadow-lg);">
+                    <li style="padding:14px 16px 10px; border-bottom:1px solid var(--border-color);">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span style="font-size:13px;font-weight:700;color:var(--text-primary);">Notifications</span>
+                            <span style="font-size:11px;font-weight:600;color:var(--primary);cursor:pointer;">Mark all read</span>
+                        </div>
+                    </li>
+                    <li>
+                        <a class="custom-dropdown-item" href="#">
+                            <span style="width:32px;height:32px;border-radius:50%;background:rgba(79,70,229,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                <i class="bi bi-person-plus" style="color:var(--primary);font-size:14px;"></i>
+                            </span>
+                            <div>
+                                <div style="font-size:12.5px;font-weight:600;color:var(--text-primary);">New user signed up</div>
+                                <div style="font-size:11px;color:var(--text-muted);">Just now</div>
+                            </div>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="custom-dropdown-item" href="#">
+                            <span style="width:32px;height:32px;border-radius:50%;background:rgba(16,185,129,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                <i class="bi bi-palette" style="color:var(--success);font-size:14px;"></i>
+                            </span>
+                            <div>
+                                <div style="font-size:12.5px;font-weight:600;color:var(--text-primary);">Theme approved</div>
+                                <div style="font-size:11px;color:var(--text-muted);">2 minutes ago</div>
+                            </div>
+                        </a>
+                    </li>
+                    <li style="padding:10px 16px 14px; border-top:1px solid var(--border-color); text-align:center;">
+                        <a href="#" style="font-size:12px;font-weight:600;color:var(--primary);text-decoration:none;">View all notifications →</a>
+                    </li>
                 </ul>
             </div>
 
-            <!-- Profile Dropdown -->
+            <!-- Profile -->
             <div class="dropdown">
-                <button class="btn btn-light rounded-pill p-1 d-flex align-items-center gap-2 dark:bg-gray-700 dark:text-white dark:border-gray-600 border" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    {% if user.avatar %}
-                    <img src="{{ user.avatar.url }}" alt="Profile" class="rounded-circle" width="32" height="32">
-                    {% else %}
-                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
-                        {{ user.username|make_list|first|upper }}
+                <button class="nav-profile-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" id="profileDropdownBtn">
+                    <div class="nav-profile-avatar">
+                        {% if user.avatar %}
+                            <img src="{{ user.avatar.url }}" alt="Profile" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+                        {% else %}
+                            {{ user.username|make_list|first|upper }}
+                        {% endif %}
                     </div>
-                    {% endif %}
-                    <span class="d-none d-md-inline pe-2 font-medium">{{ user.username }}</span>
+                    <span class="nav-profile-name d-none d-md-inline">{{ user.username }}</span>
+                    <i class="bi bi-chevron-down d-none d-md-inline" style="font-size:11px;color:var(--text-muted);margin-left:2px;"></i>
                 </button>
-                <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 dark:bg-gray-800">
-                    <li class="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
-                        <p class="mb-0 text-sm font-medium text-gray-900 dark:text-white">{{ user.email }}</p>
-                        <p class="mb-0 text-xs text-gray-500 dark:text-gray-400">{{ user.get_role_display }}</p>
+                <ul class="dropdown-menu dropdown-menu-end p-0 border-0 overflow-hidden"
+                    style="min-width:220px; background:var(--bg-card); border:1px solid var(--border-color) !important; border-radius:var(--radius-md); box-shadow:var(--shadow-lg);">
+                    <!-- User info header -->
+                    <li style="padding:14px 16px 12px; border-bottom:1px solid var(--border-color);">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="nav-profile-avatar" style="width:38px;height:38px;border-radius:10px;font-size:14px;">
+                                {% if user.avatar %}
+                                    <img src="{{ user.avatar.url }}" alt="avatar" style="width:100%;height:100%;border-radius:10px;object-fit:cover;">
+                                {% else %}
+                                    {{ user.username|make_list|first|upper }}
+                                {% endif %}
+                            </div>
+                            <div class="overflow-hidden">
+                                <div style="font-size:13px;font-weight:700;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px;">{{ user.username }}</div>
+                                <div style="font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px;">{{ user.email }}</div>
+                            </div>
+                        </div>
                     </li>
-                    <li><a class="dropdown-item mt-2 dark:text-gray-300 dark:hover:bg-gray-700" href="{% url 'accounts:profile' %}"><i class="bi bi-person me-2"></i> Profile</a></li>
-                    <li><a class="dropdown-item dark:text-gray-300 dark:hover:bg-gray-700" href="{% url 'accounts:sessions' %}"><i class="bi bi-shield-lock me-2"></i> Security</a></li>
-                    <li><hr class="dropdown-divider dark:border-gray-700"></li>
-                    <li>
+                    <li style="padding:6px;">
+                        <a class="custom-dropdown-item" href="{% url 'accounts:profile' %}">
+                            <i class="bi bi-person" style="font-size:15px;"></i> Profile
+                        </a>
+                        <a class="custom-dropdown-item" href="{% url 'accounts:sessions' %}">
+                            <i class="bi bi-shield-lock" style="font-size:15px;"></i> Security
+                        </a>
+                        <div style="height:1px;background:var(--border-color);margin:6px 0;"></div>
                         <form action="{% url 'accounts:logout' %}" method="post" class="m-0">
                             {% csrf_token %}
-                            <button type="submit" class="dropdown-item text-danger dark:hover:bg-gray-700"><i class="bi bi-box-arrow-right me-2"></i> Log out</button>
+                            <button type="submit" class="custom-dropdown-item danger w-100" style="background:none;border:none;text-align:left;">
+                                <i class="bi bi-box-arrow-right" style="font-size:15px;"></i> Log out
+                            </button>
                         </form>
                     </li>
                 </ul>
             </div>
+
         </div>
     </div>
 </header>

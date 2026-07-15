@@ -4,110 +4,194 @@
 {% block title %}My Dashboard | AI Portfolio Builder{% endblock %}
 
 {% block content %}
-<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
-    {% include "dashboard/components/breadcrumb.html" %}
-    <a href="{% url 'portfolio:list' %}" class="btn btn-primary d-flex align-items-center gap-2 shadow-sm rounded-pill px-4">
+
+{# ── PAGE HEADER ── #}
+<div class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-4 anim-fade-up">
+    <div>
+        <div class="welcome-badge">
+            <i class="bi bi-stars"></i> Welcome back
+        </div>
+        <h1 class="page-title">My Dashboard</h1>
+        <p class="page-subtitle">Here's what's happening with your portfolios today.</p>
+    </div>
+    <a href="{% url 'portfolio:list' %}" class="btn-primary-gradient">
         <i class="bi bi-briefcase-fill"></i> My Portfolios
     </a>
 </div>
 
-{# ── PRIMARY STATS ROW ── #}
-<div class="row g-4 mb-4">
-    <div class="col-12 col-md-6 col-xl-3">
-        {% include "dashboard/components/cards/stat_card.html" with title="My Portfolios" value=my_portfolios icon="bi-briefcase-fill" color="bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300" %}
+{# ── PRIMARY STAT CARDS ── #}
+<div class="row g-3 mb-3">
+    <div class="col-12 col-sm-6 col-xl-3 anim-fade-up anim-delay-1">
+        {% include "dashboard/components/cards/stat_card.html" with title="My Portfolios" value=my_portfolios icon="bi-briefcase-fill" icon_class="stat-icon-blue" %}
     </div>
-    <div class="col-12 col-md-6 col-xl-3">
-        {% include "dashboard/components/cards/stat_card.html" with title="Drafts" value=drafts icon="bi-file-earmark-text-fill" color="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300" %}
+    <div class="col-12 col-sm-6 col-xl-3 anim-fade-up anim-delay-2">
+        {% include "dashboard/components/cards/stat_card.html" with title="Drafts" value=drafts icon="bi-file-earmark-text-fill" icon_class="stat-icon-teal" %}
     </div>
-    <div class="col-12 col-md-6 col-xl-3">
-        {% include "dashboard/components/cards/stat_card.html" with title="Published" value=published icon="bi-globe" color="bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300" %}
+    <div class="col-12 col-sm-6 col-xl-3 anim-fade-up anim-delay-3">
+        {% include "dashboard/components/cards/stat_card.html" with title="Published" value=published icon="bi-globe" icon_class="stat-icon-green" %}
     </div>
-    <div class="col-12 col-md-6 col-xl-3">
-        {% include "dashboard/components/cards/stat_card.html" with title="GitHub Projects" value=github_projects icon="bi-github" color="bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300" %}
-    </div>
-</div>
-
-{# ── SECONDARY STATS ROW (TRAFFIC & SEO AGGREGATES) ── #}
-<div class="row g-4 mb-4 animate__animated animate__fadeIn">
-    <div class="col-12 col-md-4">
-        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-3.5 d-flex align-items-center gap-3">
-            <div class="bg-blue-50 text-blue-600 dark:bg-blue-950/20 dark:text-blue-400 rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                <i class="bi bi-eye-fill fs-5"></i>
-            </div>
-            <div>
-                <span class="text-xxs text-gray-400 uppercase tracking-wider font-semibold">Total Portfolio Views</span>
-                <h5 class="fw-bold text-gray-800 dark:text-white mb-0">{{ total_views }}</h5>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-12 col-md-4">
-        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-3.5 d-flex align-items-center gap-3">
-            <div class="bg-green-50 text-green-600 dark:bg-green-950/20 dark:text-green-400 rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                <i class="bi bi-search fs-5"></i>
-            </div>
-            <div>
-                <span class="text-xxs text-gray-400 uppercase tracking-wider font-semibold">Average SEO Score</span>
-                <h5 class="fw-bold text-gray-800 dark:text-white mb-0">{{ avg_seo }}%</h5>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-12 col-md-4">
-        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-3.5 d-flex align-items-center gap-3">
-            <div class="bg-yellow-50 text-yellow-600 dark:bg-yellow-950/20 dark:text-yellow-400 rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                <i class="bi bi-speedometer2 fs-5"></i>
-            </div>
-            <div>
-                <span class="text-xxs text-gray-400 uppercase tracking-wider font-semibold">Average Speed Score</span>
-                <h5 class="fw-bold text-gray-800 dark:text-white mb-0">{{ avg_perf }}%</h5>
-            </div>
-        </div>
+    <div class="col-12 col-sm-6 col-xl-3 anim-fade-up anim-delay-4">
+        {% include "dashboard/components/cards/stat_card.html" with title="GitHub Projects" value=github_projects icon="bi-github" icon_class="stat-icon-purple" %}
     </div>
 </div>
 
-{# ── VISUALIZATIONS LINE CHART ── #}
+{# ── METRIC MINI CARDS ── #}
+<div class="row g-3 mb-4">
+    <div class="col-12 col-md-4 anim-fade-up anim-delay-2">
+        <div class="metric-card">
+            <div class="metric-icon" style="background:linear-gradient(135deg,rgba(79,70,229,0.12),rgba(6,182,212,0.08));">
+                <i class="bi bi-eye-fill" style="color:var(--primary);"></i>
+            </div>
+            <div>
+                <p class="metric-label">Total Portfolio Views</p>
+                <p class="metric-value">{{ total_views }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-4 anim-fade-up anim-delay-3">
+        <div class="metric-card">
+            <div class="metric-icon" style="background:linear-gradient(135deg,rgba(16,185,129,0.12),rgba(52,211,153,0.06));">
+                <i class="bi bi-search" style="color:var(--success);"></i>
+            </div>
+            <div>
+                <p class="metric-label">Average SEO Score</p>
+                <p class="metric-value">{{ avg_seo }}%</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-4 anim-fade-up anim-delay-4">
+        <div class="metric-card">
+            <div class="metric-icon" style="background:linear-gradient(135deg,rgba(245,158,11,0.12),rgba(251,191,36,0.06));">
+                <i class="bi bi-speedometer2" style="color:var(--warning);"></i>
+            </div>
+            <div>
+                <p class="metric-label">Average Speed Score</p>
+                <p class="metric-value">{{ avg_perf }}%</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ── CHART (only when portfolios exist) ── #}
 {% if my_portfolios > 0 %}
-<div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-4 mb-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="fw-bold text-gray-900 dark:text-white mb-0">Aggregate Views (Past 30 Days)</h5>
-        <a href="{% url 'analytics:dashboard' %}" class="text-xs text-blue-500 font-semibold">Detailed Analytics →</a>
+<div class="chart-card mb-4 anim-fade-up anim-delay-3">
+    <div class="d-flex align-items-start justify-content-between mb-4 flex-wrap gap-2">
+        <div>
+            <p class="chart-card-title">Aggregate Portfolio Views</p>
+            <p class="chart-card-subtitle">Past 30 days — across all your published portfolios</p>
+        </div>
+        <a href="{% url 'analytics:dashboard' %}" class="btn-ghost" style="font-size:12px;padding:7px 16px;">
+            Detailed Analytics <i class="bi bi-arrow-right"></i>
+        </a>
     </div>
-    <div style="height: 220px; position: relative;">
+    <div style="height: 240px; position: relative;">
         <canvas id="userDashboardViewsChart"></canvas>
     </div>
 </div>
 {% endif %}
 
-<!-- Dynamic empty state or welcome -->
-{% if my_portfolios > 0 %}
-<div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-5 text-center py-5">
-    <div class="d-inline-flex align-items-center justify-content-center bg-green-50 dark:bg-green-900/30 text-green-500 rounded-circle mb-4" style="width: 80px; height: 80px;">
-        <i class="bi bi-check-circle-fill text-4xl"></i>
+{# ── QUICK ACTIONS ── #}
+<p class="section-title anim-fade-up anim-delay-3">Quick Actions</p>
+<div class="row g-3 mb-4">
+    <div class="col-12 col-sm-6 col-lg-3 anim-fade-up anim-delay-2">
+        <a href="{% url 'portfolio:list' %}" class="quick-action-card">
+            <div class="quick-action-icon" style="background:linear-gradient(135deg,rgba(79,70,229,0.12),rgba(129,140,248,0.07));">
+                <i class="bi bi-plus-circle" style="color:var(--primary);"></i>
+            </div>
+            <div>
+                <p class="quick-action-label">New Portfolio</p>
+                <p class="quick-action-desc">Create from scratch</p>
+            </div>
+        </a>
     </div>
-    <h3 class="h4 font-bold text-gray-900 dark:text-white mb-2">Your Portfolio is Active!</h3>
-    <p class="text-gray-500 dark:text-gray-400 mb-4 max-w-md mx-auto">Active Layout Theme: <strong class="text-blue-500">{{ selected_theme_name }}</strong>. You can update your content or switch themes at any time.</p>
-    <div class="d-flex justify-content-center gap-2">
-        <a href="{% url 'portfolio:list' %}" class="btn btn-primary rounded-pill px-4 py-2"><i class="bi bi-briefcase-fill me-2"></i>Manage Portfolios</a>
+    <div class="col-12 col-sm-6 col-lg-3 anim-fade-up anim-delay-3">
+        <a href="{% url 'themes:marketplace' %}" class="quick-action-card">
+            <div class="quick-action-icon" style="background:linear-gradient(135deg,rgba(16,185,129,0.12),rgba(52,211,153,0.07));">
+                <i class="bi bi-palette" style="color:var(--success);"></i>
+            </div>
+            <div>
+                <p class="quick-action-label">Browse Themes</p>
+                <p class="quick-action-desc">Explore the marketplace</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-12 col-sm-6 col-lg-3 anim-fade-up anim-delay-4">
+        <a href="{% url 'github_integration:connect' %}" class="quick-action-card">
+            <div class="quick-action-icon" style="background:linear-gradient(135deg,rgba(139,92,246,0.12),rgba(167,139,250,0.07));">
+                <i class="bi bi-github" style="color:var(--purple);"></i>
+            </div>
+            <div>
+                <p class="quick-action-label">GitHub Sync</p>
+                <p class="quick-action-desc">Import your projects</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-12 col-sm-6 col-lg-3 anim-fade-up anim-delay-5">
+        <a href="{% url 'analytics:dashboard' %}" class="quick-action-card">
+            <div class="quick-action-icon" style="background:linear-gradient(135deg,rgba(6,182,212,0.12),rgba(34,211,238,0.07));">
+                <i class="bi bi-bar-chart-line" style="color:var(--accent);"></i>
+            </div>
+            <div>
+                <p class="quick-action-label">Analytics</p>
+                <p class="quick-action-desc">View performance data</p>
+            </div>
+        </a>
+    </div>
+</div>
+
+{# ── STATUS CARD (portfolio active / empty state) ── #}
+{% if my_portfolios > 0 %}
+<div class="welcome-card anim-fade-up anim-delay-4">
+    <div class="welcome-icon-wrap success">
+        <i class="bi bi-check-circle-fill"></i>
+    </div>
+    <h2 class="welcome-title">Your Portfolio is Live! 🎉</h2>
+    <p class="welcome-body">
+        Active theme: <strong style="color:var(--primary);">{{ selected_theme_name }}</strong>.<br>
+        You can update your content or switch themes anytime.
+    </p>
+    <div class="d-flex justify-content-center gap-2 flex-wrap">
+        <a href="{% url 'portfolio:list' %}" class="btn-primary-gradient">
+            <i class="bi bi-briefcase-fill"></i> Manage Portfolios
+        </a>
+        <a href="{% url 'themes:marketplace' %}" class="btn-ghost">
+            <i class="bi bi-palette"></i> Switch Theme
+        </a>
     </div>
 </div>
 {% else %}
-<div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-5 text-center py-5">
-    <div class="d-inline-flex align-items-center justify-content-center bg-blue-50 dark:bg-blue-900/30 text-blue-500 rounded-circle mb-4" style="width: 80px; height: 80px;">
-        <i class="bi bi-rocket-takeoff-fill text-4xl"></i>
+<div class="welcome-card anim-fade-up anim-delay-4">
+    <div class="welcome-icon-wrap">
+        <i class="bi bi-rocket-takeoff-fill"></i>
     </div>
-    <h3 class="h4 font-bold text-gray-900 dark:text-white mb-2">You haven't created a portfolio yet</h3>
-    <p class="text-gray-500 dark:text-gray-400 mb-4 max-w-md mx-auto">Get started by choosing a theme and generating your first portfolio in minutes.</p>
-    <a href="{% url 'portfolio:list' %}" class="btn btn-primary rounded-pill px-4 py-2"><i class="bi bi-magic me-2"></i>Start building</a>
+    <h2 class="welcome-title">Launch Your First Portfolio</h2>
+    <p class="welcome-body">
+        Get started in minutes — pick a stunning theme and let AI generate your portfolio content automatically.
+    </p>
+    <div class="d-flex justify-content-center gap-2 flex-wrap">
+        <a href="{% url 'portfolio:list' %}" class="btn-primary-gradient">
+            <i class="bi bi-magic"></i> Start Building
+        </a>
+        <a href="{% url 'themes:marketplace' %}" class="btn-ghost">
+            <i class="bi bi-palette"></i> Browse Themes
+        </a>
+    </div>
 </div>
 {% endif %}
+
 {% endblock %}
 
 {% block extra_js %}
 {% if my_portfolios > 0 %}
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    const ctx = document.getElementById('userDashboardViewsChart').getContext('2d');
+    const ctx = document.getElementById('userDashboardViewsChart');
+    if (!ctx) return;
+
+    const isDark = document.documentElement.classList.contains('dark');
+    const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
+    const tickColor = isDark ? '#475569' : '#94a3b8';
+
     new Chart(ctx, {
         type: 'line',
         data: {
@@ -115,23 +199,53 @@ document.addEventListener("DOMContentLoaded", function() {
             datasets: [{
                 label: 'Views',
                 data: {{ chart_data|safe }},
-                borderColor: '#0d6efd',
-                backgroundColor: 'rgba(13, 110, 253, 0.05)',
-                borderWidth: 2,
+                borderColor: '#4f46e5',
+                backgroundColor: function(context) {
+                    const chart = context.chart;
+                    const { ctx: c, chartArea } = chart;
+                    if (!chartArea) return 'transparent';
+                    const gradient = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                    gradient.addColorStop(0, 'rgba(79,70,229,0.20)');
+                    gradient.addColorStop(1, 'rgba(79,70,229,0.00)');
+                    return gradient;
+                },
+                borderWidth: 2.5,
                 fill: true,
-                tension: 0.25
+                tension: 0.4,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                pointBackgroundColor: '#4f46e5',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            interaction: { intersect: false, mode: 'index' },
             plugins: {
-                legend: { display: false }
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: isDark ? '#1e293b' : '#fff',
+                    borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+                    borderWidth: 1,
+                    titleColor: isDark ? '#f1f5f9' : '#0f172a',
+                    bodyColor: isDark ? '#94a3b8' : '#64748b',
+                    padding: 12,
+                    cornerRadius: 10,
+                }
             },
             scales: {
+                x: {
+                    grid: { color: gridColor },
+                    ticks: { color: tickColor, font: { size: 11 }, maxTicksLimit: 8 },
+                    border: { display: false },
+                },
                 y: {
                     beginAtZero: true,
-                    ticks: { precision: 0 }
+                    grid: { color: gridColor },
+                    ticks: { color: tickColor, font: { size: 11 }, precision: 0 },
+                    border: { display: false },
                 }
             }
         }

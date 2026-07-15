@@ -1,41 +1,71 @@
 {% load static %}
-<div class="offcanvas-lg offcanvas-start bg-white dark:bg-gray-800 border-end border-gray-200 dark:border-gray-700 transition-all duration-300 z-40 shadow-sm" tabindex="-1" id="sidebarOffcanvas" aria-labelledby="sidebarOffcanvasLabel" style="width: 260px;">
-    
-    <!-- Sidebar Header -->
-    <div class="offcanvas-header border-b border-gray-100 dark:border-gray-700 p-4 d-flex align-items-center justify-content-between">
+<div class="offcanvas-lg offcanvas-start" tabindex="-1" id="sidebarOffcanvas" aria-labelledby="sidebarOffcanvasLabel">
+
+    <!-- Sidebar Header / Brand -->
+    <div class="offcanvas-header border-bottom px-4 py-3 d-flex align-items-center justify-content-between" style="border-color: var(--border-color) !important; min-height: var(--navbar-h);">
         <a href="{% url 'accounts:dashboard_redirect' %}" class="text-decoration-none d-flex align-items-center gap-2 overflow-hidden">
-            <div class="bg-blue-600 text-white rounded p-1 flex items-center justify-center flex-shrink-0">
-                <i class="bi bi-box-fill text-xl"></i>
+            <div class="sidebar-brand-icon flex-shrink-0">
+                <i class="bi bi-box-fill"></i>
             </div>
-            <span class="fs-5 fw-bold text-gray-900 dark:text-white tracking-tight text-nowrap sidebar-text">AI Portfolio</span>
+            <div class="sidebar-text overflow-hidden">
+                <span class="sidebar-brand-name d-block">AI Portfolio</span>
+                <span style="font-size:10px; color: var(--text-muted); font-weight:500; line-height:1;">Builder</span>
+            </div>
         </a>
-        <button type="button" class="btn-close d-lg-none dark:filter-white" data-bs-dismiss="offcanvas" data-bs-target="#sidebarOffcanvas" aria-label="Close"></button>
+        <button type="button" class="btn-close d-lg-none" data-bs-dismiss="offcanvas" data-bs-target="#sidebarOffcanvas" aria-label="Close"></button>
     </div>
 
-    <!-- Sidebar Body / Navigation -->
-    <div class="offcanvas-body p-3 flex-column overflow-y-auto overflow-x-hidden">
-        <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3 px-2 sidebar-text">Menu</p>
-        
-        <ul class="nav nav-pills flex-column gap-1 mb-auto">
+    <!-- Nav Body -->
+    <div class="offcanvas-body p-3 d-flex flex-column overflow-y-auto overflow-x-hidden" style="gap: 4px;">
+
+        <p class="sidebar-section-label sidebar-text">Main Menu</p>
+
+        <ul class="nav flex-column gap-1 mb-auto" style="list-style:none; padding:0; margin:0;">
             {% for item in sidebar_nav %}
-            <li class="nav-item">
-                <a href="{{ item.url }}" class="nav-link d-flex align-items-center gap-3 px-3 py-2.5 rounded-lg transition-colors duration-200 {% if request.path == item.url %}active bg-blue-50 text-blue-700 dark:bg-blue-900/50 dark:text-blue-400 fw-medium{% else %}text-gray-600 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900 dark:hover:bg-gray-700 dark:hover:text-white{% endif %}" title="{{ item.title }}">
-                    <i class="bi {{ item.icon }} text-lg flex-shrink-0"></i>
-                    <span class="sidebar-text text-nowrap">{{ item.title }}</span>
+            <li>
+                <a href="{{ item.url }}"
+                   class="sidebar-nav-link {% if request.path == item.url %}active{% endif %}"
+                   title="{{ item.title }}">
+                    <i class="bi {{ item.icon }} sidebar-nav-icon"></i>
+                    <span class="sidebar-text flex-grow-1 text-nowrap">{{ item.title }}</span>
                     {% if item.coming_soon %}
-                    <span class="badge bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300 ms-auto text-xs rounded-pill sidebar-text">Soon</span>
+                    <span class="sidebar-badge sidebar-badge-soon sidebar-text">Soon</span>
                     {% elif item.badge %}
-                    <span class="badge bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300 ms-auto text-xs rounded-pill sidebar-text">{{ item.badge }}</span>
+                    <span class="sidebar-badge sidebar-badge-beta sidebar-text">{{ item.badge }}</span>
+                    {% endif %}
+                    {% if item.premium %}
+                    <span class="sidebar-badge sidebar-badge-premium sidebar-text">Pro</span>
                     {% endif %}
                 </a>
             </li>
             {% endfor %}
         </ul>
-        
-        <!-- Bottom section (collapse toggle for desktop) -->
-        <div class="mt-auto pt-3 border-t border-gray-100 dark:border-gray-700 d-none d-lg-block">
-            <button id="sidebarToggleBtn" class="btn btn-link text-gray-500 dark:text-gray-400 text-decoration-none w-100 d-flex align-items-center justify-content-center hover:bg-gray-50 dark:hover:bg-gray-700 rounded py-2">
-                <i class="bi bi-chevron-bar-left text-xl transition-transform duration-300" id="sidebarToggleIcon"></i>
+
+        <!-- Bottom: collapse toggle + user card -->
+        <div class="mt-auto pt-3" style="border-top: 1px solid var(--border-color);">
+
+            <!-- User card -->
+            <div class="sidebar-user-card sidebar-text" onclick="window.location='{% url 'accounts:profile' %}'">
+                <div class="sidebar-avatar">
+                    {% if user.avatar %}
+                        <img src="{{ user.avatar.url }}" alt="avatar" style="width:100%;height:100%;border-radius:10px;object-fit:cover;">
+                    {% else %}
+                        {{ user.username|make_list|first|upper }}
+                    {% endif %}
+                </div>
+                <div class="overflow-hidden flex-grow-1 sidebar-text">
+                    <div style="font-size:13px;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ user.username }}</div>
+                    <div style="font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ user.email }}</div>
+                </div>
+                <i class="bi bi-chevron-right sidebar-text" style="font-size:12px;color:var(--text-muted);"></i>
+            </div>
+
+            <!-- Collapse toggle (desktop only) -->
+            <button id="sidebarToggleBtn"
+                    class="d-none d-lg-flex mt-2 w-100 align-items-center justify-content-center gap-2 sidebar-nav-link"
+                    style="background:none;border:none;cursor:pointer;color:var(--text-muted);">
+                <i class="bi bi-chevron-bar-left sidebar-nav-icon transition-transform duration-300" id="sidebarToggleIcon"></i>
+                <span class="sidebar-text" style="font-size:12px;font-weight:600;">Collapse</span>
             </button>
         </div>
     </div>

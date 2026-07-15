@@ -1,23 +1,23 @@
-<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-100 dark:border-gray-700 transition duration-200 hover:shadow-md">
-    <div class="flex items-center justify-between">
-        <div>
-            <p class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">{{ title }}</p>
-            <h3 class="mt-1 text-3xl font-bold text-gray-900 dark:text-white">{{ value }}</h3>
+<!-- Premium stat card component -->
+<div class="stat-card anim-fade-up">
+    <div class="d-flex align-items-start justify-content-between gap-3">
+        <div class="flex-grow-1">
+            <p class="stat-card-label">{{ title }}</p>
+            <h3 class="stat-card-value">{{ value }}</h3>
             {% if growth %}
-            <p class="mt-1 text-sm font-medium {% if growth > 0 %}text-green-600 dark:text-green-400{% else %}text-red-600 dark:text-red-400{% endif %}">
-                <i class="bi {% if growth > 0 %}bi-arrow-up-right{% else %}bi-arrow-down-right{% endif %}"></i> {{ growth }}%
+            <p class="mt-1 mb-0" style="font-size:12px;font-weight:600;{% if growth > 0 %}color:var(--success){% else %}color:var(--danger){% endif %};">
+                <i class="bi {% if growth > 0 %}bi-arrow-up-right{% else %}bi-arrow-down-right{% endif %}"></i>
+                {{ growth }}% vs last month
             </p>
+            {% endif %}
+            {% if link %}
+            <a href="{{ link }}" class="stat-card-link">View details <i class="bi bi-arrow-right"></i></a>
             {% endif %}
         </div>
         {% if icon %}
-        <div class="p-3 rounded-full {{ color|default:'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300' }}">
-            <i class="bi {{ icon }} text-2xl"></i>
+        <div class="stat-card-icon {{ icon_class|default:'stat-icon-blue' }}">
+            <i class="bi {{ icon }}"></i>
         </div>
         {% endif %}
     </div>
-    {% if link %}
-    <div class="mt-4">
-        <a href="{{ link }}" class="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">View details &rarr;</a>
-    </div>
-    {% endif %}
 </div>
