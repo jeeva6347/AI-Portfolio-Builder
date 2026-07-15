@@ -27,8 +27,12 @@ urlpatterns = [
     path("robots.txt", RedirectView.as_view(url="/analytics/robots.txt", permanent=True)),
 ]
 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+from django.views.static import serve
+from django.urls import re_path
+
+urlpatterns += [
+    re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
+]
 
 handler403 = 'dashboard.views.custom_permission_denied_view'
 handler404 = 'dashboard.views.custom_page_not_found_view'

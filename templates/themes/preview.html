@@ -4,105 +4,129 @@
 {% block title %}Preview: {{ theme.name }} | AI Portfolio Builder{% endblock %}
 
 {% block content %}
-<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
-    {% include "dashboard/components/breadcrumb.html" %}
+
+{# ── PAGE HEADER ── #}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4 anim-fade-up">
+    <div>
+        <div class="welcome-badge">
+            <i class="bi bi-eye"></i> Theme Live View
+        </div>
+        <h1 class="page-title">Preview: {{ theme.name }}</h1>
+        <p class="page-subtitle">Test and review the design in real-time across multiple viewports.</p>
+    </div>
     <div class="d-flex gap-2">
         {% if theme.index_html_url %}
-        <a href="{{ theme.index_html_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary rounded-pill px-3 d-flex align-items-center gap-2 text-sm">
+        <a href="{{ theme.index_html_url }}" target="_blank" rel="noopener noreferrer" class="btn-ghost" style="padding: 9px 18px;">
             <i class="bi bi-box-arrow-up-right"></i> Open in new tab
         </a>
         {% endif %}
-        <a href="{% url 'themes:marketplace' %}" class="btn btn-outline-primary rounded-pill px-3 d-flex align-items-center gap-2 text-sm">
+        <a href="{% url 'themes:marketplace' %}" class="btn-primary-gradient" style="padding: 9px 20px;">
             <i class="bi bi-arrow-left"></i> Back to Marketplace
         </a>
     </div>
 </div>
 
 <div class="row g-4">
-    {# ── iframe Preview ── #}
-    <div class="col-12 col-xl-9">
+    {# ── Interactive Device Viewport & Iframe ── #}
+    <div class="col-12 col-xl-9 anim-fade-up anim-delay-1">
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-            {# Browser chrome bar mockup #}
-            <div class="d-flex align-items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
-                <span class="rounded-circle bg-red-400" style="width:10px;height:10px;"></span>
-                <span class="rounded-circle bg-yellow-400" style="width:10px;height:10px;"></span>
-                <span class="rounded-circle bg-green-400" style="width:10px;height:10px;"></span>
-                <div class="flex-grow-1 mx-3 bg-white dark:bg-gray-600 rounded px-3 py-1 text-xs text-gray-500 dark:text-gray-300 font-mono">
-                    preview / {{ theme.slug }}/index.html
+            
+            {# Premium Browser Window Header Mockup #}
+            <div class="d-flex align-items-center justify-content-between px-4 py-3 bg-gray-50 dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
+                <!-- Left: Window controls -->
+                <div class="d-flex gap-2 align-items-center flex-shrink-0" style="width: 80px;">
+                    <span class="rounded-circle" style="width:11px; height:11px; background-color:#ef4444; opacity:0.85;"></span>
+                    <span class="rounded-circle" style="width:11px; height:11px; background-color:#f59e0b; opacity:0.85;"></span>
+                    <span class="rounded-circle" style="width:11px; height:11px; background-color:#10b981; opacity:0.85;"></span>
+                </div>
+                
+                <!-- Middle: Mock Address Bar -->
+                <div class="d-none d-md-flex align-items-center justify-content-center bg-white dark:bg-gray-850 border border-gray-100 dark:border-gray-800 rounded-lg px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 font-monospace flex-grow-1 mx-4 max-w-lg select-none" style="background-color: var(--bg-base);">
+                    <i class="bi bi-lock-fill me-1.5 text-success"></i>ai-portfolio-builder.com/preview/{{ theme.slug }}/
+                </div>
+                
+                <!-- Right: Viewport Controls -->
+                <div class="d-flex align-items-center gap-1 bg-white dark:bg-gray-800 rounded-lg p-0.5 border border-gray-100 dark:border-gray-700">
+                    <button class="btn btn-xs text-gray-600 dark:text-gray-300 px-2.5 py-1 border-0 hover:bg-gray-50 dark:hover:bg-gray-700" onclick="setViewport('100%')" id="btnDesktop" title="Desktop View">
+                        <i class="bi bi-display"></i>
+                    </button>
+                    <button class="btn btn-xs text-gray-600 dark:text-gray-300 px-2.5 py-1 border-0 hover:bg-gray-50 dark:hover:bg-gray-700" onclick="setViewport('768px')" id="btnTablet" title="Tablet View">
+                        <i class="bi bi-tablet"></i>
+                    </button>
+                    <button class="btn btn-xs text-gray-600 dark:text-gray-300 px-2.5 py-1 border-0 hover:bg-gray-50 dark:hover:bg-gray-700" onclick="setViewport('375px')" id="btnMobile" title="Mobile View">
+                        <i class="bi bi-phone"></i>
+                    </button>
                 </div>
             </div>
+            
             {# The actual iframe #}
             {% if theme.index_html_url %}
-            <div id="previewContainer" style="height: 600px; resize: vertical; overflow: hidden;">
+            <div id="previewContainer" style="height: 620px; transition: width 0.3s ease; margin: 0 auto; background: var(--bg-base); display: flex; justify-content: center; align-items: flex-start; overflow: hidden; position: relative;">
                 <iframe
                     id="themePreviewFrame"
                     src="{{ theme.index_html_url }}"
-                    style="width: 100%; height: 100%; border: none;"
+                    style="width: 100%; height: 100%; border: none; background: #fff;"
                     sandbox="allow-scripts allow-same-origin"
                     title="Theme Preview: {{ theme.name }}"
                     loading="lazy"
                 ></iframe>
             </div>
             {% else %}
-            <div class="text-center py-5 text-gray-400" style="height:400px;display:flex;align-items:center;justify-content:center;flex-direction:column;">
-                <i class="bi bi-exclamation-triangle-fill text-yellow-400" style="font-size:3rem;"></i>
-                <h5 class="mt-3 text-gray-600 dark:text-gray-300">Preview Unavailable</h5>
-                <p class="text-sm text-gray-400">The theme files could not be located.</p>
+            <div class="text-center py-5 text-gray-400" style="height:450px; display:flex; align-items:center; justify-content:center; flex-direction:column;">
+                <i class="bi bi-exclamation-triangle-fill text-yellow-500" style="font-size:3rem;"></i>
+                <h5 class="mt-3 text-gray-800 dark:text-white fw-bold">Preview Unavailable</h5>
+                <p class="text-sm text-gray-500 dark:text-gray-400 max-w-xs">The theme files could not be located in the media directory.</p>
             </div>
             {% endif %}
-        </div>
-
-        {# Viewport toggle #}
-        <div class="d-flex justify-content-center gap-3 mt-3">
-            <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="setViewport('100%')" id="btnDesktop">
-                <i class="bi bi-display me-1"></i>Desktop
-            </button>
-            <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="setViewport('768px')" id="btnTablet">
-                <i class="bi bi-tablet me-1"></i>Tablet
-            </button>
-            <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="setViewport('375px')" id="btnMobile">
-                <i class="bi bi-phone me-1"></i>Mobile
-            </button>
         </div>
     </div>
 
     {# ── Theme Info Sidebar ── #}
-    <div class="col-12 col-xl-3">
-        {# Thumbnail #}
+    <div class="col-12 col-xl-3 anim-fade-up anim-delay-2">
+        {# Thumbnail card #}
         {% if theme.thumbnail %}
-        <img src="{{ theme.thumbnail.url }}" alt="{{ theme.name }}" class="rounded-xl w-100 mb-3 shadow-sm" style="height:120px;object-fit:cover;">
+        <div class="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-700 p-2 mb-3">
+            <img src="{{ theme.thumbnail.url }}" alt="{{ theme.name }}" class="rounded-lg w-100 shadow-inner" style="height:140px; object-fit:cover;">
+        </div>
         {% endif %}
 
+        {# Stats & Specifications #}
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 mb-3">
-            <h5 class="fw-bold text-gray-900 dark:text-white mb-1">{{ theme.name }}</h5>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">{{ theme.description|default:"No description." }}</p>
+            <h5 class="fw-bold text-gray-900 dark:text-white mb-2">{{ theme.name }}</h5>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">{{ theme.description|default:"No description available." }}</p>
+            
             {% if theme.is_premium %}
-            <div class="d-flex align-items-center justify-content-between p-3 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg mb-3">
-                <span class="text-sm fw-bold text-yellow-700 dark:text-yellow-400"><i class="bi bi-star-fill me-1"></i>Premium Theme</span>
-                <span class="text-lg fw-bold text-yellow-700 dark:text-yellow-400">${{ theme.price }}</span>
+            <div class="d-flex align-items-center justify-content-between p-3 bg-warning bg-opacity-10 rounded-xl mb-4 border border-warning border-opacity-15">
+                <span class="text-xs fw-bold text-warning-700" style="color: #d97706;"><i class="bi bi-star-fill me-1"></i>Premium Theme</span>
+                <span class="text-lg fw-bold text-warning-700" style="color: #d97706;">${{ theme.price }}</span>
             </div>
             {% else %}
-            <div class="d-flex align-items-center justify-content-between p-3 bg-green-50 dark:bg-green-900/30 rounded-lg mb-3">
-                <span class="text-sm fw-bold text-green-700 dark:text-green-400"><i class="bi bi-check-circle-fill me-1"></i>Free Theme</span>
-                <span class="text-lg fw-bold text-green-700 dark:text-green-400">$0</span>
+            <div class="d-flex align-items-center justify-content-between p-3 bg-success bg-opacity-10 rounded-xl mb-4 border border-success border-opacity-15">
+                <span class="text-xs fw-bold text-success-700" style="color: #059669;"><i class="bi bi-check-circle-fill me-1"></i>Free Theme</span>
+                <span class="text-lg fw-bold text-success-700" style="color: #059669;">$0</span>
             </div>
             {% endif %}
-            <dl class="row g-1 text-sm mb-0">
-                <dt class="col-5 text-gray-400">Category</dt>
-                <dd class="col-7 text-gray-700 dark:text-gray-300">{{ theme.category.name|default:"—" }}</dd>
-                <dt class="col-5 text-gray-400">Version</dt>
-                <dd class="col-7 text-gray-700 dark:text-gray-300">{{ theme.version }}</dd>
-                <dt class="col-5 text-gray-400">Downloads</dt>
-                <dd class="col-7 text-gray-700 dark:text-gray-300">{{ theme.downloads }}</dd>
-                <dt class="col-5 text-gray-400">Files</dt>
-                <dd class="col-7 text-gray-700 dark:text-gray-300">{{ theme.file_count }}</dd>
+            
+            <dl class="row g-2 text-sm mb-0">
+                <dt class="col-6 text-gray-400 font-medium">Category</dt>
+                <dd class="col-6 text-end text-gray-800 dark:text-gray-200 fw-semibold">{{ theme.category.name|default:"—" }}</dd>
+                
+                <dt class="col-6 text-gray-400 font-medium">Version</dt>
+                <dd class="col-6 text-end text-gray-800 dark:text-gray-200 fw-semibold">{{ theme.version }}</dd>
+                
+                <dt class="col-6 text-gray-400 font-medium">Downloads</dt>
+                <dd class="col-6 text-end text-gray-800 dark:text-gray-200 fw-semibold">{{ theme.downloads }}</dd>
+                
+                <dt class="col-6 text-gray-400 font-medium">Files count</dt>
+                <dd class="col-6 text-end text-gray-800 dark:text-gray-200 fw-semibold">{{ theme.file_count }}</dd>
             </dl>
         </div>
 
+        {# Tag list #}
         {% if theme.tag_list %}
-        <div class="d-flex flex-wrap gap-2">
+        <div class="d-flex flex-wrap gap-1.5">
             {% for tag in theme.tag_list %}
-            <span class="badge bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 rounded-pill">{{ tag }}</span>
+            <span class="badge bg-light text-secondary dark:bg-gray-800 dark:text-gray-300 px-3 py-2 rounded-pill border border-gray-100 dark:border-gray-700 font-medium text-xs">{{ tag }}</span>
             {% endfor %}
         </div>
         {% endif %}
@@ -115,33 +139,54 @@
 function setViewport(width) {
     const frame = document.getElementById('themePreviewFrame');
     const container = document.getElementById('previewContainer');
-    if (!frame) return;
+    if (!frame || !container) return;
 
     // Reset active button states
     ['btnDesktop','btnTablet','btnMobile'].forEach(id => {
-        document.getElementById(id)?.classList.remove('btn-primary', 'text-white');
-        document.getElementById(id)?.classList.add('btn-outline-secondary');
+        const btn = document.getElementById(id);
+        if (btn) {
+            btn.style.backgroundColor = 'transparent';
+            btn.style.color = '';
+            btn.style.fontWeight = 'normal';
+        }
     });
 
     if (width === '100%') {
         frame.style.width = '100%';
         frame.style.transform = '';
         frame.style.transformOrigin = '';
-        document.getElementById('btnDesktop')?.classList.replace('btn-outline-secondary', 'btn-primary');
+        const btn = document.getElementById('btnDesktop');
+        if (btn) {
+            btn.style.backgroundColor = 'var(--primary-glow)';
+            btn.style.color = 'var(--primary)';
+            btn.style.fontWeight = 'bold';
+        }
     } else {
         const containerWidth = container.offsetWidth;
         const targetWidth = parseInt(width);
         const scale = Math.min(1, containerWidth / targetWidth);
         frame.style.width = width;
         frame.style.transform = `scale(${scale})`;
-        frame.style.transformOrigin = 'top left';
-        if (width === '768px') document.getElementById('btnTablet')?.classList.replace('btn-outline-secondary', 'btn-primary');
-        if (width === '375px') document.getElementById('btnMobile')?.classList.replace('btn-outline-secondary', 'btn-primary');
+        frame.style.transformOrigin = 'top center';
+        
+        const activeId = width === '768px' ? 'btnTablet' : 'btnMobile';
+        const btn = document.getElementById(activeId);
+        if (btn) {
+            btn.style.backgroundColor = 'var(--primary-glow)';
+            btn.style.color = 'var(--primary)';
+            btn.style.fontWeight = 'bold';
+        }
     }
 }
+
 // Default to desktop active
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('btnDesktop')?.classList.replace('btn-outline-secondary', 'btn-primary');
+    const btn = document.getElementById('btnDesktop');
+    if (btn) {
+        btn.style.backgroundColor = 'var(--primary-glow)';
+        btn.style.color = 'var(--primary)';
+        btn.style.fontWeight = 'bold';
+    }
 });
 </script>
 {% endblock %}
