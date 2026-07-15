@@ -42,7 +42,7 @@
                 <p class="text-xs text-gray-500 dark:text-gray-400 mb-3.5 max-w-sm mx-auto">
                     Link your GitHub profile via secure OAuth web authorization to deploy your portfolios directly to public Git repositories with GitHub Pages.
                 </p>
-                <a href="{% url 'github:connect' %}" class="btn btn-sm btn-primary rounded-pill px-4">
+                <a href="{% url 'github:connect' %}?portfolio_pk={{ portfolio.pk }}" class="btn btn-sm btn-primary rounded-pill px-4">
                     <i class="bi bi-plus-lg me-1.5"></i>Connect GitHub Profile
                 </a>
             </div>
