@@ -81,6 +81,18 @@ class DeploymentDashboardView(LoginRequiredMixin, View):
                     ctx["repos_list"] = list_repositories(token)
                 except Exception as e:
                     messages.error(request, f"Failed to retrieve repositories: {str(e)}")
+
+                # Fetch real-time GitHub Pages build status if repo config is linked
+                repo_config = ctx.get("repo_config")
+                if repo_config:
+                    try:
+                        pages_info = get_github_pages_info(token, repo_config.repository_owner, repo_config.repo_name)
+                        if pages_info.get("pages_enabled"):
+                            ctx["live_pages_status"] = pages_info.get("status")  # "built", "building", or "errored"
+                        else:
+                            ctx["live_pages_status"] = "not_configured"
+                    except Exception:
+                        ctx["live_pages_status"] = "unknown"
             else:
                 # Token might have expired or been revoked
                 messages.warning(request, "GitHub access token not found. Please reconnect your account.")

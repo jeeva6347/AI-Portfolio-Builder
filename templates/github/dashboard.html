@@ -221,6 +221,20 @@
                     </div>
                 </div>
 
+                {% if live_pages_status == "building" or live_pages_status == "not_configured" %}
+                <div class="p-3 bg-amber-50/50 dark:bg-amber-950/10 border border-amber-200/50 dark:border-amber-900/50 rounded-xl">
+                    <div class="d-flex gap-2">
+                        <div class="spinner-border spinner-border-sm text-amber-500 mt-0.5" role="status"></div>
+                        <div>
+                            <h6 class="text-xs font-bold text-amber-900 dark:text-amber-300 mb-1">GitHub Pages is Building...</h6>
+                            <p class="text-xxs text-gray-500 dark:text-gray-400 mb-0">
+                                GitHub is currently compiling and deploying your portfolio in the background. The live website link below may display a <strong>404 page</strong> for 1-2 minutes until GitHub's background build process finishes. Please wait a moment and refresh.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
                 {% if latest_deployment.status == 'SUCCESS' and latest_deployment.published_url %}
                 <div class="p-3 bg-green-50/50 dark:bg-green-950/10 border rounded-xl d-flex align-items-center justify-content-between gap-3">
                     <div class="overflow-hidden">
