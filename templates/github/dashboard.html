@@ -76,15 +76,15 @@
                     {# Remove connection #}
                     <form method="post" action="{% url 'github:clear' portfolio.pk %}" class="m-0">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-xs btn-outline-danger rounded-pill px-2.5" onclick="return confirm('Clear repository mapping config? This unlinks the site but preserves committed files on GitHub.');">
-                            Disconnect Config
+                        <button type="submit" class="btn btn-xs btn-outline-danger rounded-pill px-2.5" onclick="return confirm('Unlink repository mapping config? This unlinks the site but preserves committed files on GitHub.');">
+                            Unlink Repository
                         </button>
                     </form>
                 </div>
             </div>
 
             {# Rename or change config accordion trigger #}
-            <p class="text-xxs text-gray-400 mb-3"><i class="bi bi-info-circle"></i> Need to rename or map to a different repository? Disconnect config above first.</p>
+            <p class="text-xxs text-gray-400 mb-3"><i class="bi bi-info-circle"></i> Need to rename or map to a different repository? Unlink repository above first.</p>
 
             {# Visual publish console trigger #}
             <div class="border rounded-xl p-4 bg-blue-50/30 dark:bg-blue-950/10 border-blue-100 dark:border-blue-900">

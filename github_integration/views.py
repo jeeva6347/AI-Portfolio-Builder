@@ -207,17 +207,25 @@ class AutoDeployView(LoginRequiredMixin, View):
             if not owner:
                 raise Exception("Failed to identify GitHub user details.")
 
-            success = False
-            suffix = 0
-            current_repo_name = repo_name
-            while not success and suffix < 10:
-                try:
-                    create_repository(token, current_repo_name)
-                    success = True
-                    repo_name = current_repo_name
-                except Exception:
-                    suffix += 1
-                    current_repo_name = f"{repo_name}-{suffix}"
+            # Check if a repository with this name already exists in the user's account
+            existing_repos = list_repositories(token)
+            existing_repo_names = [r["name"].lower() for r in existing_repos]
+
+            if repo_name.lower() in existing_repo_names:
+                # Reuse the existing repository rather than creating a new one
+                success = True
+            else:
+                success = False
+                suffix = 0
+                current_repo_name = repo_name
+                while not success and suffix < 10:
+                    try:
+                        create_repository(token, current_repo_name)
+                        success = True
+                        repo_name = current_repo_name
+                    except Exception:
+                        suffix += 1
+                        current_repo_name = f"{repo_name}-{suffix}"
             
             if not success:
                 raise Exception("Could not create a unique repository name. Please configure manually.")
