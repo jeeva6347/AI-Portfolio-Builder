@@ -162,20 +162,13 @@ ACCOUNT_DEFAULT_HTTP_PROTOCOL = config("ACCOUNT_DEFAULT_HTTP_PROTOCOL", default=
 
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
-        "APP": {
-            "client_id": config("GOOGLE_OAUTH_CLIENT_ID", default=""),
-            "secret": config("GOOGLE_OAUTH_CLIENT_SECRET", default=""),
-            "key": "",
-        },
         "SCOPE": ["profile", "email"],
+        "AUTH_PARAMS": {
+            "access_type": "online",
+        }
     },
     "github": {
-        "APP": {
-            "client_id": config("GITHUB_OAUTH_CLIENT_ID", default=""),
-            "secret": config("GITHUB_OAUTH_CLIENT_SECRET", default=""),
-            "key": "",
-        },
-        "SCOPE": ["user:email", "repo"],  # repo scope reused later by GitHub Auto Publish module
+        "SCOPE": ["user:email", "repo"],
     },
 }
 
