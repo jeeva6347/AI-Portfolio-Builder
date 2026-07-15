@@ -12,44 +12,50 @@ def setup_sites_and_apps(apps, schema_editor):
     site.save()
 
     # Configure Google SocialApp
-    google_client_id = config('GOOGLE_OAUTH_CLIENT_ID', default='')
-    google_secret = config('GOOGLE_OAUTH_CLIENT_SECRET', default='')
+    google_client_id = config('GOOGLE_OAUTH_CLIENT_ID', default='dummy-google-client-id')
+    google_secret = config('GOOGLE_OAUTH_CLIENT_SECRET', default='dummy-google-client-secret')
 
-    if google_client_id and google_secret:
-        google_app, created = SocialApp.objects.get_or_create(
-            provider='google',
-            defaults={
-                'name': 'Google OAuth',
-                'client_id': google_client_id,
-                'secret': google_secret,
-            }
-        )
-        if not created:
-            google_app.client_id = google_client_id
-            google_app.secret = google_secret
-            google_app.save()
-        # Attach the site to the app
-        google_app.sites.add(site)
+    if not google_client_id:
+        google_client_id = 'dummy-google-client-id'
+    if not google_secret:
+        google_secret = 'dummy-google-client-secret'
+
+    google_app, created = SocialApp.objects.get_or_create(
+        provider='google',
+        defaults={
+            'name': 'Google OAuth',
+            'client_id': google_client_id,
+            'secret': google_secret,
+        }
+    )
+    if not created:
+        google_app.client_id = google_client_id
+        google_app.secret = google_secret
+        google_app.save()
+    google_app.sites.add(site)
 
     # Configure GitHub SocialApp
-    github_client_id = config('GITHUB_OAUTH_CLIENT_ID', default='')
-    github_secret = config('GITHUB_OAUTH_CLIENT_SECRET', default='')
+    github_client_id = config('GITHUB_OAUTH_CLIENT_ID', default='dummy-github-client-id')
+    github_secret = config('GITHUB_OAUTH_CLIENT_SECRET', default='dummy-github-client-secret')
 
-    if github_client_id and github_secret:
-        github_app, created = SocialApp.objects.get_or_create(
-            provider='github',
-            defaults={
-                'name': 'GitHub OAuth',
-                'client_id': github_client_id,
-                'secret': github_secret,
-            }
-        )
-        if not created:
-            github_app.client_id = github_client_id
-            github_app.secret = github_secret
-            github_app.save()
-        # Attach the site to the app
-        github_app.sites.add(site)
+    if not github_client_id:
+        github_client_id = 'dummy-github-client-id'
+    if not github_secret:
+        github_secret = 'dummy-github-client-secret'
+
+    github_app, created = SocialApp.objects.get_or_create(
+        provider='github',
+        defaults={
+            'name': 'GitHub OAuth',
+            'client_id': github_client_id,
+            'secret': github_secret,
+        }
+    )
+    if not created:
+        github_app.client_id = github_client_id
+        github_app.secret = github_secret
+        github_app.save()
+    github_app.sites.add(site)
 
 def remove_sites_and_apps(apps, schema_editor):
     pass
