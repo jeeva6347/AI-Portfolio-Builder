@@ -159,6 +159,7 @@ LOGIN_REDIRECT_URL = "accounts:dashboard_redirect"
 LOGOUT_REDIRECT_URL = "accounts:login"
 SOCIALACCOUNT_LOGIN_ON_GET = True
 SOCIALACCOUNT_ADAPTER = "accounts.adapter.CustomSocialAccountAdapter"
+SOCIALACCOUNT_STORE_TOKENS = True
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = config("ACCOUNT_DEFAULT_HTTP_PROTOCOL", default="https" if not DEBUG else "http")
 
 SOCIALACCOUNT_PROVIDERS = {
