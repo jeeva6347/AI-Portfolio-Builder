@@ -218,6 +218,8 @@ DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="noreply@aiportfoliobu
 SESSION_COOKIE_AGE = config("SESSION_COOKIE_AGE", default=1209600, cast=int)  # 14 days
 SESSION_SAVE_EVERY_REQUEST = True
 
+X_FRAME_OPTIONS = "SAMEORIGIN"
+
 # ---------------------------------------------------------------------------
 # Production Security settings (Active only when DJANGO_DEBUG=False)
 # ---------------------------------------------------------------------------
