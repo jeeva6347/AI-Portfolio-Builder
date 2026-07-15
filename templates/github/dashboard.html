@@ -102,7 +102,24 @@
             </div>
             {% else %}
             {# No repo mapped yet - Setup Form #}
-            <form method="post" action="{% url 'github:configure' portfolio.pk %}" class="d-flex flex-column gap-3.5">
+            <div class="mb-4 p-3 bg-blue-50/50 dark:bg-blue-950/10 border border-blue-100/50 dark:border-blue-900/50 rounded-xl">
+                <h6 class="fw-bold text-blue-900 dark:text-blue-300 text-xs mb-1.5"><i class="bi bi-magic me-1"></i>One-Click Auto-Deploy</h6>
+                <p class="text-xxs text-gray-500 dark:text-gray-400 mb-3">Automatically create a new GitHub repository matching this portfolio's name, configure GitHub Pages, and publish it instantly.</p>
+                <form method="post" action="{% url 'github:auto_deploy' portfolio.pk %}" class="m-0">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-primary w-100 rounded-pill py-2 font-bold d-flex align-items-center justify-content-center gap-2">
+                        <i class="bi bi-rocket-takeoff-fill"></i>Auto-Create & Deploy Portfolio
+                    </button>
+                </form>
+            </div>
+
+            <div class="relative flex py-2 items-center">
+                <div class="flex-grow border-t border-gray-200 dark:border-gray-700"></div>
+                <span class="flex-shrink mx-3 text-gray-400 text-[10px] font-bold uppercase tracking-wider">OR MANUALLY CONFIGURE</span>
+                <div class="flex-grow border-t border-gray-200 dark:border-gray-700"></div>
+            </div>
+
+            <form method="post" action="{% url 'github:configure' portfolio.pk %}" class="d-flex flex-column gap-3.5 mt-3">
                 {% csrf_token %}
                 
                 <div>

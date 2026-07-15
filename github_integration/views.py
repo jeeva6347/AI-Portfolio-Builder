@@ -171,6 +171,71 @@ class PublishPortfolioView(GitHubPublishLimitMixin, LoginRequiredMixin, View):
         return redirect("github:dashboard", pk=portfolio.pk)
 
 
+class AutoDeployView(LoginRequiredMixin, View):
+    """
+    Automatically creates a repository with a name based on the portfolio,
+    links the repository mapping, and immediately publishes the website.
+    """
+    def post(self, request, pk):
+        portfolio = get_object_or_404(Portfolio, pk=pk, user=request.user)
+        token = get_github_token(request.user)
+        if not token:
+            messages.error(request, "GitHub authentication token is missing. Please connect account first.")
+            return redirect("github:dashboard", pk=portfolio.pk)
+
+        import re
+        base_name = portfolio.name or "my-portfolio"
+        repo_name = re.sub(r'[^a-zA-Z0-9_\-\.]', '-', base_name.lower())
+        repo_name = re.sub(r'-+', '-', repo_name).strip('-')
+        if not repo_name:
+            repo_name = f"portfolio-{portfolio.pk}"
+
+        try:
+            owner = get_authenticated_username(token)
+            if not owner:
+                raise Exception("Failed to identify GitHub user details.")
+
+            success = False
+            suffix = 0
+            current_repo_name = repo_name
+            while not success and suffix < 10:
+                try:
+                    create_repository(token, current_repo_name)
+                    success = True
+                    repo_name = current_repo_name
+                except Exception:
+                    suffix += 1
+                    current_repo_name = f"{repo_name}-{suffix}"
+            
+            if not success:
+                raise Exception("Could not create a unique repository name. Please configure manually.")
+
+            # Create or update local config
+            config, _ = GitHubRepoConfig.objects.get_or_create(portfolio=portfolio)
+            config.repo_name = repo_name
+            config.repository_owner = owner
+            config.branch_name = "main"
+            config.save()
+
+            # Trigger publishing immediately
+            deployment = publish_portfolio_to_github(portfolio, token, commit_message="Auto-deployed via AI Portfolio Builder")
+            
+            if deployment.status == GitHubDeployment.Status.SUCCESS:
+                messages.success(
+                    request,
+                    f"Repository '{owner}/{repo_name}' created and portfolio deployed successfully! Live URL: {deployment.published_url}"
+                )
+            else:
+                messages.warning(
+                    request,
+                    f"Repository '{owner}/{repo_name}' created, but publishing failed: {deployment.error_message}. You can manually retry from the panel."
+                )
+        except Exception as e:
+            messages.error(request, f"Auto-deployment failed: {str(e)}")
+
+        return redirect("github:dashboard", pk=portfolio.pk)
+
+
 class ClearConnectionView(LoginRequiredMixin, View):
     """
     Removes the linked repository connection config locally,
