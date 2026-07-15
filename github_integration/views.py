@@ -33,7 +33,7 @@ def _base_context(request):
 class GitHubConnectView(LoginRequiredMixin, View):
     """Redirects to allauth OAuth connect pipeline for GitHub."""
     def get(self, request):
-        return redirect("/accounts/github/login/?process=connect")
+        return redirect("/accounts/social/github/login/?process=connect")
 
 
 class GitHubDisconnectView(LoginRequiredMixin, View):
