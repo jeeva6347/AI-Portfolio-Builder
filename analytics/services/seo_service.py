@@ -66,7 +66,7 @@ def inject_seo_metadata(html_content, portfolio, request=None):
         old_robots.decompose()
         
     from portfolio.models import Portfolio
-    robots_content = "index, follow" if portfolio.status == Portfolio.Status.PUBLISHED else "noindex, nofollow"
+    robots_content = "index,follow" if portfolio.status == Portfolio.Status.PUBLISHED else "noindex,nofollow"
     new_robots = soup.new_tag("meta", attrs={"name": "robots", "content": robots_content})
     head.append(new_robots)
 
