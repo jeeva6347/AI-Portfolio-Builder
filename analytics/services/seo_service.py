@@ -95,8 +95,8 @@ def inject_seo_metadata(html_content, portfolio, request=None):
         new_title.string = title_str
         head.append(new_title)
 
-    # 2. Descriptions and Keywords (Dynamic fallback to headline / summary)
-    desc_str = seo.meta_description or portfolio.summary or portfolio.headline or f"Explore the professional resume portfolio of {owner_name} containing experience, education, projects, and skills."
+    # 2. Descriptions and Keywords (Dynamic fallback to about / tagline)
+    desc_str = seo.meta_description or portfolio.about or portfolio.tagline or portfolio.title or f"Explore the professional resume portfolio of {owner_name} containing experience, education, projects, and skills."
     upsert_meta_name("description", desc_str)
     
     keywords_str = seo.keywords or "resume, portfolio, developer, experience, projects, skills"
@@ -160,8 +160,6 @@ def inject_seo_metadata(html_content, portfolio, request=None):
     fav_url = seo.favicon.url if seo.favicon else "/favicon.ico"
     if request and not fav_url.startswith("http"):
         fav_url = request.build_absolute_uri(fav_url)
-    elif not fav_url.startswith("http"):
-        fav_url = f"https://ai-portfolio-builder-icmv.onrender.com{fav_url}"
         
     # Remove any existing favicon tags
     for old_fav in head.find_all("link", attrs={"rel": lambda x: x and "icon" in x.lower()}):
@@ -181,8 +179,8 @@ def inject_seo_metadata(html_content, portfolio, request=None):
         "mainEntity": {
             "@type": "Person",
             "name": owner_name,
-            "jobTitle": portfolio.headline or "Professional Profile",
-            "description": portfolio.summary or desc_str,
+            "jobTitle": portfolio.title or portfolio.tagline or "Professional Profile",
+            "description": portfolio.about or desc_str,
             "url": canonical_url
         }
     }
