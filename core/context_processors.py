@@ -14,7 +14,7 @@ def analytics_context(request):
         "IS_PRODUCTION": not settings.DEBUG,
         
         # Site verification meta tags
-        "GOOGLE_SITE_VERIFICATION": config("GOOGLE_SITE_VERIFICATION", default=""),
+        "GOOGLE_SITE_VERIFICATION": config("GOOGLE_SITE_VERIFICATION", default="VxHQLjDktq112JPcvkUL2tGbY3MUgxsemqtUReyCs5M"),
         "BING_SITE_VERIFICATION": config("BING_SITE_VERIFICATION", default=""),
         
         # Reusable global SEO configuration
