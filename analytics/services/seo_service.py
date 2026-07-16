@@ -61,6 +61,15 @@ def inject_seo_metadata(html_content, portfolio, request=None):
     if not head:
         return html_content
 
+    # Clean and override robots indexing directives to prevent pre-existing template overrides (none, noindex, nofollow)
+    for old_robots in head.find_all("meta", attrs={"name": "robots"}):
+        old_robots.decompose()
+        
+    from portfolio.models import Portfolio
+    robots_content = "index, follow" if portfolio.status == Portfolio.Status.PUBLISHED else "noindex, nofollow"
+    new_robots = soup.new_tag("meta", attrs={"name": "robots", "content": robots_content})
+    head.append(new_robots)
+
     # helper to upsert meta by name
     def upsert_meta_name(name, content):
         if not content:
