@@ -6,6 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Dashboard | AI Portfolio Builder{% endblock %}</title>
 
+    <!-- Prevent Search Engine Indexing of private dashboards by default -->
+    {% block robots %}
+    <meta name="robots" content="noindex, nofollow">
+    {% endblock %}
+
+    <!-- Favicon Assets -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+
     <!-- Preconnect for Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

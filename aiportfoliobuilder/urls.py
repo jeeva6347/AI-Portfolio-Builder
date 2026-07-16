@@ -3,6 +3,8 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import RedirectView
+from django.contrib.staticfiles.storage import staticfiles_storage
+from analytics.views import SitemapView, RobotsTxtView
 
 from core.views import LandingPageView
 
@@ -23,8 +25,11 @@ urlpatterns = [
     path("organizations/", include("organizations.urls")),
     
     # Root level SEO files
-    path("sitemap.xml", RedirectView.as_view(url="/analytics/sitemap.xml", permanent=True)),
-    path("robots.txt", RedirectView.as_view(url="/analytics/robots.txt", permanent=True)),
+    path("sitemap.xml", SitemapView.as_view(), name="sitemap"),
+    path("robots.txt", RobotsTxtView.as_view(), name="robots_txt"),
+    path("favicon.ico", RedirectView.as_view(url=staticfiles_storage.url("favicon.ico")), name="favicon"),
+    path("apple-touch-icon.png", RedirectView.as_view(url=staticfiles_storage.url("apple-touch-icon.png")), name="apple_touch_icon"),
+    path("site.webmanifest", RedirectView.as_view(url=staticfiles_storage.url("site.webmanifest")), name="site_webmanifest"),
 ]
 
 from django.views.static import serve

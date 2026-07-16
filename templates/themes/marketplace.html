@@ -3,6 +3,45 @@
 
 {% block title %}Theme Marketplace | AI Portfolio Builder{% endblock %}
 
+{% block robots %}
+    <!-- Allow indexing of the public Marketplace -->
+    <meta name="robots" content="index, follow">
+    <meta name="description" content="Browse handcrafted premium and free HTML templates for your resume portfolio websites. Instantly launch and map your portfolio with AI.">
+    <link rel="canonical" href="{{ CANONICAL_URL }}">
+    
+    <!-- Open Graph Sharing Cards -->
+    <meta property="og:title" content="Theme Marketplace | AI Portfolio Builder">
+    <meta property="og:description" content="Browse handcrafted premium and free HTML templates for your resume portfolio websites. Instantly launch and map your portfolio with AI.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ CANONICAL_URL }}">
+    <meta property="og:image" content="{{ OG_DEFAULT_IMAGE }}">
+    
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Theme Marketplace | AI Portfolio Builder">
+    <meta name="twitter:description" content="Browse handcrafted premium and free HTML templates for your resume portfolio websites. Instantly launch and map your portfolio with AI.">
+    <meta name="twitter:image" content="{{ OG_DEFAULT_IMAGE }}">
+
+    <!-- Schema.org BreadcrumbList Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [{
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://ai-portfolio-builder-icmv.onrender.com/"
+      },{
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Marketplace",
+        "item": "https://ai-portfolio-builder-icmv.onrender.com/themes/marketplace/"
+      }]
+    }
+    </script>
+{% endblock %}
+
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/themes.css' %}">
 {% endblock %}

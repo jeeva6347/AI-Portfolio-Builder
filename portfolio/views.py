@@ -652,6 +652,6 @@ class UserPortfolioPreview(LoginRequiredMixin, View):
 
         # 2. Dynamic SEO Injection
         from analytics.services.seo_service import inject_seo_metadata
-        compiled_html = inject_seo_metadata(compiled_html, portfolio)
+        compiled_html = inject_seo_metadata(compiled_html, portfolio, request=request)
         
         return HttpResponse(compiled_html, content_type="text/html")

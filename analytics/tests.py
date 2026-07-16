@@ -159,8 +159,8 @@ class PortfolioAnalyticsTestCase(TestCase):
         root = ET.fromstring(res.content)
         urls = [loc.text for loc in root.findall(".//{http://www.sitemaps.org/schemas/sitemap/0.9}loc")]
         
-        self.assertEqual(len(urls), 1)
-        self.assertIn(f"/portfolio/preview/{self.portfolio.pk}/", urls[0])
+        self.assertEqual(len(urls), 3)
+        self.assertTrue(any(f"/portfolio/preview/{self.portfolio.pk}/" in u for u in urls))
 
     def test_robots_txt_routing_provides_plain_text(self):
         """Verify robots.txt serves crawler mapping directives."""

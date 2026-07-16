@@ -110,6 +110,6 @@ class CustomDomainMiddleware(MiddlewareMixin):
             logger.warning("Failed to track custom domain visit: %s", exc)
 
         # Inject SEO metadata
-        compiled_html = inject_seo_metadata(compiled_html, portfolio)
+        compiled_html = inject_seo_metadata(compiled_html, portfolio, request=request)
 
         return HttpResponse(compiled_html, content_type="text/html")

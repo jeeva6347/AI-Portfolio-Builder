@@ -276,16 +276,33 @@ class PortfolioPerformanceView(LoginRequiredMixin, View):
 
 class SitemapView(View):
     """
-    Dynamic sitemap.xml generator listing all public portfolios.
+    Dynamic sitemap.xml generator listing all public platform pages
+    and published user portfolios.
     """
     def get(self, request):
-        portfolios = Portfolio.objects.filter(status=Portfolio.Status.PUBLISHED).select_related("user")
-
         xml_lines = [
             '<?xml version="1.0" encoding="UTF-8"?>',
             '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
         ]
 
+        # 1. Platform Landing page (Highest priority)
+        homepage_url = request.build_absolute_uri("/")
+        xml_lines.append("  <url>")
+        xml_lines.append(f"    <loc>{homepage_url}</loc>")
+        xml_lines.append("    <changefreq>daily</changefreq>")
+        xml_lines.append("    <priority>1.0</priority>")
+        xml_lines.append("  </url>")
+
+        # 2. Public Marketplace page
+        marketplace_url = request.build_absolute_uri(reverse("themes:marketplace"))
+        xml_lines.append("  <url>")
+        xml_lines.append(f"    <loc>{marketplace_url}</loc>")
+        xml_lines.append("    <changefreq>daily</changefreq>")
+        xml_lines.append("    <priority>0.9</priority>")
+        xml_lines.append("  </url>")
+
+        # 3. Dynamic published portfolios list
+        portfolios = Portfolio.objects.filter(status=Portfolio.Status.PUBLISHED).select_related("user")
         for p in portfolios:
             url = request.build_absolute_uri(reverse("portfolio:preview", kwargs={"pk": p.pk}))
             xml_lines.append("  <url>")
@@ -301,9 +318,27 @@ class SitemapView(View):
 
 class RobotsTxtView(View):
     """
-    Dynamic robots.txt builder routing crawlers and pointing indexes.
+    Dynamic robots.txt builder routing search engine crawlers and referencing sitemaps.
     """
     def get(self, request):
-        sitemap_url = request.build_absolute_uri(reverse("analytics:sitemap"))
-        content = f"User-agent: *\nAllow: /\nDisallow: /admin/\nDisallow: /billing/\n\nSitemap: {sitemap_url}"
+        sitemap_url = "https://ai-portfolio-builder-icmv.onrender.com/sitemap.xml"
+        
+        # Block private, API, and administration folders
+        disallows = [
+            "Disallow: /admin/",
+            "Disallow: /accounts/",
+            "Disallow: /dashboard/",
+            "Disallow: /api/",
+            "Disallow: /private/",
+            "Disallow: /billing/",
+        ]
+        
+        content = (
+            "User-agent: *\n"
+            "Allow: /\n"
+            "Allow: /themes/marketplace/\n"
+            "Allow: /portfolio/preview/\n"
+            + "\n".join(disallows) + "\n\n"
+            f"Sitemap: {sitemap_url}"
+        )
         return HttpResponse(content, content_type="text/plain")
