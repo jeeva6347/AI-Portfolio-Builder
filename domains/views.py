@@ -17,8 +17,11 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
-from django.http import HttpResponseForbidden
-from django.urls import reverse
+from django.http import HttpResponseForbidden, Http404
+
+class DisableDomainsMixin:
+    def dispatch(self, request, *args, **kwargs):
+        raise Http404("Custom Domains feature is disabled.")
 
 from dashboard.navigation import get_sidebar_navigation
 from portfolio.models import Portfolio
@@ -46,7 +49,7 @@ def _base_context(request, active_tab: str = "domains") -> dict:
 
 # ── DOMAIN LIST ───────────────────────────────────────────────────────────────
 
-class DomainListView(LoginRequiredMixin, View):
+class DomainListView(DisableDomainsMixin, LoginRequiredMixin, View):
     """
     Lists all custom domains registered by the authenticated user,
     grouped by portfolio.
@@ -85,7 +88,7 @@ class DomainListView(LoginRequiredMixin, View):
 
 # ── DOMAIN ADD ────────────────────────────────────────────────────────────────
 
-class DomainAddView(LoginRequiredMixin, View):
+class DomainAddView(DisableDomainsMixin, LoginRequiredMixin, View):
     """
     Renders a form for adding a new custom domain and processes its submission.
     Gated: Free users are redirected to billing.
@@ -181,7 +184,7 @@ class DomainAddView(LoginRequiredMixin, View):
 
 # ── DNS INSTRUCTIONS ──────────────────────────────────────────────────────────
 
-class DomainInstructionsView(LoginRequiredMixin, View):
+class DomainInstructionsView(DisableDomainsMixin, LoginRequiredMixin, View):
     """
     Displays step-by-step DNS configuration instructions for the domain,
     including the verification token / CNAME record to set.
@@ -208,7 +211,7 @@ class DomainInstructionsView(LoginRequiredMixin, View):
 
 # ── DOMAIN VERIFY ─────────────────────────────────────────────────────────────
 
-class DomainVerifyView(LoginRequiredMixin, View):
+class DomainVerifyView(DisableDomainsMixin, LoginRequiredMixin, View):
     """
     Triggers a DNS verification check for the domain and redirects back
     with a success or failure message.
@@ -233,7 +236,7 @@ class DomainVerifyView(LoginRequiredMixin, View):
 
 # ── SET PRIMARY ───────────────────────────────────────────────────────────────
 
-class DomainSetPrimaryView(LoginRequiredMixin, View):
+class DomainSetPrimaryView(DisableDomainsMixin, LoginRequiredMixin, View):
     """
     Marks a verified domain as the primary domain for its portfolio.
     Only ACTIVE domains can be set as primary.
@@ -253,7 +256,7 @@ class DomainSetPrimaryView(LoginRequiredMixin, View):
 
 # ── DOMAIN DELETE ─────────────────────────────────────────────────────────────
 
-class DomainDeleteView(LoginRequiredMixin, View):
+class DomainDeleteView(DisableDomainsMixin, LoginRequiredMixin, View):
     """
     Deletes a custom domain after ownership confirmation.
     Automatically promotes another active domain to primary if the deleted one was primary.
@@ -268,7 +271,7 @@ class DomainDeleteView(LoginRequiredMixin, View):
 
 # ── SSL REFRESH ───────────────────────────────────────────────────────────────
 
-class DomainSSLRefreshView(LoginRequiredMixin, View):
+class DomainSSLRefreshView(DisableDomainsMixin, LoginRequiredMixin, View):
     """
     Triggers an SSL status refresh for an active domain.
     """

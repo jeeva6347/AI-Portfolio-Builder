@@ -255,23 +255,21 @@ class CustomDomainTestCase(TestCase):
         self.assertEqual(custom_url, "https://mypage.net")
 
     def test_anonymous_redirect_on_dashboard(self):
-        """Verify anonymous requests to domains dashboard redirect to login."""
+        """Verify anonymous requests to domains dashboard returns 404 because disabled."""
         res = self.client.get(reverse("domains:list"))
-        self.assertEqual(res.status_code, 302)
-        self.assertIn("login", res.url)
+        self.assertEqual(res.status_code, 404)
 
     def test_free_user_gated_billing(self):
-        """Verify free user attempting to add domain redirects to billing with warning."""
+        """Verify free user accessing domain form returns 404 because disabled."""
         self.client.login(username="free_guy", password="pwd")
         res = self.client.get(reverse("domains:add"))
-        self.assertEqual(res.status_code, 302)
-        self.assertIn("billing", res.url)
+        self.assertEqual(res.status_code, 404)
 
     def test_premium_user_access_dashboard(self):
-        """Verify premium user can render domains list and add forms."""
+        """Verify premium user accessing domains dashboard returns 404 because disabled."""
         self.client.login(username="premium_guy", password="pwd")
         res = self.client.get(reverse("domains:list"))
-        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.status_code, 404)
 
         res_add = self.client.get(reverse("domains:add"))
-        self.assertEqual(res_add.status_code, 200)
+        self.assertEqual(res_add.status_code, 404)
