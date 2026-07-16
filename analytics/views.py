@@ -334,7 +334,10 @@ class RobotsTxtView(View):
         ]
         
         content = (
-            "User-agent: *\n"
+            "User-agent: *\n\n"
+            "Allow: /\n"
+            "Allow: /themes/marketplace/\n"
+            "Allow: /portfolio/preview/\n\n"
             + "\n".join(disallows) + "\n\n"
             f"Sitemap: {sitemap_url}"
         )
