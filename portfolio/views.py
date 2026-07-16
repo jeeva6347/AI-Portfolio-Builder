@@ -577,7 +577,7 @@ class SelectThemeView(LoginRequiredMixin, View):
         return redirect("portfolio:select_theme", pk=portfolio.pk)
 
 
-class UserPortfolioPreview(LoginRequiredMixin, View):
+class UserPortfolioPreview(View):
     """
     Live portfolio compiler that renders a specific portfolio's
     active theme template.
