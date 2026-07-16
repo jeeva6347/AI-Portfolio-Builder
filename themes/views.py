@@ -289,7 +289,7 @@ class CategoryDeleteView(AdminRequiredMixin, View):
 # PUBLIC VIEWS (login required)
 # ══════════════════════════════════════════════════════════════════════════════
 
-class MarketplaceView(LoginRequiredMixin, View):
+class MarketplaceView(View):
     """
     Public marketplace: browse approved themes.
     GET /themes/marketplace/
