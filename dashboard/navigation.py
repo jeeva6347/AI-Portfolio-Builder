@@ -74,15 +74,6 @@ SIDEBAR_NAVIGATION = [
         "name": "payments",
     },
     {
-        "title": "Custom Domains",
-        "icon": "bi-globe",
-        "url": "domains:list",
-        "required_role": ["SUPER_ADMIN", "ADMIN", "PREMIUM_USER", "FREE_USER"],
-        "badge": "Premium",
-        "coming_soon": False,
-        "name": "domains",
-    },
-    {
         "title": "Settings",
         "icon": "bi-gear-fill",
         "url": "dashboard:settings_placeholder",

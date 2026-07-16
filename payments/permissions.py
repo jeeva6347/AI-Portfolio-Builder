@@ -55,6 +55,10 @@ def ai_limit_required(view_func):
             metrics.sync_metrics()
             
             plan = get_user_plan_benefits(user)
+            # If on a paid plan, bypass limits to allow unlimited parsing
+            if plan.slug != "free":
+                return view_func(request, *args, **kwargs)
+                
             if metrics.ai_uploads_count >= plan.ai_usage_limit:
                 messages.warning(
                     request,
@@ -114,6 +118,10 @@ class AILimitMixin(AccessMixin):
             metrics.sync_metrics()
             
             plan = get_user_plan_benefits(request.user)
+            # If on a paid plan, bypass limits to allow unlimited parsing
+            if plan.slug != "free":
+                return super().dispatch(request, *args, **kwargs)
+                
             if metrics.ai_uploads_count >= plan.ai_usage_limit:
                 messages.warning(
                     request,
