@@ -471,3 +471,25 @@ def apply_theme_mapping(html_content: str, mapping, portfolio_data: dict) -> str
     return final_html
 
 
+def switch_theme_service(portfolio, new_theme) -> bool:
+    """
+    Seamlessly switches a portfolio to a new theme instance.
+    Preserves all user profile data, child items, images, and SEO configuration intact.
+    Clears rendering cache for instant theme update.
+    """
+    from django.core.cache import cache
+
+    if not new_theme or not new_theme.is_active:
+        return False
+
+    portfolio.selected_theme = new_theme
+    portfolio.save(update_fields=["selected_theme", "updated_at"])
+
+    # Clear cached portfolio HTML
+    cache_key = f"rendered_portfolio_html_{portfolio.pk}_*"
+    cache.delete_pattern(cache_key) if hasattr(cache, "delete_pattern") else cache.clear()
+
+    return True
+
+
+

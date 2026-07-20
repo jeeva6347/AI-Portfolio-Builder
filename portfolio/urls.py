@@ -11,6 +11,13 @@ urlpatterns = [
     # Builder & Update API
     path("builder/<int:pk>/", views.PortfolioBuilderView.as_view(), name="builder"),
     path("builder/<int:pk>/update-api/", views.PortfolioUpdateAPI.as_view(), name="update_api"),
+    path("builder/<int:pk>/reorder/", views.PortfolioReorderAPI.as_view(), name="reorder_api"),
+    path("builder/<int:pk>/duplicate-item/", views.PortfolioDuplicateItemAPI.as_view(), name="duplicate_item_api"),
+    path("builder/<int:pk>/add-component/", views.PortfolioAddComponentAPI.as_view(), name="add_component_api"),
+    path("builder/<int:pk>/versions/", views.PortfolioVersionListView.as_view(), name="version_list_api"),
+    path("builder/<int:pk>/versions/<int:v_pk>/preview/", views.PortfolioVersionPreviewView.as_view(), name="version_preview_api"),
+    path("builder/<int:pk>/versions/<int:v_pk>/restore/", views.PortfolioVersionRestoreAPI.as_view(), name="version_restore_api"),
+    path("builder/<int:pk>/versions/compare/", views.PortfolioVersionCompareAPI.as_view(), name="version_compare_api"),
 
     # CRUD portfolio actions
     path("builder/<int:pk>/delete/", views.PortfolioDeleteView.as_view(), name="delete"),
@@ -39,5 +46,6 @@ urlpatterns = [
 
     # Theme & Preview
     path("builder/<int:pk>/select-theme/", views.SelectThemeView.as_view(), name="select_theme"),
+    path("use-theme/<int:theme_id>/", views.UseThemeFromMarketplaceView.as_view(), name="use_theme_marketplace"),
     path("preview/<int:pk>/", views.UserPortfolioPreview.as_view(), name="preview"),
 ]

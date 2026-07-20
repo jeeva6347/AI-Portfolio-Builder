@@ -209,9 +209,21 @@ class PortfolioDuplicateView(PortfolioLimitMixin, LoginRequiredMixin, View):
 class PortfolioPublishView(LoginRequiredMixin, View):
     def post(self, request, pk):
         portfolio = get_portfolio_for_user(pk, request.user, "EDITOR")
-        portfolio.status = Portfolio.Status.PUBLISHED
-        portfolio.save(update_fields=["status"])
-        messages.success(request, f"Published portfolio '{portfolio.name}' successfully!")
+
+        from portfolio.services.publishing import publish_portfolio
+        res = publish_portfolio(portfolio, user=request.user)
+
+        # Handle AJAX/JSON requests
+        if request.headers.get("x-requested-with") == "XMLHttpRequest" or request.content_type == "application/json":
+            status_code = 200 if res.get("success") else (400 if res.get("code") == "VALIDATION_FAILED" else 409)
+            return JsonResponse(res, status=status_code)
+
+        if res.get("success"):
+            messages.success(request, f"Published portfolio '{portfolio.name}' successfully!")
+        else:
+            first_err = res.get("errors", [{}])[0].get("message", "Publishing failed.")
+            messages.error(request, f"Publishing failed: {first_err}")
+
         return redirect("portfolio:list")
 
 
@@ -241,15 +253,19 @@ class PortfolioBuilderView(LoginRequiredMixin, View):
     Renders left editing panel forms and right live preview viewport.
     """
     template_name = "portfolio/builder.html"
-    login_url = "/accounts/login/"
-
     def get(self, request, pk):
         portfolio = get_portfolio_for_user(pk, request.user, "EDITOR")
         active_tab = request.GET.get("tab", "personal")
-        
+
+        from themes.models import Theme, ThemeCategory
+        themes = Theme.objects.filter(status=Theme.Status.APPROVED).select_related("category")
+        categories = ThemeCategory.objects.all()
+
         ctx = _base_context(request, active_tab)
         ctx.update({
             "portfolio": portfolio,
+            "themes": themes,
+            "categories": categories,
             "form": PortfolioForm(instance=portfolio),
             "breadcrumbs": [
                 {"title": "My Portfolios", "url": reverse("portfolio:list")},
@@ -329,6 +345,274 @@ class PortfolioUpdateAPI(LoginRequiredMixin, View):
             form.save()
             return JsonResponse({"success": True, "message": "Draft saved."})
         return JsonResponse({"success": False, "errors": form.errors}, status=400)
+
+
+class PortfolioReorderAPI(LoginRequiredMixin, View):
+    """
+    AJAX endpoint to update ordering indices of portfolio child items via SortableJS.
+    """
+    def post(self, request, pk):
+        import json
+        portfolio = get_portfolio_for_user(pk, request.user, "EDITOR")
+        item_type = request.POST.get("item_type")
+        raw_order = request.POST.get("order_ids")
+        
+        if not item_type or not raw_order:
+            return JsonResponse({"success": False, "error": "Missing parameters"}, status=400)
+
+        try:
+            order_ids = json.loads(raw_order)
+        except json.JSONDecodeError:
+            return JsonResponse({"success": False, "error": "Invalid order JSON"}, status=400)
+
+        model_map = {
+            "projects": (portfolio.projects, PortfolioProject),
+            "experiences": (portfolio.experiences, PortfolioExperience),
+            "educations": (portfolio.education, PortfolioEducation),
+            "certificates": (portfolio.certificates, PortfolioCertificate),
+            "services": (portfolio.services, PortfolioService),
+            "testimonials": (portfolio.testimonials, PortfolioTestimonial),
+        }
+
+        if item_type in model_map:
+            rel, model_cls = model_map[item_type]
+            for idx, item_id in enumerate(order_ids):
+                model_cls.objects.filter(pk=item_id, portfolio=portfolio).update(order=idx)
+            return JsonResponse({"success": True, "message": f"Reordered {item_type} successfully."})
+
+        return JsonResponse({"success": False, "error": "Unknown item type"}, status=400)
+
+
+class PortfolioDuplicateItemAPI(LoginRequiredMixin, View):
+    """
+    AJAX endpoint to duplicate an existing portfolio child item.
+    """
+    def post(self, request, pk):
+        portfolio = get_portfolio_for_user(pk, request.user, "EDITOR")
+        item_type = request.POST.get("item_type")
+        item_id = request.POST.get("item_id")
+
+        if not item_type or not item_id:
+            return JsonResponse({"success": False, "error": "Missing parameters"}, status=400)
+
+        model_map = {
+            "projects": PortfolioProject,
+            "experiences": PortfolioExperience,
+            "educations": PortfolioEducation,
+            "certificates": PortfolioCertificate,
+            "services": PortfolioService,
+            "testimonials": PortfolioTestimonial,
+            "skills": PortfolioSkill,
+        }
+
+        if item_type not in model_map:
+            return JsonResponse({"success": False, "error": "Invalid item type"}, status=400)
+
+        model_cls = model_map[item_type]
+        item = get_object_or_404(model_cls, pk=item_id, portfolio=portfolio)
+        
+        clone = copy.copy(item)
+        clone.pk = None
+        clone.id = None
+        if hasattr(clone, "title"):
+            clone.title = f"{clone.title} (Copy)"
+        elif hasattr(clone, "name"):
+            clone.name = f"{clone.name} (Copy)"
+        elif hasattr(clone, "position"):
+            clone.position = f"{clone.position} (Copy)"
+        clone.save()
+
+        return JsonResponse({"success": True, "message": "Item duplicated successfully", "new_id": clone.pk})
+
+
+class PortfolioAddComponentAPI(LoginRequiredMixin, View):
+    """
+    AJAX endpoint to insert component presets into a portfolio.
+    """
+    def post(self, request, pk):
+        portfolio = get_portfolio_for_user(pk, request.user, "EDITOR")
+        component_type = request.POST.get("component_type", "project")
+
+        if component_type in ["projects", "project"]:
+            PortfolioProject.objects.create(
+                portfolio=portfolio,
+                title="New Showcase Project",
+                description="High performance web application showcasing modern design patterns.",
+                technologies="Python, Django, Tailwind CSS, JavaScript",
+                github_url="https://github.com/",
+                live_url="https://example.com"
+            )
+        elif component_type in ["experiences", "experience"]:
+            PortfolioExperience.objects.create(
+                portfolio=portfolio,
+                company="Tech Innovators Inc",
+                position="Senior Full-Stack Engineer",
+                duration="2023 - Present",
+                description="Designed and deployed scalable Django microservices and interactive user interfaces."
+            )
+        elif component_type in ["skills", "skill"]:
+            PortfolioSkill.objects.create(
+                portfolio=portfolio,
+                skill_type="technical",
+                name="Python / Django",
+                level="Expert"
+            )
+        elif component_type in ["education"]:
+            PortfolioEducation.objects.create(
+                portfolio=portfolio,
+                degree="B.S. in Computer Science",
+                college="School of Engineering",
+                university="State University",
+                year="2019 - 2023"
+            )
+        elif component_type in ["testimonials", "testimonial", "reviews"]:
+            PortfolioTestimonial.objects.create(
+                portfolio=portfolio,
+                reviewer_name="Sarah Jenkins",
+                reviewer_role="Product Manager at CloudCorp",
+                text="Delivered outstanding results ahead of schedule. Exceptional code quality and UI design skills!"
+            )
+        elif component_type in ["services", "service"]:
+            PortfolioService.objects.create(
+                portfolio=portfolio,
+                title="Full-Stack Web Development",
+                description="Custom web application architecture, API development, and UI/UX engineering.",
+                icon="bi-code-slash"
+            )
+        elif component_type in ["hero"]:
+            portfolio.title = portfolio.title or "Senior Software Engineer"
+            portfolio.tagline = portfolio.tagline or "Building scalable cloud applications and user experiences"
+            portfolio.save(update_fields=["title", "tagline"])
+
+        return JsonResponse({"success": True, "message": f"Component '{component_type}' added successfully."})
+
+
+# ── VERSION HISTORY API VIEWS (Phase 6.2) ───────────────────────────────────
+
+class PortfolioVersionListView(LoginRequiredMixin, View):
+    """
+    GET /portfolio/builder/<pk>/versions/
+    Returns JSON array of version history snapshots for a portfolio.
+    """
+    def get(self, request, pk):
+        try:
+            portfolio = get_portfolio_for_user(pk, request.user, "EDITOR")
+        except PermissionDenied:
+            return HttpResponseForbidden("You do not have permission to view version history.")
+
+        versions = portfolio.versions.select_related("theme", "created_by").all()
+        data = [
+            {
+                "id": v.pk,
+                "uuid": str(v.uuid),
+                "version_number": v.version_number,
+                "title": v.title,
+                "description": v.description,
+                "tag": v.tag,
+                "theme_name": v.theme.name if v.theme else "Default",
+                "created_at": v.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                "created_by": v.created_by.get_full_name() or v.created_by.username if v.created_by else "System",
+                "is_published": v.is_published,
+                "is_auto_save": v.is_auto_save,
+                "is_manual_save": v.is_manual_save,
+            }
+            for v in versions
+        ]
+        return JsonResponse({"success": True, "versions": data})
+
+
+class PortfolioVersionRestoreAPI(LoginRequiredMixin, View):
+    """
+    POST /portfolio/builder/<pk>/versions/<v_pk>/restore/
+    Restores the portfolio to the target version snapshot (supports full or partial section restore).
+    """
+    def post(self, request, pk, v_pk):
+        try:
+            portfolio = get_portfolio_for_user(pk, request.user, "EDITOR")
+        except PermissionDenied:
+            return HttpResponseForbidden("You do not have permission to restore versions.")
+
+        from portfolio.models import PortfolioVersion
+        from portfolio.services.versioning import restore_version_snapshot
+
+        sections = request.POST.getlist("sections[]") or request.POST.getlist("sections")
+        if not sections:
+            sec_param = request.POST.get("sections") or request.POST.get("section")
+            if sec_param:
+                sections = [s.strip() for s in sec_param.split(",") if s.strip()]
+
+        version_obj = get_object_or_404(PortfolioVersion, pk=v_pk, portfolio=portfolio)
+        rollback_version = restore_version_snapshot(portfolio, version_obj, user=request.user, sections_to_restore=sections or None)
+
+        return JsonResponse({
+            "success": True,
+            "message": f"Successfully restored version #{version_obj.version_number}.",
+            "rollback_version_id": rollback_version.pk
+        })
+
+
+class PortfolioVersionPreviewView(LoginRequiredMixin, View):
+    """
+    GET /portfolio/builder/<pk>/versions/<v_pk>/preview/
+    Renders compiled HTML preview of a historical version snapshot inside the builder preview frame.
+    """
+    def get(self, request, pk, v_pk):
+        try:
+            portfolio = get_portfolio_for_user(pk, request.user, "VIEWER")
+        except PermissionDenied:
+            return HttpResponseForbidden("You do not have permission to preview versions.")
+
+        from portfolio.models import PortfolioVersion
+        version_obj = get_object_or_404(PortfolioVersion, pk=v_pk, portfolio=portfolio)
+
+        if not portfolio.selected_theme:
+            return HttpResponse(
+                "<div style='padding:2rem;text-align:center;'><h3>Version Snapshot Preview</h3>"
+                "<p>No layout theme selected for this portfolio.</p></div>",
+                content_type="text/html"
+            )
+
+        theme = version_obj.theme or portfolio.selected_theme
+        mapping = theme.mappings.filter(is_active=True).first()
+        if not mapping or not theme.index_html_path or not os.path.exists(theme.index_html_path):
+            return HttpResponse(
+                f"<div style='padding:2rem;text-align:center;'><h3>Version #{version_obj.version_number} Preview</h3>"
+                f"<p>Layout template for theme '{theme.name}' is inactive.</p></div>",
+                content_type="text/html"
+            )
+
+        with open(theme.index_html_path, "r", encoding="utf-8", errors="ignore") as f:
+            html_content = f.read()
+
+        compiled_html = apply_theme_mapping(html_content, mapping, portfolio.get_fields_dict())
+        return HttpResponse(compiled_html, content_type="text/html")
+
+
+class PortfolioVersionCompareAPI(LoginRequiredMixin, View):
+    """
+    POST /portfolio/builder/<pk>/versions/compare/
+    Compares two version snapshots and returns structured field & child diffs.
+    """
+    def post(self, request, pk):
+        try:
+            portfolio = get_portfolio_for_user(pk, request.user, "EDITOR")
+        except PermissionDenied:
+            return HttpResponseForbidden("You do not have permission to compare versions.")
+
+        version_a_id = request.POST.get("version_a_id")
+        version_b_id = request.POST.get("version_b_id")
+
+        if not version_a_id or not version_b_id:
+            return JsonResponse({"success": False, "error": "Both version_a_id and version_b_id are required."}, status=400)
+
+        from portfolio.models import PortfolioVersion
+        from portfolio.services.versioning import compare_version_snapshots
+
+        v_a = get_object_or_404(PortfolioVersion, pk=version_a_id, portfolio=portfolio)
+        v_b = get_object_or_404(PortfolioVersion, pk=version_b_id, portfolio=portfolio)
+
+        diff = compare_version_snapshots(v_a, v_b)
+        return JsonResponse({"success": True, "diff": diff})
 
 
 # ── SUB-ITEM CREATE VIEWS ────────────────────────────────────────────────────
@@ -655,3 +939,49 @@ class UserPortfolioPreview(View):
         compiled_html = inject_seo_metadata(compiled_html, portfolio, request=request)
         
         return HttpResponse(compiled_html, content_type="text/html")
+
+
+class UseThemeFromMarketplaceView(LoginRequiredMixin, View):
+    """
+    POST/GET entry point to immediately associate a theme from the Marketplace
+    to the user's portfolio and launch the builder.
+    """
+    def get(self, request, theme_id):
+        from themes.models import Theme
+        theme = get_object_or_404(Theme, pk=theme_id, status=Theme.Status.APPROVED)
+        
+        # Check premium theme layout permissions
+        from payments.permissions import get_user_plan_benefits
+        plan = get_user_plan_benefits(request.user)
+        if theme.is_premium and not plan.premium_themes_enabled:
+            messages.error(request, f"Theme '{theme.name}' is a Premium Theme. Please upgrade your subscription to use it.")
+            return redirect("payments:billing")
+            
+        portfolios = Portfolio.objects.filter(user=request.user)
+        count = portfolios.count()
+        
+        if count == 0:
+            # Create a default new portfolio with this theme
+            portfolio = Portfolio.objects.create(
+                user=request.user,
+                name="My Portfolio 1",
+                title="Software Engineer",
+                selected_theme=theme,
+                status=Portfolio.Status.DRAFT
+            )
+            messages.success(request, f"New portfolio created with theme '{theme.name}'!")
+            return redirect("portfolio:builder", pk=portfolio.pk)
+        elif count == 1:
+            # Apply layout to their single active portfolio
+            portfolio = portfolios.first()
+            portfolio.selected_theme = theme
+            portfolio.save(update_fields=["selected_theme"])
+            messages.success(request, f"Theme '{theme.name}' applied to your portfolio!")
+            return redirect("portfolio:builder", pk=portfolio.pk)
+        else:
+            # Apply to their most recently updated active portfolio
+            portfolio = portfolios.order_by("-updated_at").first()
+            portfolio.selected_theme = theme
+            portfolio.save(update_fields=["selected_theme"])
+            messages.success(request, f"Theme '{theme.name}' applied to your active portfolio '{portfolio.name}'!")
+            return redirect("portfolio:builder", pk=portfolio.pk)

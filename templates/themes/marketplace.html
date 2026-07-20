@@ -135,10 +135,12 @@
                     <span class="badge bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-pill text-xs">{{ tag }}</span>
                     {% endfor %}
                 </div>
-                <div class="d-flex align-items-center justify-content-between">
-                    <span class="text-xs text-gray-400"><i class="bi bi-download me-1"></i>{{ theme.downloads }}</span>
-                    <a href="{% url 'themes:theme_preview' theme.slug %}" class="btn btn-sm btn-primary rounded-pill px-3 d-flex align-items-center gap-1">
+                <div class="d-flex align-items-center justify-content-between gap-2 mt-auto">
+                    <a href="{% url 'themes:theme_preview' theme.slug %}" class="btn btn-sm btn-outline-secondary rounded-pill px-2.5 d-flex align-items-center gap-1 flex-grow-1 justify-content-center">
                         <i class="bi bi-eye-fill"></i> Preview
+                    </a>
+                    <a href="{% url 'portfolio:use_theme_marketplace' theme.pk %}" class="btn btn-sm btn-primary rounded-pill px-2.5 d-flex align-items-center gap-1 flex-grow-1 justify-content-center">
+                        <i class="bi bi-check-circle-fill"></i> Use Theme
                     </a>
                 </div>
             </div>

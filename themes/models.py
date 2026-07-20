@@ -38,14 +38,12 @@ class ThemeCategory(models.Model):
         return self.name
 
 
+import uuid
+
+
 class Theme(models.Model):
     """
-    A portfolio theme uploaded as a .zip archive.
-
-    Workflow:
-      Admin uploads zip → status=draft
-      Super Admin or Admin reviews → status=approved | rejected
-      Approved themes appear in the Marketplace.
+    A portfolio theme uploaded as a .zip archive or registered via theme registry.
     """
 
     class Status(models.TextChoices):
@@ -54,9 +52,11 @@ class Theme(models.Model):
         APPROVED = "approved", "Approved"
         REJECTED = "rejected", "Rejected"
 
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=200)
     slug = models.SlugField(max_length=220, unique=True, blank=True)
     description = models.TextField(blank=True)
+    author = models.CharField(max_length=150, blank=True, default="AI Portfolio Team")
     category = models.ForeignKey(
         ThemeCategory,
         on_delete=models.SET_NULL,
@@ -84,6 +84,19 @@ class Theme(models.Model):
         help_text="Price in USD. 0 = free.",
     )
 
+    # Engine Specs & Customization Flags
+    template_directory = models.CharField(max_length=255, blank=True)
+    configuration_file = models.CharField(max_length=255, default="theme.json")
+    default_css = models.TextField(blank=True)
+    css_variables = models.JSONField(default=dict, blank=True)
+    font_family = models.CharField(max_length=100, default="Inter")
+    supports_dark_mode = models.BooleanField(default=True)
+    supports_custom_colors = models.BooleanField(default=True)
+    supports_custom_fonts = models.BooleanField(default=True)
+    supports_animation = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True)
+    display_order = models.PositiveIntegerField(default=0)
+
     # Storage
     zip_file = models.FileField(upload_to="themes/zips/", null=True, blank=True)
     extracted_path = models.CharField(
@@ -96,6 +109,12 @@ class Theme(models.Model):
         null=True,
         blank=True,
         help_text="Auto-generated or manually uploaded preview image.",
+    )
+    preview_image = models.ImageField(
+        upload_to="themes/previews/",
+        null=True,
+        blank=True,
+        help_text="High-resolution full preview screenshot image.",
     )
 
     # Metadata

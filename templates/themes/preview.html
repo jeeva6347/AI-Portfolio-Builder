@@ -107,6 +107,10 @@
             </div>
             {% endif %}
             
+            <a href="{% url 'portfolio:use_theme_marketplace' theme.pk %}" class="btn btn-primary rounded-pill w-100 py-2 mb-3 d-flex align-items-center justify-content-center gap-1.5 shadow-sm font-semibold">
+                <i class="bi bi-check-circle-fill"></i> Use Theme Layout
+            </a>
+            
             <dl class="row g-2 text-sm mb-0">
                 <dt class="col-6 text-gray-400 font-medium">Category</dt>
                 <dd class="col-6 text-end text-gray-800 dark:text-gray-200 fw-semibold">{{ theme.category.name|default:"—" }}</dd>

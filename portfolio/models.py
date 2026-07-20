@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from django.conf import settings
 from django.urls import reverse
@@ -72,6 +73,32 @@ class Portfolio(models.Model):
     # Footer
     footer_copyright = models.CharField(max_length=255, blank=True)
     footer_tagline = models.CharField(max_length=255, blank=True)
+
+    # Publishing & Build Pipeline (Phase 7.1)
+    class BuildStatus(models.TextChoices):
+        DRAFT = "DRAFT", "Draft"
+        BUILDING = "BUILDING", "Building"
+        PUBLISHED = "PUBLISHED", "Published"
+        FAILED = "FAILED", "Failed"
+
+    build_status = models.CharField(
+        max_length=20,
+        choices=BuildStatus.choices,
+        default=BuildStatus.DRAFT,
+        help_text="Current build state of the portfolio"
+    )
+    published_at = models.DateTimeField(null=True, blank=True)
+    published_version = models.ForeignKey(
+        "PortfolioVersion",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="active_published_portfolios"
+    )
+    last_publish_error = models.TextField(blank=True)
+    build_time_ms = models.PositiveIntegerField(default=0)
+    html_size_bytes = models.PositiveIntegerField(default=0)
+    css_size_bytes = models.PositiveIntegerField(default=0)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -297,3 +324,75 @@ class PortfolioTestimonial(models.Model):
 
     def __str__(self):
         return f"Testimonial from {self.reviewer_name}"
+
+
+class PortfolioVersion(models.Model):
+    """
+    Version history snapshot model for portfolios (Phase 6.1).
+    Stores serialized portfolio states for draft editing, rollback, and comparison.
+    """
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False)
+    portfolio = models.ForeignKey(
+        Portfolio,
+        on_delete=models.CASCADE,
+        related_name="versions"
+    )
+    version_number = models.PositiveIntegerField(default=1)
+    title = models.CharField(max_length=150, blank=True)
+    description = models.TextField(blank=True)
+    snapshot_json = models.JSONField(default=dict)
+    theme = models.ForeignKey(
+        "themes.Theme",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="portfolio_versions"
+    )
+    seo_snapshot = models.JSONField(default=dict, blank=True)
+    tag = models.CharField(max_length=50, default="Draft", help_text="e.g. Draft, Published, Rollback, Autosave")
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_portfolio_versions"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_published = models.BooleanField(default=False)
+    is_auto_save = models.BooleanField(default=False)
+    is_manual_save = models.BooleanField(default=False)
+    git_commit_sha = models.CharField(max_length=100, null=True, blank=True)
+
+    class Meta:
+        ordering = ["-version_number", "-created_at"]
+        verbose_name = "Portfolio Version"
+        verbose_name_plural = "Portfolio Versions"
+
+    def __str__(self):
+        return f"{self.portfolio.name} v{self.version_number} [{self.tag}]"
+
+
+class PortfolioBuildLog(models.Model):
+    """
+    Log record for publishing pipeline execution steps (Phase 7.1).
+    """
+    portfolio = models.ForeignKey(
+        Portfolio,
+        on_delete=models.CASCADE,
+        related_name="build_logs"
+    )
+    status = models.CharField(max_length=50)
+    step = models.CharField(max_length=100)
+    message = models.TextField()
+    duration_ms = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "Portfolio Build Log"
+        verbose_name_plural = "Portfolio Build Logs"
+
+    def __str__(self):
+        return f"[{self.step}] {self.status} - {self.portfolio.name}"
+
+

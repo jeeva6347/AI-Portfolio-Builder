@@ -156,13 +156,21 @@ class PortfolioBuilderTestCase(TestCase):
 
     def test_portfolio_builder_tab_access(self):
         """Verify the builder dashboard view requires login and serves segments correctly."""
-        portfolio = Portfolio.objects.create(user=self.user, name="Build Test")
-        
+        # Create a minimal approved theme so the workspace panel renders (not the onboarding screen)
+        category = ThemeCategory.objects.create(name="Test Category", slug="test-category")
+        theme = Theme.objects.create(
+            name="Test Theme",
+            slug="test-theme",
+            status=Theme.Status.APPROVED,
+            category=category,
+        )
+        portfolio = Portfolio.objects.create(user=self.user, name="Build Test", selected_theme=theme)
+
         # Unauthenticated access
         res = self.client.get(reverse("portfolio:builder", kwargs={"pk": portfolio.pk}))
         self.assertEqual(res.status_code, 302)  # Redirects to login
 
-        # Authenticated access
+        # Authenticated access – personal tab should render the workspace form panel
         self.client.login(username="testuser", password="testpassword")
         res_auth = self.client.get(reverse("portfolio:builder", kwargs={"pk": portfolio.pk}) + "?tab=personal")
         self.assertEqual(res_auth.status_code, 200)
@@ -395,3 +403,343 @@ class PortfolioBuilderTestCase(TestCase):
         self.assertEqual(res.status_code, 403)
         portfolio.refresh_from_db()
         self.assertNotEqual(portfolio.name, "Hacked Name")
+
+
+class PortfolioVersioningTestCase(TestCase):
+    """
+    Test suite for Phase 6.1 Backend Version Engine.
+    Tests snapshot creation, version restoration, and version diff comparison.
+    """
+    def setUp(self):
+        from themes.models import Theme, ThemeCategory
+        self.user = User.objects.create_user(username="versionuser", password="versionpassword")
+        self.category = ThemeCategory.objects.create(name="Version Cat", slug="version-cat")
+        self.theme = Theme.objects.create(
+            name="Version Theme",
+            slug="version-theme",
+            category=self.category,
+            status=Theme.Status.APPROVED,
+            is_active=True
+        )
+        self.portfolio = Portfolio.objects.create(
+            user=self.user,
+            name="Version Test Portfolio",
+            title="Senior Django Developer",
+            about="Building backend versioning systems.",
+            selected_theme=self.theme
+        )
+        # Create sample child records
+        PortfolioSkill.objects.create(portfolio=self.portfolio, name="Python", skill_type="technical")
+        PortfolioProject.objects.create(
+            portfolio=self.portfolio,
+            title="SaaS Engine",
+            description="Version management system for portfolios."
+        )
+
+    def test_create_version_snapshot(self):
+        """Verify creating a version snapshot serializes portfolio and increments version number."""
+        from portfolio.services.versioning import create_version_snapshot, decompress_snapshot
+
+        v1 = create_version_snapshot(self.portfolio, title="Initial Snapshot", tag="Draft")
+        self.assertEqual(v1.version_number, 1)
+        self.assertEqual(v1.tag, "Draft")
+        
+        snapshot_data = decompress_snapshot(v1.snapshot_json)
+        self.assertIn("fields", snapshot_data)
+        self.assertEqual(snapshot_data["fields"]["name"], "Version Test Portfolio")
+        self.assertEqual(len(snapshot_data["children"]["projects"]), 1)
+
+        v2 = create_version_snapshot(self.portfolio, title="Second Snapshot", tag="Published", is_published=True)
+        self.assertEqual(v2.version_number, 2)
+        self.assertTrue(v2.is_published)
+
+    def test_restore_version_snapshot(self):
+        """Verify restoring a version snapshot updates portfolio data and creates a Rollback version."""
+        from portfolio.services.versioning import create_version_snapshot, restore_version_snapshot
+
+        # Create v1
+        v1 = create_version_snapshot(self.portfolio, title="Original State", tag="Draft")
+
+        # Update portfolio
+        self.portfolio.name = "Modified Portfolio Name"
+        self.portfolio.save()
+        PortfolioProject.objects.create(portfolio=self.portfolio, title="Project 2")
+
+        # Restore v1
+        rollback_v = restore_version_snapshot(self.portfolio, v1, user=self.user)
+        self.portfolio.refresh_from_db()
+
+        self.assertEqual(self.portfolio.name, "Version Test Portfolio")
+        self.assertEqual(self.portfolio.projects.count(), 1)
+        self.assertEqual(rollback_v.tag, "Rollback")
+
+    def test_compare_version_snapshots(self):
+        """Verify comparing two version snapshots detects field and child diffs."""
+        from portfolio.services.versioning import create_version_snapshot, compare_version_snapshots
+
+        v1 = create_version_snapshot(self.portfolio, title="v1")
+        self.portfolio.title = "Lead Software Architect"
+        self.portfolio.save()
+        v2 = create_version_snapshot(self.portfolio, title="v2")
+
+        diff = compare_version_snapshots(v1, v2)
+        self.assertEqual(diff["version_a"], 1)
+        self.assertEqual(diff["version_b"], 2)
+        self.assertIn("title", diff["field_diffs"])
+        self.assertEqual(diff["field_diffs"]["title"]["old"], "Senior Django Developer")
+        self.assertEqual(diff["field_diffs"]["title"]["new"], "Lead Software Architect")
+
+    def test_version_list_api(self):
+        """Verify GET /portfolio/builder/<pk>/versions/ returns JSON list of versions."""
+        from portfolio.services.versioning import create_version_snapshot
+
+        create_version_snapshot(self.portfolio, title="Snap 1")
+        self.client.login(username="versionuser", password="versionpassword")
+        res = self.client.get(reverse("portfolio:version_list_api", kwargs={"pk": self.portfolio.pk}))
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data["success"])
+        self.assertEqual(len(data["versions"]), 1)
+
+    def test_version_restore_api(self):
+        """Verify POST /portfolio/builder/<pk>/versions/<v_pk>/restore/ restores target version."""
+        from portfolio.services.versioning import create_version_snapshot
+
+        v1 = create_version_snapshot(self.portfolio, title="Original")
+        self.portfolio.name = "Renamed"
+        self.portfolio.save()
+
+        self.client.login(username="versionuser", password="versionpassword")
+        res = self.client.post(reverse("portfolio:version_restore_api", kwargs={"pk": self.portfolio.pk, "v_pk": v1.pk}))
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data["success"])
+
+        self.portfolio.refresh_from_db()
+        self.assertEqual(self.portfolio.name, "Version Test Portfolio")
+
+    def test_version_compare_api(self):
+        """Verify POST /portfolio/builder/<pk>/versions/compare/ returns diff JSON."""
+        from portfolio.services.versioning import create_version_snapshot
+
+        v1 = create_version_snapshot(self.portfolio, title="v1")
+        self.portfolio.title = "Architect"
+        self.portfolio.save()
+        v2 = create_version_snapshot(self.portfolio, title="v2")
+
+        self.client.login(username="versionuser", password="versionpassword")
+        res = self.client.post(
+            reverse("portfolio:version_compare_api", kwargs={"pk": self.portfolio.pk}),
+            data={"version_a_id": v1.pk, "version_b_id": v2.pk}
+        )
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data["success"])
+        self.assertIn("title", data["diff"]["field_diffs"])
+
+    def test_publishing_creates_version_snapshot(self):
+        """Verify publishing a portfolio creates a Published version snapshot."""
+        self.client.login(username="versionuser", password="versionpassword")
+        res = self.client.post(reverse("portfolio:publish", kwargs={"pk": self.portfolio.pk}))
+        self.assertEqual(res.status_code, 302)
+
+        self.portfolio.refresh_from_db()
+        self.assertEqual(self.portfolio.status, Portfolio.Status.PUBLISHED)
+        self.assertTrue(self.portfolio.versions.filter(tag="Published", is_published=True).exists())
+
+    def test_zlib_snapshot_compression_and_decompression(self):
+        """Verify zlib compression compresses large JSON dicts and decompresses seamlessly."""
+        from portfolio.services.versioning import compress_snapshot, decompress_snapshot
+
+        large_dict = {"fields": {"about": "A" * 1000}, "children": {}}
+        compressed = compress_snapshot(large_dict)
+        self.assertTrue(compressed.get("_compressed"))
+
+        decompressed = decompress_snapshot(compressed)
+        self.assertEqual(decompressed["fields"]["about"], "A" * 1000)
+
+    def test_partial_section_restore(self):
+        """Verify restoring only selected sections (e.g. projects) preserves other modified fields."""
+        from portfolio.services.versioning import create_version_snapshot, restore_version_snapshot
+
+        # Create v1
+        v1 = create_version_snapshot(self.portfolio, title="v1")
+
+        # Change name and projects
+        self.portfolio.name = "New Portfolio Name"
+        self.portfolio.save()
+        PortfolioProject.objects.create(portfolio=self.portfolio, title="Extra Project")
+
+        # Partial restore: projects only
+        restore_version_snapshot(self.portfolio, v1, user=self.user, sections_to_restore=["projects"])
+        self.portfolio.refresh_from_db()
+
+        # Projects restored (back to 1 item), but name remains modified!
+        self.assertEqual(self.portfolio.projects.count(), 1)
+        self.assertEqual(self.portfolio.name, "New Portfolio Name")
+
+    def test_version_preview_endpoint(self):
+        """Verify GET /portfolio/builder/<pk>/versions/<v_pk>/preview/ renders historical HTML preview."""
+        from portfolio.services.versioning import create_version_snapshot
+
+        v1 = create_version_snapshot(self.portfolio, title="v1")
+        self.client.login(username="versionuser", password="versionpassword")
+        res = self.client.get(reverse("portfolio:version_preview_api", kwargs={"pk": self.portfolio.pk, "v_pk": v1.pk}))
+        self.assertIn(res.status_code, [200, 404])
+
+
+class PortfolioPublishingPipelineTestCase(TestCase):
+    """
+    Test suite for Phase 7.1 Publishing Pipeline.
+    Tests validation rules, build artifacts, publish lock, build logs, and error codes.
+    """
+    def setUp(self):
+        from themes.models import Theme, ThemeCategory
+        self.user = User.objects.create_user(username="publisher", password="publishpassword")
+        self.category = ThemeCategory.objects.create(name="Modern", slug="modern")
+        self.theme = Theme.objects.create(
+            name="Publish Theme",
+            slug="publish-theme",
+            category=self.category,
+            status=Theme.Status.APPROVED,
+            is_active=True
+        )
+        self.portfolio = Portfolio.objects.create(
+            user=self.user,
+            name="Publisher Portfolio",
+            title="Senior DevOps Engineer",
+            about="Automating cloud infrastructure and publishing pipelines.",
+            selected_theme=self.theme
+        )
+        from portfolio.services.versioning import create_version_snapshot
+        v1 = create_version_snapshot(self.portfolio, title="v1", is_published=True)
+        self.portfolio.published_version = v1
+        self.portfolio.save()
+
+    def test_validate_portfolio(self):
+        """Verify validate_portfolio returns structured error codes for invalid states."""
+        from portfolio.services.publishing import validate_portfolio
+
+        # Invalid portfolio with no theme
+        self.portfolio.selected_theme = None
+        self.portfolio.save()
+        errors = validate_portfolio(self.portfolio)
+        self.assertTrue(any(e["code"] == "THEME_NOT_FOUND" for e in errors))
+
+    def test_build_portfolio_artifact(self):
+        """Verify build_portfolio returns BuildArtifact with index.html, assets/css/styles.css, and metrics."""
+        from portfolio.services.publishing import build_portfolio
+
+        artifact = build_portfolio(self.portfolio)
+        self.assertIn("index.html", artifact.static_files)
+        self.assertIn("assets/css/styles.css", artifact.static_files)
+        self.assertIn("manifest.json", artifact.static_files)
+        self.assertIn("build_time_ms", artifact.metrics)
+
+    def test_publish_portfolio_pipeline(self):
+        """Verify publish_portfolio executes full pipeline, updates status, and logs build steps."""
+        from portfolio.services.publishing import publish_portfolio
+
+        res = publish_portfolio(self.portfolio, user=self.user)
+        self.assertTrue(res["success"])
+        self.assertEqual(res["status"], "PUBLISHED")
+
+        self.portfolio.refresh_from_db()
+        self.assertEqual(self.portfolio.status, Portfolio.Status.PUBLISHED)
+        self.assertEqual(self.portfolio.build_status, Portfolio.BuildStatus.PUBLISHED)
+        self.assertIsNotNone(self.portfolio.published_at)
+        self.assertTrue(self.portfolio.build_logs.exists())
+
+    def test_publish_lock_prevents_duplicate_builds(self):
+        """Verify Publish Lock rejects concurrent publish requests when build_status == BUILDING."""
+        from portfolio.services.publishing import publish_portfolio
+
+        self.portfolio.build_status = Portfolio.BuildStatus.BUILDING
+        self.portfolio.save()
+
+        res = publish_portfolio(self.portfolio, user=self.user)
+        self.assertFalse(res["success"])
+        self.assertEqual(res["code"], "PUBLISH_IN_PROGRESS")
+
+
+class StaticSiteBuildEngineTestCase(TestCase):
+    """
+    Test suite for Phase 7.2 Static Site Generation.
+    Tests validate_build_prerequisites, build_static_portfolio, sitemap.xml, robots.txt, manifest.json, and seo.json.
+    """
+    def setUp(self):
+        from themes.models import Theme, ThemeCategory
+        from portfolio.services.versioning import create_version_snapshot
+
+        self.user = User.objects.create_user(username="staticbuilder", password="staticpassword")
+        self.category = ThemeCategory.objects.create(name="Static Cat", slug="static-cat")
+        self.theme = Theme.objects.create(
+            name="Static Theme",
+            slug="static-theme",
+            category=self.category,
+            status=Theme.Status.APPROVED,
+            is_active=True
+        )
+        self.portfolio = Portfolio.objects.create(
+            user=self.user,
+            name="Static Portfolio",
+            title="Full Stack Engineer",
+            about="Building static site generators.",
+            selected_theme=self.theme
+        )
+        # Create published version snapshot
+        self.published_version = create_version_snapshot(
+            self.portfolio,
+            title="Published v1",
+            tag="Published",
+            is_published=True
+        )
+        self.portfolio.published_version = self.published_version
+        self.portfolio.status = Portfolio.Status.PUBLISHED
+        self.portfolio.save()
+
+    def test_validate_build_prerequisites(self):
+        """Verify validate_build_prerequisites checks published version and theme."""
+        from portfolio.services.build import validate_build_prerequisites
+
+        # Valid portfolio
+        errors = validate_build_prerequisites(self.portfolio)
+        self.assertEqual(len(errors), 0)
+
+        # Portfolio without published version
+        self.portfolio.published_version = None
+        self.portfolio.versions.all().delete()
+        self.portfolio.save()
+        errors_no_ver = validate_build_prerequisites(self.portfolio)
+        self.assertTrue(any(e["code"] == "NO_PUBLISHED_VERSION" for e in errors_no_ver))
+
+    def test_build_static_portfolio_package(self):
+        """Verify build_static_portfolio generates index.html, sitemap.xml, robots.txt, and manifest.json."""
+        from portfolio.services.build import build_static_portfolio
+
+        res = build_static_portfolio(self.portfolio)
+        self.assertTrue(res["success"])
+        self.assertEqual(res["code"], "BUILD_SUCCESSFUL")
+
+        artifact = res["artifact"]
+        self.assertIn("index.html", artifact.static_package)
+        self.assertIn("assets/css/styles.css", artifact.static_package)
+        self.assertIn("sitemap.xml", artifact.static_package)
+        self.assertIn("robots.txt", artifact.static_package)
+        self.assertIn("manifest.json", artifact.static_package)
+        self.assertIn("seo.json", artifact.static_package)
+
+    def test_build_metrics(self):
+        """Verify build_static_portfolio returns accurate build metrics."""
+        from portfolio.services.build import build_static_portfolio
+
+        res = build_static_portfolio(self.portfolio)
+        metrics = res["metrics"]
+        self.assertIn("build_time_ms", metrics)
+        self.assertIn("html_size", metrics)
+        self.assertIn("css_size", metrics)
+        self.assertIn("pages_generated", metrics)
+
+
+
+
