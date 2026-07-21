@@ -444,6 +444,14 @@ document.addEventListener('alpine:init', () => {
                     timer = setTimeout(() => this.performAutosave(form, updateUrl), 300);
                 });
             });
+
+            const fileInputs = form.querySelectorAll('input[type="file"]');
+            fileInputs.forEach(fileInput => {
+                fileInput.addEventListener('change', () => {
+                    this.triggerSaving();
+                    this.performAutosave(form, updateUrl);
+                });
+            });
         },
 
         performAutosave(form, updateUrl) {

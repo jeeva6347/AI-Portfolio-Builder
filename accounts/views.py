@@ -98,8 +98,14 @@ class ProfileView(LoginRequiredMixin, UpdateView):
         return self.request.user
 
     def form_valid(self, form):
+        response = super().form_valid(form)
+        from django.core.cache import cache
+        from portfolio.models import Portfolio
+        for portfolio in Portfolio.objects.filter(user=self.request.user):
+            cache.delete(f"portfolio_rendered_html_{portfolio.pk}")
+            cache.delete(f"builder_draft_{portfolio.pk}")
         messages.success(self.request, "Profile updated.")
-        return super().form_valid(form)
+        return response
 
 
 @login_required

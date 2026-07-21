@@ -121,7 +121,7 @@ class Portfolio(models.Model):
             "personal.title": self.title,
             "personal.tagline": self.tagline,
             "personal.about": self.about,
-            "personal.photo": self.photo.url if self.photo else "",
+            "personal.photo": self.photo.url if self.photo else (self.user.avatar.url if hasattr(self.user, "avatar") and self.user.avatar else ""),
             "personal.cover": self.cover.url if self.cover else "",
             "personal.email": self.email or self.user.email,
             "personal.phone": self.phone,

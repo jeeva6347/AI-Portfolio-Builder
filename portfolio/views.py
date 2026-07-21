@@ -1279,8 +1279,15 @@ class PortfolioUpdateAPI(LoginRequiredMixin, View):
             return HttpResponseForbidden("You do not have permission to edit this portfolio.")
         form = PortfolioForm(request.POST, request.FILES, instance=portfolio)
         if form.is_valid():
-            form.save()
-            return JsonResponse({"success": True, "message": "Draft saved."})
+            saved_portfolio = form.save()
+            cache.delete(f"portfolio_rendered_html_{saved_portfolio.pk}")
+            cache.delete(f"builder_draft_{saved_portfolio.pk}")
+            return JsonResponse({
+                "success": True,
+                "message": "Draft saved.",
+                "photo_url": saved_portfolio.photo.url if saved_portfolio.photo else "",
+                "resume_url": saved_portfolio.resume.url if saved_portfolio.resume else "",
+            })
         return JsonResponse({"success": False, "errors": form.errors}, status=400)
 
 
