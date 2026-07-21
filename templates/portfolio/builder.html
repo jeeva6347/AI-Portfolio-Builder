@@ -164,6 +164,10 @@
                 <i class="bi bi-question-circle"></i>
             </button>
 
+            <a href="{% url 'portfolio:preview' portfolio.pk %}" target="_blank" class="toolbar-btn bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-pill px-3 text-decoration-none" title="Open Live Website Preview in New Tab">
+                <i class="bi bi-box-arrow-up-right me-1"></i>Live Website
+            </a>
+
             {% if portfolio.status == 'PUBLISHED' %}
             <form method="post" action="{% url 'portfolio:publish' portfolio.pk %}" class="m-0">
                 {% csrf_token %}
@@ -205,7 +209,7 @@
     </div>
 
     {# ── MAIN 3-COLUMN WORKSPACE GRID ── #}
-    <div class="builder-workspace-grid">
+    <div class="builder-workspace-grid" :class="{ 'preview-mode-active': builderMode === 'preview' }">
 
         {# ── LEFT SIDEBAR: ACCORDION FORM & COMPONENT TREE ── #}
         <aside class="builder-left-sidebar" :class="{ 'collapsed': !leftSidebarOpen }">
@@ -651,9 +655,14 @@
                             <span class="traffic-dot traffic-dot-yellow"></span>
                             <span class="traffic-dot traffic-dot-green"></span>
                         </div>
-                        <div class="browser-url-input">
-                            <i class="bi bi-lock-fill text-emerald-500"></i>
-                            <span>https://{{ portfolio.name|slugify }}.aiportfoliobuilder.com</span>
+                        <div class="browser-url-input d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-1.5 overflow-hidden">
+                                <i class="bi bi-lock-fill text-emerald-500"></i>
+                                <span class="text-truncate">https://{{ portfolio.name|slugify }}.aiportfoliobuilder.com</span>
+                            </div>
+                            <a href="{% url 'portfolio:preview' portfolio.pk %}" target="_blank" class="text-xs text-blue-500 hover:text-blue-700 font-semibold ms-2 text-decoration-none" title="Open Live Website in New Tab">
+                                <i class="bi bi-box-arrow-up-right me-1"></i>Open Website
+                            </a>
                         </div>
                     </div>
 
