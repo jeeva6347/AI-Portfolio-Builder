@@ -1,11 +1,15 @@
 import os
+import time
+import json
+import copy
+import re
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.urls import reverse
 from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
-import copy
+from django.core.cache import cache
 
 from dashboard.navigation import get_sidebar_navigation
 from themes.models import Theme
@@ -225,6 +229,939 @@ class PortfolioPublishView(LoginRequiredMixin, View):
             messages.error(request, f"Publishing failed: {first_err}")
 
         return redirect("portfolio:list")
+
+
+class PortfolioDeployView(LoginRequiredMixin, View):
+    """
+    POST /portfolio/<int:pk>/deploy/
+    Triggers GitHub deployment pipeline for the portfolio.
+    Returns JSON response with deployment status, commit_sha, duration_ms, and deployment_url.
+    """
+    def post(self, request, pk):
+        try:
+            portfolio = get_portfolio_for_user(pk, request.user, "EDITOR")
+        except PermissionDenied:
+            return JsonResponse({"success": False, "code": "PERMISSION_DENIED", "message": "Permission denied."}, status=403)
+
+        from portfolio.services.deployment import deploy_to_github
+        res = deploy_to_github(portfolio, user=request.user)
+
+        status_code = 200 if res.get("success") else 400
+        return JsonResponse(res, status=status_code)
+
+
+class PortfolioAIImportAPI(LoginRequiredMixin, View):
+    """
+    POST /portfolio/builder/<int:pk>/ai-import/
+    Imports validated AI JSON payload into portfolio draft state.
+    Supports partial sections, import modes ('replace', 'merge', 'skip_existing'), and AI metadata versioning.
+    """
+    def post(self, request, pk):
+        try:
+            portfolio = get_portfolio_for_user(pk, request.user, "EDITOR")
+        except PermissionDenied:
+            return JsonResponse({"success": False, "code": "PERMISSION_DENIED", "message": "Permission denied."}, status=403)
+
+        body = {}
+        if request.body:
+            try:
+                body = json.loads(request.body.decode("utf-8"))
+            except Exception:
+                pass
+
+        if not body and request.POST:
+            body = request.POST.dict()
+
+        ai_data = body.get("ai_data", body)
+        if isinstance(ai_data, str):
+            try:
+                ai_data = json.loads(ai_data)
+            except Exception:
+                ai_data = {}
+
+        sections = body.get("sections")
+        mode = body.get("mode", "replace")
+        ai_metadata = body.get("ai_metadata")
+
+        from portfolio.services.ai_import import import_generated_portfolio
+        res = import_generated_portfolio(
+            portfolio=portfolio,
+            ai_data=ai_data,
+            sections=sections,
+            mode=mode,
+            ai_metadata=ai_metadata,
+            user=request.user
+        )
+
+        status_code = 200 if res.get("success") else 400
+        return JsonResponse(res, status=status_code)
+
+
+class PortfolioAIRegenerateSectionAPI(LoginRequiredMixin, View):
+    """
+    POST /portfolio/builder/<int:pk>/ai-regenerate-section/
+    Generates preview payload for a single portfolio section using AI (Zero DB Writes).
+    """
+    def post(self, request, pk):
+        try:
+            portfolio = get_portfolio_for_user(pk, request.user, "EDITOR")
+        except PermissionDenied:
+            return JsonResponse({"success": False, "code": "PERMISSION_DENIED", "message": "Permission denied."}, status=403)
+
+        try:
+            body = json.loads(request.body.decode("utf-8")) if request.body else {}
+        except Exception:
+            body = {}
+
+        section_name = body.get("section_name", "")
+        user_prompt = body.get("user_prompt", "")
+
+        from portfolio.services.ai_regeneration import regenerate_section
+        res = regenerate_section(portfolio, section_name=section_name, user_prompt=user_prompt)
+
+        status_code = 200 if res.get("success") else 400
+        return JsonResponse(res, status=status_code)
+
+
+class PortfolioAIAcceptSectionAPI(LoginRequiredMixin, View):
+    """
+    POST /portfolio/builder/<int:pk>/ai-accept-section/
+    Atomically commits an accepted regenerated section into draft state & version history.
+    """
+    def post(self, request, pk):
+        try:
+            portfolio = get_portfolio_for_user(pk, request.user, "EDITOR")
+        except PermissionDenied:
+            return JsonResponse({"success": False, "code": "PERMISSION_DENIED", "message": "Permission denied."}, status=403)
+
+        try:
+            body = json.loads(request.body.decode("utf-8")) if request.body else {}
+        except Exception:
+            body = {}
+
+        section_name = body.get("section_name", "")
+        regenerated_data = body.get("regenerated_data", {})
+        ai_metadata = body.get("ai_metadata")
+        expected_checksum = body.get("expected_checksum")
+
+        from portfolio.services.ai_regeneration import apply_regenerated_section
+        res = apply_regenerated_section(
+            portfolio=portfolio,
+            section_name=section_name,
+            regenerated_data=regenerated_data,
+            ai_metadata=ai_metadata,
+            expected_checksum=expected_checksum,
+            user=request.user
+        )
+
+        status_code = 200 if res.get("success") else 400
+        return JsonResponse(res, status=status_code)
+
+
+class PortfolioAIAssistantAnalysisAPI(LoginRequiredMixin, View):
+    """
+    POST /portfolio/builder/<int:pk>/ai-analysis/
+    Executes hybrid AI Assistant analysis pipeline (Deterministic Rule Engine + Gemini AI Analysis).
+    Returns multidimensional scores (0-100), priority-sorted recommendations, explainability reasons,
+    confidence metrics, and AI metadata with zero database write isolation.
+    """
+    def post(self, request, pk):
+        try:
+            portfolio = get_portfolio_for_user(pk, request.user, "EDITOR")
+        except PermissionDenied:
+            return JsonResponse({"success": False, "code": "PERMISSION_DENIED", "message": "Permission denied."}, status=403)
+
+        try:
+            body = json.loads(request.body.decode("utf-8")) if request.body else {}
+        except Exception:
+            body = {}
+
+        user_instruction = body.get("user_instruction")
+        target_role = body.get("target_role")
+        industry = body.get("industry")
+        seniority = body.get("seniority")
+
+        from portfolio.services.ai_assistant import analyze_portfolio
+        res = analyze_portfolio(
+            portfolio=portfolio,
+            user_instruction=user_instruction,
+            target_role=target_role,
+            industry=industry,
+            seniority=seniority
+        )
+
+        status_code = 200 if res.get("success") else 400
+        return JsonResponse(res, status=status_code)
+
+
+class PortfolioResumeUploadAPI(LoginRequiredMixin, View):
+    """
+    POST /portfolio/builder/<int:pk>/resume-upload/
+    Accepts resume file upload (PDF/DOCX/TXT), executes 8-step security validation sequence,
+    parses & normalizes sections, invokes Phase 8.1 AI generation engine, and returns zero-DB preview + diff delta summary.
+    """
+    def post(self, request, pk):
+        try:
+            portfolio = get_portfolio_for_user(pk, request.user, "EDITOR")
+        except PermissionDenied:
+            return JsonResponse({"success": False, "code": "PERMISSION_DENIED", "message": "Permission denied."}, status=403)
+
+        if "resume" not in request.FILES:
+            return JsonResponse({"success": False, "code": "NO_FILE", "message": "No resume file uploaded."}, status=400)
+
+        uploaded_file = request.FILES["resume"]
+
+        try:
+            from portfolio.services.resume_parser import parse_resume, compute_preview_diff
+            from portfolio.services.ai_generation import generate_portfolio_with_ai
+
+            # 1. Parse Resume & Normalize Sections
+            parse_result = parse_resume(uploaded_file, max_size_mb=5)
+            norm = parse_result["normalized_resume"]
+
+            # Format raw profile data for Phase 8.1 AI Generation Engine
+            profile_data = {
+                "name": norm["personal"]["value"]["name"],
+                "headline": norm["personal"]["value"]["headline"],
+                "about": norm["summary"]["value"],
+                "contact_email": norm["personal"]["value"]["email"],
+                "social_github": norm["personal"]["value"]["github"],
+                "social_linkedin": norm["personal"]["value"]["linkedin"],
+                "skills": [s["name"] for s in norm["skills"]["value"]],
+                "projects": [p["title"] for p in norm["projects"]["value"]],
+                "experience": [f"{e['position']} at {e['company']}" for e in norm["experience"]["value"]],
+                "education": [ed["degree"] for ed in norm["education"]["value"]]
+            }
+
+            # 2. Invoke Phase 8.1 AI Generation Engine (Zero DB Write)
+            gen_res = generate_portfolio_with_ai(profile_data)
+            if not gen_res.get("success"):
+                return JsonResponse(gen_res, status=400)
+
+            generated_portfolio = gen_res.get("data", gen_res.get("portfolio", {}))
+
+            # 3. Calculate Difference Delta Summary
+            diff_summary = compute_preview_diff(portfolio, generated_portfolio)
+
+            # 4. Return Preview Payload
+            return JsonResponse({
+                "success": True,
+                "code": "RESUME_PREVIEW_READY",
+                "filename": parse_result["filename"],
+                "resume_hash": parse_result["resume_hash"],
+                "statistics": parse_result["statistics"],
+                "normalized_resume": norm,
+                "generated_portfolio": generated_portfolio,
+                "diff_summary": diff_summary,
+                "ai_metadata": gen_res.get("metadata", {})
+            })
+
+        except ValueError as val_err:
+            return JsonResponse({"success": False, "code": "VALIDATION_FAILED", "message": str(val_err)}, status=400)
+        except Exception as e:
+            return JsonResponse({"success": False, "code": "RESUME_PARSING_FAILED", "message": f"Resume processing failed: {str(e)}"}, status=400)
+
+
+class PortfolioResumeImportAPI(LoginRequiredMixin, View):
+    """
+    POST /portfolio/builder/<int:pk>/resume-import/
+    Commits an accepted resume-generated portfolio preview into draft state via Phase 8.2 import engine,
+    and creates a PortfolioVersion snapshot tagged "Resume Import".
+    """
+    def post(self, request, pk):
+        try:
+            portfolio = get_portfolio_for_user(pk, request.user, "EDITOR")
+        except PermissionDenied:
+            return JsonResponse({"success": False, "code": "PERMISSION_DENIED", "message": "Permission denied."}, status=403)
+
+        try:
+            body = json.loads(request.body.decode("utf-8")) if request.body else {}
+        except Exception:
+            body = {}
+
+        ai_data = body.get("ai_data", {})
+        resume_hash = body.get("resume_hash", "")
+        ai_metadata = body.get("ai_metadata", {})
+
+        if not isinstance(ai_metadata, dict):
+            ai_metadata = {}
+
+        ai_metadata.update({
+            "source": "resume_import",
+            "resume_hash": resume_hash,
+            "parser_version": "1.0",
+            "generated_from_resume": True,
+            "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        })
+
+        from portfolio.services.ai_import import import_generated_portfolio
+        res = import_generated_portfolio(
+            portfolio=portfolio,
+            ai_data=ai_data,
+            mode="replace",
+            ai_metadata=ai_metadata,
+            user=request.user
+        )
+
+        status_code = 200 if res.get("success") else 400
+        return JsonResponse(res, status=status_code)
+
+
+class PortfolioJobAnalysisAPI(LoginRequiredMixin, View):
+    """
+    POST /portfolio/builder/<int:pk>/job-analysis/
+    Accepts pasted job description text or uploaded file (PDF/DOCX/TXT), parses requirements,
+    compares against current portfolio draft, calculates ATS match scores (0-100), and generates
+    section-by-section optimization preview with zero database writes.
+    """
+    def post(self, request, pk):
+        try:
+            portfolio = get_portfolio_for_user(pk, request.user, "EDITOR")
+        except PermissionDenied:
+            return JsonResponse({"success": False, "code": "PERMISSION_DENIED", "message": "Permission denied."}, status=403)
+
+        job_text = None
+        uploaded_file = None
+
+        if "job_file" in request.FILES:
+            uploaded_file = request.FILES["job_file"]
+
+        if not uploaded_file:
+            try:
+                body = json.loads(request.body.decode("utf-8")) if request.body else {}
+                job_text = body.get("job_text") or body.get("job_description")
+                user_instruction = body.get("user_instruction")
+            except Exception:
+                job_text = request.POST.get("job_text")
+                user_instruction = request.POST.get("user_instruction")
+        else:
+            user_instruction = request.POST.get("user_instruction")
+
+        if not job_text and not uploaded_file:
+            return JsonResponse({"success": False, "code": "MISSING_JOB_DESCRIPTION", "message": "Please provide job description text or upload a document."}, status=400)
+
+        try:
+            from portfolio.services.job_description import parse_job_description, generate_job_optimization_preview
+
+            # 1. Parse Job Description
+            parse_res = parse_job_description(job_text=job_text, uploaded_file=uploaded_file, max_size_mb=5)
+            job_reqs = parse_res["job_requirements"]
+
+            # 2. Generate Optimization Preview (Zero DB Writes)
+            preview_res = generate_job_optimization_preview(
+                portfolio=portfolio,
+                job_requirements=job_reqs,
+                user_instruction=user_instruction
+            )
+
+            status_code = 200 if preview_res.get("success") else 400
+            return JsonResponse(preview_res, status=status_code)
+
+        except ValueError as val_err:
+            return JsonResponse({"success": False, "code": "VALIDATION_FAILED", "message": str(val_err)}, status=400)
+        except Exception as e:
+            return JsonResponse({"success": False, "code": "JOB_ANALYSIS_FAILED", "message": f"Job analysis failed: {str(e)}"}, status=400)
+
+
+class PortfolioJobApplyAPI(LoginRequiredMixin, View):
+    """
+    POST /portfolio/builder/<int:pk>/job-apply/
+    Selectively commits approved section optimizations (e.g. hero, skills) into draft state via Phase 8.3 section regeneration engine,
+    and creates a PortfolioVersion snapshot tagged "Job Optimized".
+    """
+    def post(self, request, pk):
+        try:
+            portfolio = get_portfolio_for_user(pk, request.user, "EDITOR")
+        except PermissionDenied:
+            return JsonResponse({"success": False, "code": "PERMISSION_DENIED", "message": "Permission denied."}, status=403)
+
+        try:
+            body = json.loads(request.body.decode("utf-8")) if request.body else {}
+        except Exception:
+            body = {}
+
+        selected_sections = body.get("selected_sections", [])
+        optimizations = body.get("optimizations", {})
+        job_metadata = body.get("job_metadata", {})
+        job_hash = body.get("job_hash", "")
+
+        if not selected_sections or not isinstance(selected_sections, list):
+            return JsonResponse({"success": False, "code": "NO_SECTIONS_SELECTED", "message": "No target sections selected for application."}, status=400)
+
+        from portfolio.services.ai_regeneration import apply_regenerated_section
+        from portfolio.models import PortfolioVersion
+        from portfolio.services.versioning import create_version_snapshot
+        from django.db import transaction
+        from portfolio.services.prompt_library import PROMPT_VERSION
+
+        applied_report = {}
+        all_warnings = []
+
+        try:
+            with transaction.atomic():
+                for sec_name in selected_sections:
+                    sec_key = sec_name.lower()
+                    opt_item = optimizations.get(sec_key, optimizations.get(sec_name, {}))
+                    opt_data = opt_item.get("optimized_data", opt_item) if isinstance(opt_item, dict) else opt_item
+
+                    if not opt_data:
+                        continue
+
+                    apply_res = apply_regenerated_section(
+                        portfolio=portfolio,
+                        section_name=sec_key,
+                        regenerated_data=opt_data,
+                        user=request.user
+                    )
+
+                    if apply_res.get("success"):
+                        applied_report[sec_key] = "applied"
+                    else:
+                        applied_report[sec_key] = "failed"
+                        all_warnings.extend(apply_res.get("errors", []))
+
+                # Create PortfolioVersion Snapshot Tagged "Job Optimized"
+                job_title = job_metadata.get("job_title", "Target Job")
+                version_title = f"Job Optimized Portfolio - {job_title}"
+
+                snapshot = create_version_snapshot(
+                    portfolio=portfolio,
+                    title=version_title,
+                    tag="Job Optimized",
+                    description=f"Applied targeted optimizations for {job_title}.",
+                    is_published=False,
+                    is_manual_save=True,
+                    created_by=request.user
+                )
+
+                meta_payload = {
+                    "source": "job_optimization",
+                    "job_hash": job_hash,
+                    "job_title": job_title,
+                    "company": job_metadata.get("company", ""),
+                    "optimization_version": "1.0",
+                    "provider": "Gemini",
+                    "prompt_version": PROMPT_VERSION,
+                    "applied_sections": list(applied_report.keys()),
+                    "optimization_session": {
+                        "job_hash": job_hash,
+                        "applied_sections": list(applied_report.keys()),
+                        "applied_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+                    }
+                }
+
+                snap_json = snapshot.snapshot_json
+                snap_json["_ai_metadata"] = meta_payload
+                snapshot.snapshot_json = snap_json
+                snapshot.save(update_fields=["snapshot_json"])
+
+                cache.delete(f"builder_draft_{portfolio.pk}")
+                cache.delete_pattern(f"job_opt_{portfolio.pk}_*") if hasattr(cache, "delete_pattern") else None
+
+                return JsonResponse({
+                    "success": True,
+                    "status": "JOB_OPTIMIZATIONS_APPLIED",
+                    "version_number": snapshot.version_number,
+                    "applied_sections": applied_report,
+                    "warnings": all_warnings,
+                    "errors": []
+                })
+
+        except Exception as e:
+            return JsonResponse({"success": False, "code": "JOB_APPLY_FAILED", "message": f"Failed to apply optimizations: {str(e)}"}, status=400)
+
+
+class CoverLetterGenerateView(LoginRequiredMixin, View):
+    """
+    POST /portfolio/builder/<int:pk>/cover-letter/generate/
+    Generates a structured cover letter preview in 100% read-only mode (Zero Database Writes).
+    """
+    def post(self, request, pk):
+        try:
+            portfolio = get_portfolio_for_user(pk, request.user, "EDITOR")
+        except PermissionDenied:
+            return JsonResponse({"success": False, "code": "PERMISSION_DENIED", "message": "Permission denied."}, status=403)
+
+        try:
+            body = json.loads(request.body.decode("utf-8")) if request.body else {}
+        except Exception:
+            body = {}
+
+        resume_data = body.get("resume_data", {})
+        job_requirements = body.get("job_requirements", {})
+        tone = body.get("tone", "Professional")
+        length = body.get("length", "Medium")
+        template_variant = body.get("template_variant", "Modern")
+        user_instruction = body.get("user_instruction")
+
+        from portfolio.services.cover_letter import generate_cover_letter
+        res = generate_cover_letter(
+            portfolio=portfolio,
+            resume_data=resume_data,
+            job_requirements=job_requirements,
+            tone=tone,
+            length=length,
+            template_variant=template_variant,
+            user_instruction=user_instruction
+        )
+
+        status_code = 200 if res.get("success") else 400
+        return JsonResponse(res, status=status_code)
+
+
+class CoverLetterSaveView(LoginRequiredMixin, View):
+    """
+    POST /portfolio/builder/<int:pk>/cover-letter/save/
+    Saves or restores a cover letter version record in DB with duplicate detection.
+    """
+    def post(self, request, pk):
+        try:
+            portfolio = get_portfolio_for_user(pk, request.user, "EDITOR")
+        except PermissionDenied:
+            return JsonResponse({"success": False, "code": "PERMISSION_DENIED", "message": "Permission denied."}, status=403)
+
+        try:
+            body = json.loads(request.body.decode("utf-8")) if request.body else {}
+        except Exception:
+            body = {}
+
+        cover_letter_data = body.get("cover_letter_data", {})
+        tone = body.get("tone", "Professional")
+        length = body.get("length", "Medium")
+        template_variant = body.get("template_variant", "Modern")
+        job_requirements = body.get("job_requirements", {})
+        replace_version_id = body.get("replace_version_id")
+
+        if not cover_letter_data:
+            return JsonResponse({"success": False, "code": "MISSING_DATA", "message": "Cover letter content data is required."}, status=400)
+
+        from portfolio.services.cover_letter import save_cover_letter_version
+        res = save_cover_letter_version(
+            portfolio=portfolio,
+            cover_letter_data=cover_letter_data,
+            tone=tone,
+            length=length,
+            template_variant=template_variant,
+            job_requirements=job_requirements,
+            replace_version_id=replace_version_id,
+            user=request.user
+        )
+
+        status_code = 200 if res.get("success") else 400
+        return JsonResponse(res, status=status_code)
+
+
+class CoverLetterHistoryView(LoginRequiredMixin, View):
+    """
+    GET & POST /portfolio/builder/<int:pk>/cover-letter/history/
+    Lists saved cover letter versions with restore (creates new revision safely), duplicate, and delete operations.
+    """
+    def get(self, request, pk):
+        try:
+            portfolio = get_portfolio_for_user(pk, request.user, "VIEWER")
+        except PermissionDenied:
+            return JsonResponse({"success": False, "code": "PERMISSION_DENIED", "message": "Permission denied."}, status=403)
+
+        from portfolio.models import CoverLetter
+        versions = CoverLetter.objects.filter(portfolio=portfolio).order_by("-version_number")
+
+        history_list = []
+        for v in versions:
+            history_list.append({
+                "id": v.pk,
+                "version_number": v.version_number,
+                "title": v.title,
+                "job_title": v.job_title,
+                "company": v.company,
+                "tone": v.tone,
+                "length": v.length,
+                "template_variant": v.template_variant,
+                "created_at": v.created_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "content_json": v.content_json,
+                "metadata": v.metadata_json
+            })
+
+        return JsonResponse({"success": True, "count": len(history_list), "history": history_list})
+
+    def post(self, request, pk):
+        try:
+            portfolio = get_portfolio_for_user(pk, request.user, "EDITOR")
+        except PermissionDenied:
+            return JsonResponse({"success": False, "code": "PERMISSION_DENIED", "message": "Permission denied."}, status=403)
+
+        try:
+            body = json.loads(request.body.decode("utf-8")) if request.body else {}
+        except Exception:
+            body = {}
+
+        action = body.get("action", "").lower()
+        cover_letter_id = body.get("cover_letter_id")
+
+        from portfolio.models import CoverLetter
+        from portfolio.services.cover_letter import save_cover_letter_version
+
+        try:
+            cl = CoverLetter.objects.get(pk=cover_letter_id, portfolio=portfolio)
+        except CoverLetter.DoesNotExist:
+            return JsonResponse({"success": False, "code": "NOT_FOUND", "message": "Cover letter version not found."}, status=404)
+
+        if action == "restore":
+            # Reversible restore — creates a NEW revision from the historical version
+            res = save_cover_letter_version(
+                portfolio=portfolio,
+                cover_letter_data=cl.content_json,
+                tone=cl.tone,
+                length=cl.length,
+                template_variant=cl.template_variant,
+                job_requirements={"title": cl.job_title, "company": cl.company},
+                user=request.user
+            )
+            res["action"] = "restored_as_new_version"
+            return JsonResponse(res)
+
+        elif action == "duplicate":
+            res = save_cover_letter_version(
+                portfolio=portfolio,
+                cover_letter_data=cl.content_json,
+                tone=cl.tone,
+                length=cl.length,
+                template_variant=cl.template_variant,
+                job_requirements={"title": cl.job_title, "company": cl.company},
+                user=request.user
+            )
+            res["action"] = "duplicated"
+            return JsonResponse(res)
+
+        elif action == "delete":
+            v_num = cl.version_number
+            cl.delete()
+            return JsonResponse({"success": True, "action": "deleted", "message": f"Deleted cover letter v{v_num}."})
+
+        else:
+            return JsonResponse({"success": False, "code": "INVALID_ACTION", "message": "Invalid action. Supported: restore, duplicate, delete."}, status=400)
+
+
+class CoverLetterExportView(LoginRequiredMixin, View):
+    """
+    POST /portfolio/builder/<int:pk>/cover-letter/export/
+    Generates downloadable cover letter files in PDF, DOCX, Markdown, or Plain Text format.
+    """
+    def post(self, request, pk):
+        try:
+            portfolio = get_portfolio_for_user(pk, request.user, "VIEWER")
+        except PermissionDenied:
+            return JsonResponse({"success": False, "code": "PERMISSION_DENIED", "message": "Permission denied."}, status=403)
+
+        try:
+            body = json.loads(request.body.decode("utf-8")) if request.body else {}
+        except Exception:
+            body = {}
+
+        export_format = body.get("format", "pdf")
+        cover_letter_data = body.get("cover_letter_data")
+        cover_letter_id = body.get("cover_letter_id")
+
+        from portfolio.models import CoverLetter
+        from portfolio.services.cover_letter import export_cover_letter
+
+        if not cover_letter_data and cover_letter_id:
+            try:
+                cl = CoverLetter.objects.get(pk=cover_letter_id, portfolio=portfolio)
+                cover_letter_data = {
+                    "title": cl.title,
+                    "greeting": cl.content_json.get("greeting", ""),
+                    "introduction": cl.content_json.get("introduction", ""),
+                    "body": cl.content_json.get("body", ""),
+                    "closing": cl.content_json.get("closing", ""),
+                    "signature": cl.content_json.get("signature", ""),
+                    "metadata": cl.metadata_json
+                }
+            except CoverLetter.DoesNotExist:
+                return JsonResponse({"success": False, "code": "NOT_FOUND", "message": "Cover letter record not found."}, status=404)
+
+        if not cover_letter_data:
+            return JsonResponse({"success": False, "code": "MISSING_DATA", "message": "Cover letter content required for export."}, status=400)
+
+        file_bytes, mime_type, filename = export_cover_letter(cover_letter_data, format=export_format)
+
+        response = HttpResponse(file_bytes, content_type=mime_type)
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
+
+
+class ResumeOptimizeView(LoginRequiredMixin, View):
+    """
+    POST /resume/optimize/
+    Generates a simplified zero-DB-write preview diff optimizing Summary, Skills, Projects, and Experience.
+    """
+    def post(self, request):
+        try:
+            body = json.loads(request.body.decode("utf-8")) if request.body else {}
+        except Exception:
+            body = {}
+
+        resume_data = body.get("resume_data", {})
+        job_requirements = body.get("job_requirements", {})
+        user_instruction = body.get("user_instruction")
+
+        if not resume_data:
+            return JsonResponse({"success": False, "code": "MISSING_RESUME_DATA", "message": "Resume data is required for optimization."}, status=400)
+        if not job_requirements:
+            return JsonResponse({"success": False, "code": "MISSING_JOB_REQUIREMENTS", "message": "Job description requirements are required for optimization."}, status=400)
+
+        try:
+            from portfolio.services.resume_optimizer import optimize_resume
+            preview_res = optimize_resume(
+                resume_data=resume_data,
+                job_requirements=job_requirements,
+                user_instruction=user_instruction
+            )
+            return JsonResponse(preview_res, status=200)
+
+        except ValueError as val_err:
+            return JsonResponse({"success": False, "code": "VALIDATION_FAILED", "message": str(val_err)}, status=400)
+        except Exception as e:
+            return JsonResponse({"success": False, "code": "RESUME_OPTIMIZATION_FAILED", "message": f"Resume optimization failed: {str(e)}"}, status=400)
+
+
+class ResumeSaveView(LoginRequiredMixin, View):
+    """
+    POST /resume/save/
+    Saves a new OptimizedResume version in DB without overwriting original resume data.
+    """
+    def post(self, request):
+        try:
+            body = json.loads(request.body.decode("utf-8")) if request.body else {}
+        except Exception:
+            body = {}
+
+        portfolio_id = body.get("portfolio_id")
+        optimized_preview_data = body.get("optimized_preview_data", {})
+        original_resume_data = body.get("original_resume_data", {})
+        title = body.get("title")
+
+        if not portfolio_id:
+            return JsonResponse({"success": False, "code": "MISSING_PORTFOLIO_ID", "message": "Portfolio ID is required."}, status=400)
+        if not optimized_preview_data:
+            return JsonResponse({"success": False, "code": "MISSING_PREVIEW_DATA", "message": "Optimized preview data is required for saving."}, status=400)
+
+        try:
+            portfolio = get_portfolio_for_user(portfolio_id, request.user, "EDITOR")
+        except PermissionDenied:
+            return JsonResponse({"success": False, "code": "PERMISSION_DENIED", "message": "Permission denied."}, status=403)
+        except Exception:
+            return JsonResponse({"success": False, "code": "PORTFOLIO_NOT_FOUND", "message": "Portfolio not found."}, status=404)
+
+        try:
+            from portfolio.services.resume_optimizer import save_optimized_resume
+            res = save_optimized_resume(
+                portfolio=portfolio,
+                optimized_preview_data=optimized_preview_data,
+                original_resume_data=original_resume_data,
+                title=title,
+                user=request.user
+            )
+            return JsonResponse(res, status=200)
+
+        except Exception as e:
+            return JsonResponse({"success": False, "code": "RESUME_SAVE_FAILED", "message": f"Failed to save optimized resume: {str(e)}"}, status=400)
+
+
+class PortfolioExportView(LoginRequiredMixin, View):
+    """
+    POST /portfolio/export/
+    Exports a portfolio into PDF, DOCX, HTML (Theme Engine reuse), or ZIP (Static Site Builder reuse).
+    Returns file download attachment response.
+    """
+    def post(self, request, pk=None):
+        try:
+            body = json.loads(request.body.decode("utf-8")) if request.body else {}
+        except Exception:
+            body = {}
+
+        portfolio_id = pk or body.get("portfolio_id") or body.get("pk") or request.POST.get("portfolio_id") or request.POST.get("pk") or request.GET.get("portfolio_id") or request.GET.get("pk")
+        export_format = body.get("format") or request.POST.get("format", "pdf")
+
+        if not portfolio_id:
+            return JsonResponse({"success": False, "code": "MISSING_PORTFOLIO_ID", "message": "Portfolio ID is required for export."}, status=400)
+
+        try:
+            portfolio = get_portfolio_for_user(portfolio_id, request.user, "VIEWER")
+        except PermissionDenied:
+            return JsonResponse({"success": False, "code": "PERMISSION_DENIED", "message": "Permission denied."}, status=403)
+        except Exception:
+            return JsonResponse({"success": False, "code": "PORTFOLIO_NOT_FOUND", "message": "Portfolio not found."}, status=404)
+
+        try:
+            from portfolio.services.export_service import export_portfolio
+            file_bytes, mime_type, filename = export_portfolio(portfolio, format=export_format)
+
+            response = HttpResponse(file_bytes, content_type=mime_type)
+            response["Content-Disposition"] = f'attachment; filename="{filename}"'
+            return response
+
+        except ValueError as val_err:
+            return JsonResponse({"success": False, "code": "INVALID_EXPORT_FORMAT", "message": str(val_err)}, status=400)
+        except Exception as e:
+            return JsonResponse({"success": False, "code": "EXPORT_FAILED", "message": f"Export failed: {str(e)}"}, status=400)
+
+
+class PortfolioBackupExportView(LoginRequiredMixin, View):
+    """
+    POST /portfolio/backup/export/
+    Generates and downloads a complete JSON portfolio backup snapshot.
+    """
+    def post(self, request, pk=None):
+        try:
+            body = json.loads(request.body.decode("utf-8")) if request.body else {}
+        except Exception:
+            body = {}
+
+        portfolio_id = pk or body.get("portfolio_id") or body.get("pk") or request.POST.get("portfolio_id") or request.POST.get("pk") or request.GET.get("portfolio_id") or request.GET.get("pk")
+
+        if not portfolio_id:
+            return JsonResponse({"success": False, "code": "MISSING_PORTFOLIO_ID", "message": "Portfolio ID is required for backup export."}, status=400)
+
+        try:
+            portfolio = get_portfolio_for_user(portfolio_id, request.user, "VIEWER")
+        except PermissionDenied:
+            return JsonResponse({"success": False, "code": "PERMISSION_DENIED", "message": "Permission denied."}, status=403)
+        except Exception:
+            return JsonResponse({"success": False, "code": "PORTFOLIO_NOT_FOUND", "message": "Portfolio not found."}, status=404)
+
+        try:
+            from portfolio.services.backup_service import export_portfolio_backup
+            backup_data = export_portfolio_backup(portfolio)
+
+            json_bytes = json.dumps(backup_data, indent=2).encode("utf-8")
+            clean_name = re.sub(r"[^\w\-_]", "_", portfolio.name or "Portfolio")
+
+            response = HttpResponse(json_bytes, content_type="application/json")
+            response["Content-Disposition"] = f'attachment; filename="{clean_name}_backup.json"'
+            return response
+
+        except Exception as e:
+            return JsonResponse({"success": False, "code": "BACKUP_EXPORT_FAILED", "message": f"Backup export failed: {str(e)}"}, status=400)
+
+
+class PortfolioBackupImportView(LoginRequiredMixin, View):
+    """
+    POST /portfolio/backup/import/
+    Imports a JSON backup snapshot and reconstructs a brand new portfolio. Never overwrites existing portfolios!
+    """
+    def post(self, request):
+        backup_file = request.FILES.get("backup_file")
+        backup_data = None
+
+        if backup_file:
+            try:
+                raw_bytes = backup_file.read()
+                backup_data = json.loads(raw_bytes.decode("utf-8"))
+            except Exception:
+                return JsonResponse({"success": False, "code": "INVALID_JSON_FILE", "message": "Uploaded file is not a valid JSON backup document."}, status=400)
+        else:
+            try:
+                backup_data = json.loads(request.body.decode("utf-8")) if request.body else {}
+            except Exception:
+                return JsonResponse({"success": False, "code": "INVALID_JSON_BODY", "message": "Invalid JSON body format."}, status=400)
+
+        if not backup_data:
+            return JsonResponse({"success": False, "code": "MISSING_BACKUP_DATA", "message": "Backup payload or file is required."}, status=400)
+
+        try:
+            from portfolio.services.backup_service import import_portfolio_backup
+            new_portfolio = import_portfolio_backup(backup_data, user=request.user)
+
+            return JsonResponse({
+                "success": True,
+                "code": "BACKUP_IMPORTED",
+                "message": f"Successfully imported portfolio '{new_portfolio.name}'.",
+                "portfolio_id": new_portfolio.pk,
+                "name": new_portfolio.name
+            }, status=200)
+
+        except ValueError as val_err:
+            return JsonResponse({"success": False, "code": "VALIDATION_FAILED", "message": str(val_err)}, status=400)
+        except Exception as e:
+            return JsonResponse({"success": False, "code": "BACKUP_IMPORT_FAILED", "message": f"Backup import failed: {str(e)}"}, status=400)
+
+
+class PortfolioTemplatesListView(LoginRequiredMixin, View):
+    """
+    GET /portfolio/templates/
+    Returns active built-in portfolio template presets.
+    """
+    def get(self, request):
+        try:
+            from portfolio.services.template_service import list_templates
+            templates = list_templates()
+            return JsonResponse({"success": True, "count": len(templates), "templates": templates}, status=200)
+        except Exception as e:
+            return JsonResponse({"success": False, "code": "LIST_TEMPLATES_FAILED", "message": f"Failed to list templates: {str(e)}"}, status=400)
+
+
+class PortfolioChangeTemplateView(LoginRequiredMixin, View):
+    """
+    POST /portfolio/template/change/
+    Switches a portfolio's visual template layout while preserving user data.
+    """
+    def post(self, request, pk=None):
+        try:
+            body = json.loads(request.body.decode("utf-8")) if request.body else {}
+        except Exception:
+            body = {}
+
+        portfolio_id = pk or body.get("portfolio_id") or body.get("pk") or request.POST.get("portfolio_id") or request.POST.get("pk") or request.GET.get("portfolio_id")
+        template_identifier = body.get("template_id") or body.get("template_slug") or body.get("theme_id") or body.get("theme_slug") or request.POST.get("template_id") or request.POST.get("template_slug")
+
+        if not portfolio_id:
+            return JsonResponse({"success": False, "code": "MISSING_PORTFOLIO_ID", "message": "Portfolio ID is required."}, status=400)
+
+        if not template_identifier:
+            return JsonResponse({"success": False, "code": "MISSING_TEMPLATE_IDENTIFIER", "message": "Template ID or slug is required."}, status=400)
+
+        try:
+            portfolio = get_portfolio_for_user(portfolio_id, request.user, "EDITOR")
+        except PermissionDenied:
+            return JsonResponse({"success": False, "code": "PERMISSION_DENIED", "message": "Permission denied."}, status=403)
+        except Exception:
+            return JsonResponse({"success": False, "code": "PORTFOLIO_NOT_FOUND", "message": "Portfolio not found."}, status=404)
+
+        try:
+            from portfolio.services.template_service import change_template
+            result = change_template(portfolio, template_identifier)
+            return JsonResponse(result, status=200)
+        except ValueError as val_err:
+            return JsonResponse({"success": False, "code": "INVALID_TEMPLATE", "message": str(val_err)}, status=400)
+        except Exception as e:
+            return JsonResponse({"success": False, "code": "CHANGE_TEMPLATE_FAILED", "message": f"Change template failed: {str(e)}"}, status=400)
+
+
+class PortfolioSEOView(LoginRequiredMixin, View):
+    """
+    GET /portfolio/seo/<portfolio_id>/
+    Returns generated SEO meta tags, Open Graph tags, Twitter Card tags, robots.txt, and sitemap.xml.
+    """
+    def get(self, request, pk=None):
+        portfolio_id = pk or request.GET.get("portfolio_id") or request.GET.get("pk")
+
+        if not portfolio_id:
+            return JsonResponse({"success": False, "code": "MISSING_PORTFOLIO_ID", "message": "Portfolio ID is required."}, status=400)
+
+        try:
+            portfolio = get_portfolio_for_user(portfolio_id, request.user, "VIEWER")
+        except PermissionDenied:
+            return JsonResponse({"success": False, "code": "PERMISSION_DENIED", "message": "Permission denied."}, status=403)
+        except Exception:
+            return JsonResponse({"success": False, "code": "PORTFOLIO_NOT_FOUND", "message": "Portfolio not found."}, status=404)
+
+        try:
+            from portfolio.services.seo_service import generate_portfolio_seo
+            domain = request.build_absolute_uri('/')[:-1]
+            seo_data = generate_portfolio_seo(portfolio, domain=domain)
+            return JsonResponse({"success": True, **seo_data}, status=200)
+        except Exception as e:
+            return JsonResponse({"success": False, "code": "SEO_GENERATION_FAILED", "message": f"Failed to generate SEO: {str(e)}"}, status=400)
 
 
 class PortfolioArchiveView(LoginRequiredMixin, View):

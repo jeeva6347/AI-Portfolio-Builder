@@ -38,6 +38,7 @@ SITE_ID = 1
 # Applications
 # ---------------------------------------------------------------------------
 INSTALLED_APPS = [
+    "jazzmin",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -58,6 +59,7 @@ INSTALLED_APPS = [
     "dashboard",
     "themes",
     "portfolio",
+    "subscriptions",
     "analytics",
     "payments",
     "github_integration",
@@ -263,3 +265,44 @@ if SENTRY_DSN and not DEBUG:
         )
     except ImportError:
         pass
+
+
+# ---------------------------------------------------------------------------
+# Jazzmin Admin UI Configuration & SaaS Management Section
+# ---------------------------------------------------------------------------
+JAZZMIN_SETTINGS = {
+    "site_title": "AI Portfolio Builder Admin",
+    "site_header": "AI Portfolio Builder SaaS Admin",
+    "site_brand": "SaaS Admin",
+    "welcome_sign": "Welcome to AI Portfolio Builder Admin",
+    "copyright": "AI Portfolio Builder Team",
+    "search_model": ["subscriptions.SubscriptionPlan", "subscriptions.UserSubscription", "portfolio.Portfolio"],
+    "topmenu_links": [
+        {"name": "Home", "url": "admin:index", "permissions": ["auth.view_user"]},
+        {"name": "SaaS Dashboard", "url": "admin:subscriptions_summary", "permissions": ["subscriptions.view_subscriptionplan"]},
+    ],
+    "show_sidebar": True,
+    "navigation_expanded": True,
+    "order_with_respect_to": [
+        "subscriptions",
+        "portfolio",
+        "themes",
+        "accounts",
+        "auth",
+    ],
+    "icons": {
+        "subscriptions.SubscriptionPlan": "fas fa-tags",
+        "subscriptions.PlanFeature": "fas fa-cogs",
+        "subscriptions.PlanFeatureAccess": "fas fa-key",
+        "subscriptions.UserSubscription": "fas fa-user-check",
+        "subscriptions.FeatureUsage": "fas fa-chart-pie",
+        "portfolio.Portfolio": "fas fa-briefcase",
+        "themes.Theme": "fas fa-paint-brush",
+        "accounts.User": "fas fa-users",
+    },
+    "default_icon_parents": "fas fa-folder",
+    "default_icon_children": "fas fa-circle",
+    "related_modal_active": True,
+    "show_ui_builder": False,
+    "changeform_format": "horizontal_tabs",
+}

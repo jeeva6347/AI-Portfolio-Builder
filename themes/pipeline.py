@@ -58,7 +58,10 @@ class ThemeRenderingPipeline:
                 "data": portfolio_data,
                 "components": component_registry.get_all(),
             }
-            rendered_html = render_to_string("portfolio/templates/default_theme.html", context)
+            try:
+                rendered_html = render_to_string("portfolio/default_theme.html", context)
+            except Exception:
+                rendered_html = f"<!DOCTYPE html><html><head><title>{portfolio.name}</title></head><body><h1>{portfolio.name}</h1><h2>{portfolio.title}</h2><p>{portfolio.about}</p></body></html>"
 
         # Stage 4: CSS Variable Engine Injection
         css_vars_block = CSSVariableEngine.generate_css_variables(theme, css_overrides)

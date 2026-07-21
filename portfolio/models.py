@@ -396,3 +396,108 @@ class PortfolioBuildLog(models.Model):
         return f"[{self.step}] {self.status} - {self.portfolio.name}"
 
 
+class PortfolioDeployment(models.Model):
+    """
+    Immutable deployment record for Phase 7.3 GitHub Deployment Engine.
+    Tracks each deployment attempt, repository URLs, commit SHAs, and status.
+    """
+    class Status(models.TextChoices):
+        PENDING = "PENDING", "Pending"
+        DEPLOYING = "DEPLOYING", "Deploying"
+        SUCCESS = "SUCCESS", "Success"
+        FAILED = "FAILED", "Failed"
+
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    portfolio = models.ForeignKey(
+        Portfolio,
+        on_delete=models.CASCADE,
+        related_name="portfolio_deployments"
+    )
+    provider = models.CharField(max_length=50, default="GITHUB")
+    repository_name = models.CharField(max_length=255)
+    repository_url = models.URLField(max_length=500, blank=True)
+    branch = models.CharField(max_length=100, default="main")
+    commit_sha = models.CharField(max_length=100, blank=True)
+    deployment_status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING
+    )
+    deployment_url = models.URLField(max_length=500, blank=True)
+    deployed_at = models.DateTimeField(null=True, blank=True)
+    duration_ms = models.PositiveIntegerField(default=0)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="user_portfolio_deployments"
+    )
+    last_error = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "Portfolio Deployment"
+        verbose_name_plural = "Portfolio Deployments"
+
+    def __str__(self):
+        return f"Deployment [{self.provider}] - {self.portfolio.name} ({self.deployment_status})"
+
+
+class CoverLetter(models.Model):
+    """
+    CoverLetter model (Phase 9.2).
+    Stores versioned AI-generated and user-edited cover letters linked to a portfolio draft.
+    """
+    portfolio = models.ForeignKey(Portfolio, on_delete=models.CASCADE, related_name="cover_letters")
+    title = models.CharField(max_length=255)
+    job_title = models.CharField(max_length=255, blank=True)
+    company = models.CharField(max_length=255, blank=True)
+    tone = models.CharField(max_length=50, default="Professional")
+    length = models.CharField(max_length=50, default="Medium")
+    template_variant = models.CharField(max_length=50, default="Modern")
+    content_json = models.JSONField(default=dict, help_text="Stores greeting, introduction, body, closing, signature, evidence_map, coverage, metrics")
+    content_text = models.TextField(blank=True, help_text="Full compiled plain text cover letter")
+    version_number = models.PositiveIntegerField(default=1)
+    content_hash = models.CharField(max_length=64, blank=True)
+    job_hash = models.CharField(max_length=64, blank=True)
+    resume_hash = models.CharField(max_length=64, blank=True)
+    portfolio_hash = models.CharField(max_length=64, blank=True)
+    metadata_json = models.JSONField(default=dict, help_text="Source, AI model, prompt version, generation time")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-version_number", "-created_at"]
+        verbose_name = "Cover Letter Version"
+        verbose_name_plural = "Cover Letter Versions"
+
+    def __str__(self):
+        return f"Cover Letter v{self.version_number} - {self.title} ({self.portfolio.name})"
+
+
+class OptimizedResume(models.Model):
+    """
+    OptimizedResume model (Phase 9.3 MVP).
+    Stores optimized resume versions linked to a portfolio draft.
+    """
+    portfolio = models.ForeignKey(Portfolio, on_delete=models.CASCADE, related_name="optimized_resumes")
+    title = models.CharField(max_length=255)
+    resume_data_json = models.JSONField(default=dict)
+    version_number = models.PositiveIntegerField(default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-version_number", "-created_at"]
+        verbose_name = "Optimized Resume"
+        verbose_name_plural = "Optimized Resumes"
+
+    def __str__(self):
+        return f"{self.title} v{self.version_number} ({self.portfolio.name})"
+
+
+
+
+
