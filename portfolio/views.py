@@ -1844,18 +1844,8 @@ class UserPortfolioPreview(View):
                 content_type="text/html"
             )
             
-        # Premium Theme Check
-        if theme.is_premium:
-            from payments.permissions import get_user_plan_benefits
-            plan = get_user_plan_benefits(portfolio.user)
-            if not plan.premium_themes_enabled:
-                return HttpResponse(
-                    "<h3>Premium Theme Required</h3><p>This portfolio template requires a Premium "
-                    "subscription upgrade. Please upgrade your plan to render.</p>",
-                    content_type="text/html",
-                    status=403
-                )
-            
+        # ALL FEATURES FREE: Premium theme check bypassed — all themes are free for all users.
+
         mapping = theme.mappings.filter(is_active=True).first()
         if not mapping:
             return HttpResponse(
@@ -1894,13 +1884,8 @@ class UseThemeFromMarketplaceView(LoginRequiredMixin, View):
         from themes.models import Theme
         theme = get_object_or_404(Theme, pk=theme_id, status=Theme.Status.APPROVED)
         
-        # Check premium theme layout permissions
-        from payments.permissions import get_user_plan_benefits
-        plan = get_user_plan_benefits(request.user)
-        if theme.is_premium and not plan.premium_themes_enabled:
-            messages.error(request, f"Theme '{theme.name}' is a Premium Theme. Please upgrade your subscription to use it.")
-            return redirect("payments:billing")
-            
+        # ALL FEATURES FREE: Premium theme check bypassed — all themes are free for all users.
+
         portfolios = Portfolio.objects.filter(user=request.user)
         count = portfolios.count()
         

@@ -91,21 +91,13 @@ def get_available_features(user) -> List[PlanFeatureAccess]:
 
 def has_feature(user, feature_slug: str) -> bool:
     """
-    Dynamically checks if a feature_slug is enabled for user's current subscription plan.
-    Everything is database-driven and manageable via Django Admin.
+    ALL FEATURES ARE FREE FOR ALL USERS.
+    Returns True for any authenticated user regardless of subscription plan.
     """
     if not feature_slug or not user or not user.is_authenticated:
         return False
-
-    plan = get_user_plan(user)
-    if not plan:
-        return False
-
-    return PlanFeatureAccess.objects.filter(
-        plan=plan,
-        feature__slug=feature_slug,
-        enabled=True
-    ).exists()
+    # All features are unlocked for everyone.
+    return True
 
 
 def get_usage_limit(user, feature_slug: str) -> Optional[int]:
@@ -167,39 +159,24 @@ def get_usage_count(user, feature_slug: str) -> int:
 
 def can_use_feature(user, feature_slug: str) -> bool:
     """
-    Evaluates if user can consume feature:
-      - Returns False if has_feature is False
-      - Returns True if usage limit is None (Unlimited)
-      - Returns True if used_count < usage_limit
-      - Returns False if usage limit reached or exceeded
+    ALL FEATURES ARE FREE FOR ALL USERS.
+    Returns True for any authenticated user — no usage limits enforced.
     """
-    if not has_feature(user, feature_slug):
+    if not user or not user.is_authenticated:
         return False
-
-    limit = get_usage_limit(user, feature_slug)
-    if limit is None:
-        return True
-
-    used = get_usage_count(user, feature_slug)
-    return used < limit
+    # All features are unlimited for everyone.
+    return True
 
 
 def get_remaining_usage(user, feature_slug: str) -> Optional[int]:
     """
-    Returns remaining usage for a feature:
-      - None: Unlimited usage
-      - 0: Feature is disabled or limit reached
-      - Positive Integer: Remaining available uses (e.g. 2 for 2/5 remaining)
+    ALL FEATURES ARE FREE FOR ALL USERS.
+    Returns None (Unlimited) for any authenticated user.
     """
-    if not has_feature(user, feature_slug):
+    if not user or not user.is_authenticated:
         return 0
-
-    limit = get_usage_limit(user, feature_slug)
-    if limit is None:
-        return None
-
-    used = get_usage_count(user, feature_slug)
-    return max(0, limit - used)
+    # Unlimited for everyone.
+    return None
 
 
 def increment_feature_usage(user, feature_slug: str, count: int = 1) -> Optional[FeatureUsage]:
