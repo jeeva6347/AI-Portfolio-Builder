@@ -1088,30 +1088,43 @@ class Command(BaseCommand):
         admin_user = User.objects.filter(is_superuser=True).first()
 
         # ── Create Theme DB record ──
-        theme = Theme.objects.create(
-            name="Modern Glass",
-            slug=slug,
-            description="A premium glassmorphism portfolio theme with dark/light mode, Bootstrap 5, smooth animations, and full section coverage.",
-            author="AI Portfolio Team",
-            category=category,
-            uploaded_by=admin_user,
-            status=Theme.Status.DRAFT,
-            rejection_reason="",
-            css_variables={},
-            custom_css="",
-            html_structure="",
-            is_premium=False,
-            price=0.00,
-            font_family="Inter, Space Grotesk",
-            supports_dark_mode=True,
-            supports_custom_colors=True,
-            supports_custom_fonts=True,
-            supports_animation=True,
-            is_active=True,
-            display_order=1,
-            version="1.0.0",
-            tags="glassmorphism, dark, premium, bootstrap, animated, modern",
-        )
+        try:
+            theme = Theme.objects.create(
+                name="Modern Glass",
+                slug=slug,
+                description="A premium glassmorphism portfolio theme with dark/light mode, Bootstrap 5, smooth animations, and full section coverage.",
+                author="AI Portfolio Team",
+                category=category,
+                uploaded_by=admin_user,
+                status=Theme.Status.DRAFT,
+                rejection_reason="",
+                css_variables={},
+                custom_css="",
+                html_structure="",
+                is_premium=False,
+                price=0.00,
+                font_family="Inter, Space Grotesk",
+                supports_dark_mode=True,
+                supports_custom_colors=True,
+                supports_custom_fonts=True,
+                supports_animation=True,
+                is_active=True,
+                display_order=1,
+                version="1.0.0",
+                tags="glassmorphism, dark, premium, bootstrap, animated, modern",
+            )
+        except Exception as exc:
+            self.stdout.write(self.style.WARNING(f"Primary create failed ({exc}), falling back to direct save..."))
+            theme = Theme(
+                name="Modern Glass",
+                slug=slug,
+                description="A premium glassmorphism portfolio theme with dark/light mode.",
+                author="AI Portfolio Team",
+                category=category,
+                uploaded_by=admin_user,
+                status=Theme.Status.DRAFT,
+            )
+            theme.save()
         self.stdout.write(f"Created Theme record pk={theme.pk}")
 
         # ── Build ZIP in-memory ──
