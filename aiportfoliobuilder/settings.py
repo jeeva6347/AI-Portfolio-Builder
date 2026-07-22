@@ -14,8 +14,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ---------------------------------------------------------------------------
 SECRET_KEY = config("DJANGO_SECRET_KEY", default="django-insecure-change-me-in-.env")
 DEBUG = config("DJANGO_DEBUG", default=True, cast=bool)
-ALLOWED_HOSTS = config("DJANGO_ALLOWED_HOSTS", default="127.0.0.1,localhost", cast=Csv())
-CSRF_TRUSTED_ORIGINS = config("CSRF_TRUSTED_ORIGINS", default="http://127.0.0.1:8000,http://localhost:8000", cast=Csv())
+ALLOWED_HOSTS = config("DJANGO_ALLOWED_HOSTS", default="*,127.0.0.1,localhost,.onrender.com", cast=Csv())
+CSRF_TRUSTED_ORIGINS = config("CSRF_TRUSTED_ORIGINS", default="http://127.0.0.1:8000,http://localhost:8000,https://*.onrender.com", cast=Csv())
 CSRF_FAILURE_VIEW = "dashboard.views.custom_csrf_failure_view"
 
 SITE_ID = 1
@@ -175,7 +175,7 @@ STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
 
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
