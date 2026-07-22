@@ -30,8 +30,16 @@ class User(AbstractUser):
         help_text="Determines dashboard access and permission scope.",
     )
     avatar = models.ImageField(upload_to="avatars/", blank=True, null=True)
-    github_username = models.CharField(max_length=150, blank=True)
+    github_username = models.CharField(max_length=150, blank=True, default="")
     email_verified = models.BooleanField(default=False)
+
+    # Legacy Compatibility Fields for Existing PostgreSQL Schema
+    bio = models.TextField(blank=True, default="")
+    company = models.CharField(max_length=100, blank=True, default="")
+    location = models.CharField(max_length=100, blank=True, default="")
+    website = models.CharField(max_length=200, blank=True, default="")
+    phone_number = models.CharField(max_length=20, blank=True, default="")
+    timezone = models.CharField(max_length=50, blank=True, default="UTC")
     
     # Theme Preference for future synchronization
     class ThemePref(models.TextChoices):
