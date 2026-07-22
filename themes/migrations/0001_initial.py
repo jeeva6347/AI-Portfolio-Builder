@@ -41,6 +41,7 @@ class Migration(migrations.Migration):
                 ('description', models.TextField(blank=True)),
                 ('author', models.CharField(blank=True, default='AI Portfolio Team', max_length=150)),
                 ('status', models.CharField(choices=[('draft', 'Draft'), ('pending', 'Pending Review'), ('approved', 'Approved'), ('rejected', 'Rejected')], db_index=True, default='approved', max_length=10)),
+                ('rejection_reason', models.TextField(blank=True, default='')),
                 ('is_premium', models.BooleanField(default=False)),
                 ('price', models.DecimalField(decimal_places=2, default=0.0, help_text='Price in USD. 0 = free.', max_digits=8)),
                 ('template_directory', models.CharField(blank=True, max_length=255)),
