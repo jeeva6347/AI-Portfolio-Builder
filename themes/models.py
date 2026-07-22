@@ -63,6 +63,12 @@ class Theme(models.Model):
         db_index=True,
     )
     rejection_reason = models.TextField(blank=True, default="")
+    css_variables = models.JSONField(default=dict, blank=True)
+    custom_css = models.TextField(blank=True, default="")
+    html_structure = models.TextField(blank=True, default="")
+    is_featured = models.BooleanField(default=False)
+    rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.00)
+    review_count = models.PositiveIntegerField(default=0)
     is_premium = models.BooleanField(default=False)
     price = models.DecimalField(
         max_digits=8,
