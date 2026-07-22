@@ -37,8 +37,15 @@ class Command(BaseCommand):
                     "secret": secret,
                 }
             )
+            if not created:
+                if client_id and not client_id.startswith("dummy-"):
+                    app.client_id = client_id
+                if secret and not secret.startswith("dummy-"):
+                    app.secret = secret
+                app.save()
+
             if not app.sites.filter(id=site.id).exists():
                 app.sites.add(site)
 
-            status_str = "Created" if created else "Exists"
+            status_str = "Created" if created else "Updated/Exists"
             self.stdout.write(self.style.SUCCESS(f"SocialApp '{provider}' ({status_str}) linked to Site {site.id}"))

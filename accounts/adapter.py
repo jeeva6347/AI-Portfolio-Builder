@@ -17,6 +17,9 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
             return next_url
         return reverse("dashboard:home")
 
+    def get_login_redirect_url(self, request):
+        return reverse("dashboard:home")
+
     def get_app(self, request, provider, client_id=None):
         """
         Safely retrieves or provisions the database SocialApp record linked to Site 1.
@@ -24,35 +27,25 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
         try:
             return super().get_app(request, provider, client_id=client_id)
         except Exception:
-            try:
-                site, _ = Site.objects.get_or_create(
-                    id=settings.SITE_ID,
-                    defaults={
-                        "domain": "ai-portfolio-builder-icmv.onrender.com",
-                        "name": "Theme Publisher Platform",
-                    }
-                )
-                prov_config = settings.SOCIALACCOUNT_PROVIDERS.get(provider, {}).get("APP", {})
-                client_id_val = prov_config.get("client_id", f"dummy-{provider}-client-id")
-                secret_val = prov_config.get("secret", f"dummy-{provider}-secret")
+            site, _ = Site.objects.get_or_create(
+                id=settings.SITE_ID,
+                defaults={
+                    "domain": "ai-portfolio-builder-icmv.onrender.com",
+                    "name": "Theme Publisher Platform",
+                }
+            )
+            prov_config = settings.SOCIALACCOUNT_PROVIDERS.get(provider, {}).get("APP", {})
+            client_id_val = prov_config.get("client_id", f"dummy-{provider}-client-id")
+            secret_val = prov_config.get("secret", f"dummy-{provider}-secret")
 
-                app, _ = SocialApp.objects.get_or_create(
-                    provider=provider,
-                    defaults={
-                        "name": provider.title(),
-                        "client_id": client_id_val,
-                        "secret": secret_val,
-                    }
-                )
-                if not app.sites.filter(id=site.id).exists():
-                    app.sites.add(site)
-                return app
-            except Exception:
-                # Ultimate fallback
-                prov_config = settings.SOCIALACCOUNT_PROVIDERS.get(provider, {}).get("APP", {})
-                return SocialApp(
-                    provider=provider,
-                    name=provider.title(),
-                    client_id=prov_config.get("client_id", f"dummy-{provider}-client-id"),
-                    secret=prov_config.get("secret", f"dummy-{provider}-secret"),
-                )
+            app, _ = SocialApp.objects.get_or_create(
+                provider=provider,
+                defaults={
+                    "name": provider.title(),
+                    "client_id": client_id_val,
+                    "secret": secret_val,
+                }
+            )
+            if not app.sites.filter(id=site.id).exists():
+                app.sites.add(site)
+            return app
