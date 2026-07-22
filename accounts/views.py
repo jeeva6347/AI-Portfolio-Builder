@@ -16,7 +16,7 @@ User = get_user_model()
 
 
 class SignupView(FormView):
-    template_name = "accounts/signup.html"
+    template_name = "account/signup.html"
     form_class = EmailSignupForm
     success_url = reverse_lazy("accounts:dashboard_redirect")
 
@@ -28,7 +28,7 @@ class SignupView(FormView):
 
 
 class EmailLoginView(FormView):
-    template_name = "accounts/login.html"
+    template_name = "account/login.html"
     form_class = EmailLoginForm
     success_url = reverse_lazy("accounts:dashboard_redirect")
 
