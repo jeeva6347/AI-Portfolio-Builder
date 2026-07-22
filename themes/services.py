@@ -63,6 +63,18 @@ def _validate_zip(zip_file_obj, max_size: int = MAX_ZIP_SIZE_BYTES):
             )
 
         all_names = [m.filename for m in members if not m.is_dir()]
+        lower_names = [n.lower() for n in all_names]
+
+        # Check for forbidden JS framework files (React, Vue, Angular, Svelte, Next, Nuxt)
+        FORBIDDEN_PATTERNS = {"package.json", "node_modules", ".jsx", ".tsx", ".vue", ".svelte"}
+        for name in lower_names:
+            base_name = os.path.basename(name)
+            ext = os.path.splitext(name)[1]
+            if base_name in FORBIDDEN_PATTERNS or ext in FORBIDDEN_PATTERNS or "node_modules/" in name:
+                raise ThemeUploadError(
+                    f"JS Framework file '{base_name}' detected. Frameworks like React, Vue, Angular, Svelte, or Next.js are not allowed. Theme must be built using HTML5, CSS3, JavaScript, Bootstrap 5, or Tailwind CSS."
+                )
+
         for name in all_names:
             ext = os.path.splitext(name)[1].lower().lstrip(".")
             if ext and ext not in ALLOWED_EXTENSIONS:
@@ -70,7 +82,6 @@ def _validate_zip(zip_file_obj, max_size: int = MAX_ZIP_SIZE_BYTES):
                     f"File type '.{ext}' is not allowed inside the ZIP (found in '{name}')."
                 )
 
-        lower_names = [n.lower() for n in all_names]
         has_index = any(
             n == "index.html" or n.endswith("/index.html")
             for n in lower_names
