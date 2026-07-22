@@ -62,6 +62,7 @@ class Theme(models.Model):
         default=Status.APPROVED,
         db_index=True,
     )
+    rejection_reason = models.TextField(blank=True, default="")
     is_premium = models.BooleanField(default=False)
     price = models.DecimalField(
         max_digits=8,
