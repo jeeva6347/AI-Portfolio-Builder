@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Theme, ThemeCategory, ThemeAsset, ThemeMapping, ThemeMappingField
+from .models import Theme, ThemeCategory, ThemeAsset
 
 
 @admin.register(ThemeCategory)
@@ -23,18 +23,17 @@ class ThemeAssetInline(admin.TabularInline):
 
 @admin.register(Theme)
 class ThemeAdmin(admin.ModelAdmin):
-    list_display = ("name", "category", "status_badge", "is_premium", "price", "downloads", "uploaded_by", "created_at")
-    list_filter = ("status", "is_premium", "category")
+    list_display = ("name", "category", "status_badge", "uploaded_by", "created_at")
+    list_filter = ("status", "category")
     search_fields = ("name", "tags", "description")
     prepopulated_fields = {"slug": ("name",)}
-    readonly_fields = ("downloads", "created_at", "updated_at", "extracted_path", "file_count_display", "total_size_display")
+    readonly_fields = ("created_at", "updated_at", "extracted_path", "file_count_display", "total_size_display")
     inlines = [ThemeAssetInline]
     fieldsets = (
         ("Identity", {"fields": ("name", "slug", "description", "category", "tags", "version")}),
-        ("Pricing", {"fields": ("is_premium", "price")}),
-        ("Status", {"fields": ("status", "rejection_reason", "uploaded_by")}),
+        ("Status", {"fields": ("status", "uploaded_by")}),
         ("Files", {"fields": ("zip_file", "thumbnail", "extracted_path", "file_count_display", "total_size_display")}),
-        ("Stats", {"fields": ("downloads", "created_at", "updated_at")}),
+        ("Timestamps", {"fields": ("created_at", "updated_at")}),
     )
 
     def status_badge(self, obj):
@@ -71,38 +70,3 @@ class ThemeAssetAdmin(admin.ModelAdmin):
     list_filter = ("asset_type", "theme")
     search_fields = ("file_name", "file_path", "theme__name")
     readonly_fields = ("theme", "asset_type", "file_path", "file_name", "file_size", "mime_type")
-
-
-class ThemeMappingFieldInline(admin.TabularInline):
-    model = ThemeMappingField
-    extra = 1
-    fields = ("field_key", "selector", "attribute", "custom_attribute", "order", "is_required")
-
-
-@admin.register(ThemeMapping)
-class ThemeMappingAdmin(admin.ModelAdmin):
-    list_display = ("name", "theme", "version", "is_active", "field_count", "created_by", "created_at")
-    list_filter = ("is_active", "theme")
-    search_fields = ("name", "theme__name")
-    readonly_fields = ("created_at", "updated_at")
-    inlines = [ThemeMappingFieldInline]
-
-    def field_count(self, obj):
-        return obj.fields.count()
-    field_count.short_description = "Fields"
-
-    actions = ["activate_mapping"]
-
-    @admin.action(description="Activate selected mapping")
-    def activate_mapping(self, request, queryset):
-        for mapping in queryset:
-            mapping.activate()
-        self.message_user(request, f"Activated {queryset.count()} mapping(s).")
-
-
-@admin.register(ThemeMappingField)
-class ThemeMappingFieldAdmin(admin.ModelAdmin):
-    list_display = ("field_key", "selector", "attribute", "order", "is_required", "mapping")
-    list_filter = ("attribute", "is_required")
-    search_fields = ("field_key", "selector", "mapping__name")
-

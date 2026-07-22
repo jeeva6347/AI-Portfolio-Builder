@@ -1,1 +1,0 @@
-# Subscriptions Django App Package

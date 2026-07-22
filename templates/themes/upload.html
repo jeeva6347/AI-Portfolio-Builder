@@ -1,0 +1,64 @@
+{% extends "dashboard/layouts/base.html" %}
+
+{% block title %}Upload Theme ZIP | Theme Publisher{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-4">
+    <div class="max-w-2xl mx-auto">
+        <h1 class="h3 font-bold text-gray-900 dark:text-white mb-1">Upload Portfolio Theme ZIP</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Upload a ZIP package containing your `index.html`, `manifest.json`, and static assets (Bootstrap 5, Tailwind CSS, Vanilla JS supported).</p>
+
+        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 p-md-5 shadow-sm">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger rounded-xl text-xs mb-4">
+                    {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="mb-4">
+                    <label class="form-label text-xs font-semibold text-gray-500 uppercase">Theme Name *</label>
+                    {{ form.name }}
+                    {% if form.name.errors %}<div class="text-xs text-rose-500 mt-1">{{ form.name.errors.0 }}</div>{% endif %}
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label text-xs font-semibold text-gray-500 uppercase">Description</label>
+                    {{ form.description }}
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-12 col-sm-6">
+                        <label class="form-label text-xs font-semibold text-gray-500 uppercase">Category</label>
+                        {{ form.category }}
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <label class="form-label text-xs font-semibold text-gray-500 uppercase">Version</label>
+                        {{ form.version }}
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label text-xs font-semibold text-gray-500 uppercase">Tags</label>
+                    {{ form.tags }}
+                </div>
+
+                <div class="mb-4 p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-2xl text-center bg-gray-50/50 dark:bg-gray-900/50">
+                    <i class="bi bi-file-earmark-zip text-4xl text-blue-500 mb-2 d-block"></i>
+                    <label class="form-label font-bold text-gray-900 dark:text-white d-block mb-1">Theme ZIP Archive (.zip) *</label>
+                    <p class="text-xs text-gray-400 mb-3">Must contain an `index.html` at the root or subfolder.</p>
+                    {{ form.zip_file }}
+                    {% if form.zip_file.errors %}<div class="text-xs text-rose-500 mt-2">{{ form.zip_file.errors.0 }}</div>{% endif %}
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{% url 'themes:gallery' %}" class="btn btn-outline-secondary rounded-pill px-4">Cancel</a>
+                    <button type="submit" class="btn btn-primary rounded-pill px-5">Upload & Install Theme</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

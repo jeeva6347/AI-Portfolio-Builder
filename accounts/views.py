@@ -52,13 +52,10 @@ class EmailLoginView(FormView):
 
         login(self.request, user)
 
-        # Remember Me: checked -> session persists for SESSION_COOKIE_AGE
-        # (default 2 weeks, see settings.py). Unchecked -> session ends
-        # when the browser closes.
         if remember_me:
-            self.request.session.set_expiry(None)  # use SESSION_COOKIE_AGE
+            self.request.session.set_expiry(None)
         else:
-            self.request.session.set_expiry(0)  # expire on browser close
+            self.request.session.set_expiry(0)
 
         return super().form_valid(form)
 
@@ -69,52 +66,37 @@ class LogoutView(View):
         messages.info(request, "You have been logged out.")
         return redirect("accounts:login")
 
+    def get(self, request):
+        logout(request)
+        messages.info(request, "You have been logged out.")
+        return redirect("accounts:login")
+
 
 @login_required
 def dashboard_redirect(request):
-    """
-    Routes an authenticated user to the correct dashboard based on role.
-    """
-    user = request.user
-    if user.is_super_admin:
-        return redirect("dashboard:super_admin")
-    elif user.is_platform_admin:
-        return redirect("dashboard:admin")
-    else:
-        return redirect("dashboard:user")
+    """Routes an authenticated user to the dashboard."""
+    return redirect("dashboard:home")
 
 
 class ProfileView(LoginRequiredMixin, UpdateView):
     """Lets a logged-in user update their avatar and GitHub username."""
-
     login_url = reverse_lazy("accounts:login")
-
     model = User
     form_class = ProfileForm
     template_name = "accounts/profile.html"
-    success_url = reverse_lazy("accounts:profile")
+    success_url = reverse_lazy("dashboard:profile")
 
     def get_object(self, queryset=None):
         return self.request.user
 
     def form_valid(self, form):
-        response = super().form_valid(form)
-        from django.core.cache import cache
-        from portfolio.models import Portfolio
-        for portfolio in Portfolio.objects.filter(user=self.request.user):
-            cache.delete(f"portfolio_rendered_html_{portfolio.pk}")
-            cache.delete(f"builder_draft_{portfolio.pk}")
-        messages.success(self.request, "Profile updated.")
-        return response
+        messages.success(self.request, "Profile updated successfully.")
+        return super().form_valid(form)
 
 
 @login_required
 def sessions_view(request):
-    """
-    Session management: lists this user's active sessions and lets them
-    revoke all other sessions (e.g. after a password change or if they
-    suspect unauthorized access).
-    """
+    """Lists user's active sessions and lets them revoke all other sessions."""
     if request.method == "POST" and request.POST.get("action") == "revoke_others":
         current_key = request.session.session_key
         revoked = 0
@@ -142,8 +124,7 @@ def sessions_view(request):
     return render(request, "accounts/sessions.html", {"sessions": active_sessions})
 
 
-# --- Password reset (Django's built-in views, styled with our templates) ---
-
+# Password reset views
 class PasswordResetView(auth_views.PasswordResetView):
     template_name = "accounts/password_reset.html"
     email_template_name = "accounts/password_reset_email.html"

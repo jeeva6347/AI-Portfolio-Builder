@@ -1,0 +1,95 @@
+{% extends "dashboard/layouts/base.html" %}
+
+{% block title %}My Themes Gallery | Theme Publisher{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-4">
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h1 class="h3 font-bold text-gray-900 dark:text-white mb-1">My Themes Gallery</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-0">Browse, edit, preview, and publish your custom HTML5/CSS3/JS/Bootstrap 5/Tailwind CSS portfolio themes.</p>
+        </div>
+        <a href="{% url 'themes:upload' %}" class="btn btn-primary rounded-pill px-4">
+            <i class="bi bi-cloud-upload-fill me-1.5"></i> Upload New Theme ZIP
+        </a>
+    </div>
+
+    <!-- Themes Grid -->
+    <div class="row g-4">
+        {% for theme in themes %}
+        <div class="col-12 col-sm-6 col-lg-4">
+            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden shadow-sm h-100 d-flex flex-column justify-content-between hover:shadow-md transition-all">
+                <div>
+                    <!-- Thumbnail Preview -->
+                    <div class="position-relative bg-gray-100 dark:bg-gray-900" style="height: 200px; overflow: hidden;">
+                        {% if theme.thumbnail %}
+                        <img src="{{ theme.thumbnail.url }}" class="w-100 h-100 object-cover">
+                        {% else %}
+                        <div class="w-100 h-100 d-flex align-items-center justify-content-center text-white font-bold bg-gradient-to-br from-blue-600 to-indigo-700 text-2xl">
+                            {{ theme.name|slice:":2"|upper }}
+                        </div>
+                        {% endif %}
+
+                        <div class="position-absolute top-3 end-3">
+                            <span class="badge bg-emerald-500 text-white rounded-pill text-xxs px-2.5 py-1">
+                                {{ theme.status|upper }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Details -->
+                    <div class="p-4">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <h5 class="font-bold text-gray-900 dark:text-white mb-0 text-base">{{ theme.name }}</h5>
+                            <span class="text-xs text-gray-400">v{{ theme.version }}</span>
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed line-clamp-2">
+                            {{ theme.description|default:"A modern custom portfolio theme layout." }}
+                        </p>
+
+                        <div class="d-flex flex-wrap gap-1 mb-3">
+                            {% for tag in theme.tag_list %}
+                            <span class="badge bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xxs rounded-md px-2 py-0.5">{{ tag }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Actions -->
+                <div class="p-3 border-t border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 d-flex align-items-center justify-content-between gap-2">
+                    <a href="{% url 'themes:preview' theme.pk %}" target="_blank" class="btn btn-xs btn-outline-primary rounded-pill px-3">
+                        <i class="bi bi-eye-fill me-1"></i> Preview
+                    </a>
+                    <a href="{% url 'github:theme_deploy' theme.pk %}" class="btn btn-xs btn-success text-white rounded-pill px-3">
+                        <i class="bi bi-cloud-arrow-up-fill me-1"></i> Publish
+                    </a>
+                    <div class="d-flex gap-1">
+                        <a href="{% url 'themes:edit' theme.pk %}" class="btn btn-xs btn-outline-secondary rounded-circle" title="Edit Theme Details">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <form method="post" action="{% url 'themes:delete' theme.pk %}" class="m-0" onsubmit="return confirm('Are you sure you want to delete this theme?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-xs btn-outline-danger rounded-circle" title="Delete Theme">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <div class="max-w-md mx-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-5 shadow-sm">
+                <i class="bi bi-palette text-5xl text-blue-500 mb-3 d-block"></i>
+                <h4 class="font-bold text-gray-900 dark:text-white mb-2">No Themes Available</h4>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">Upload your first custom portfolio theme ZIP file (HTML5, CSS3, JS, Bootstrap 5, Tailwind CSS) to get started.</p>
+                <a href="{% url 'themes:upload' %}" class="btn btn-primary rounded-pill px-4">
+                    <i class="bi bi-cloud-upload-fill me-1.5"></i> Upload Theme ZIP
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "dashboard/layouts/base.html" %}
+
+{% block title %}Edit Theme | Theme Publisher{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-4">
+    <div class="max-w-2xl mx-auto">
+        <h1 class="h3 font-bold text-gray-900 dark:text-white mb-1">Edit Theme Details</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Update theme title, description, or custom thumbnail image.</p>
+
+        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 p-md-5 shadow-sm">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <div class="mb-4">
+                    <label class="form-label text-xs font-semibold text-gray-500 uppercase">Theme Name *</label>
+                    <input type="text" name="name" value="{{ theme.name }}" class="form-control rounded-lg" required>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label text-xs font-semibold text-gray-500 uppercase">Description</label>
+                    <textarea name="description" class="form-control rounded-lg" rows="4">{{ theme.description }}</textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label text-xs font-semibold text-gray-500 uppercase">Update Thumbnail Image</label>
+                    {% if theme.thumbnail %}
+                    <div class="mb-2 w-32 h-20 rounded-lg overflow-hidden border">
+                        <img src="{{ theme.thumbnail.url }}" class="w-100 h-100 object-cover">
+                    </div>
+                    {% endif %}
+                    <input type="file" name="preview_image" class="form-control rounded-lg" accept="image/*">
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{% url 'themes:gallery' %}" class="btn btn-outline-secondary rounded-pill px-4">Cancel</a>
+                    <button type="submit" class="btn btn-primary rounded-pill px-5">Save Theme Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

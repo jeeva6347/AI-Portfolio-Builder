@@ -7,30 +7,18 @@ User = get_user_model()
 
 class AuthenticationTestCase(TestCase):
     """
-    Unit tests verifying User model roles validation, django superuser properties,
-    and login redirects.
+    Unit tests verifying User model and authentication workflow.
     """
-    def test_create_user_with_roles(self):
-        """Verify that default user role is FREE_USER and roles map correctly."""
+    def test_create_user(self):
         user = User.objects.create_user(
             username="freebie",
             email="freebie@example.com",
             password="pwd"
         )
-        self.assertEqual(user.role, User.Role.FREE_USER)
         self.assertFalse(user.is_staff)
         self.assertFalse(user.is_superuser)
 
-        premium = User.objects.create_user(
-            username="richard",
-            email="rich@example.com",
-            password="pwd",
-            role=User.Role.PREMIUM_USER
-        )
-        self.assertEqual(premium.role, User.Role.PREMIUM_USER)
-
     def test_create_superuser(self):
-        """Verify superuser custom creation settings."""
         admin = User.objects.create_superuser(
             username="chief",
             email="chief@example.com",
@@ -41,16 +29,12 @@ class AuthenticationTestCase(TestCase):
         self.assertTrue(admin.is_superuser)
 
     def test_login_page_renders_successfully(self):
-        """Verify authentication login page loads fine."""
         res = self.client.get(reverse("account_login"))
         self.assertEqual(res.status_code, 200)
-        self.assertContains(res, "Sign In")  # allauth renders "Sign In" not "Log In"
 
-    def test_authenticated_user_redirects_to_dashboard(self):
-        """Verify that logged-in users hitting root are redirected to dashboard."""
-        User.objects.create_user(username="testuser", password="pwd123password")
-        self.client.login(username="testuser", password="pwd123password")
-        
-        # Hitting login redirects to dashboard
-        res = self.client.get(reverse("account_login"))
+    def test_dashboard_redirect(self):
+        user = User.objects.create_user(username="testuser", email="test@example.com", password="pwd")
+        self.client.login(username="testuser", password="pwd")
+        res = self.client.get(reverse("accounts:dashboard_redirect"))
         self.assertEqual(res.status_code, 302)
+        self.assertEqual(res.url, reverse("dashboard:home"))

@@ -1,0 +1,153 @@
+{% extends "dashboard/layouts/base.html" %}
+{% load static %}
+
+{% block title %}Dashboard | Theme Publisher{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-4">
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h1 class="h3 font-bold text-gray-900 dark:text-white">Welcome back, {{ request.user.username }}!</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-0">Upload custom portfolio themes, preview them live, and publish directly to GitHub Pages.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'themes:upload' %}" class="btn btn-primary rounded-pill px-4">
+                <i class="bi bi-cloud-upload-fill me-1.5"></i> Upload Theme
+            </a>
+            <a href="{% url 'themes:gallery' %}" class="btn btn-outline-secondary rounded-pill px-4">
+                <i class="bi bi-palette-fill me-1.5"></i> My Themes
+            </a>
+        </div>
+    </div>
+
+    <!-- Quick Stats Cards -->
+    <div class="row g-4 mb-5">
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 d-flex align-items-center justify-content-between shadow-sm">
+                <div>
+                    <span class="text-xs font-semibold uppercase text-gray-400 tracking-wider">Uploaded Themes</span>
+                    <h2 class="h2 font-bold text-gray-900 dark:text-white mt-1 mb-0">{{ user_themes_count }}</h2>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 d-flex align-items-center justify-content-center text-xl">
+                    <i class="bi bi-palette-fill"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 d-flex align-items-center justify-content-between shadow-sm">
+                <div>
+                    <span class="text-xs font-semibold uppercase text-gray-400 tracking-wider">GitHub Connected</span>
+                    <h2 class="h5 font-bold text-gray-900 dark:text-white mt-2 mb-0">
+                        {% if is_github_connected %}
+                        <span class="text-emerald-600 dark:text-emerald-400"><i class="bi bi-check-circle-fill me-1"></i>{{ github_username }}</span>
+                        {% else %}
+                        <span class="text-gray-400">Not Linked</span>
+                        {% endif %}
+                    </h2>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-300 d-flex align-items-center justify-content-center text-xl">
+                    <i class="bi bi-github"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 d-flex align-items-center justify-content-between shadow-sm">
+                <div>
+                    <span class="text-xs font-semibold uppercase text-gray-400 tracking-wider">Live Deployments</span>
+                    <h2 class="h2 font-bold text-gray-900 dark:text-white mt-1 mb-0">{{ successful_deployments_count }}</h2>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-300 d-flex align-items-center justify-content-center text-xl">
+                    <i class="bi bi-cloud-check-fill"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 d-flex align-items-center justify-content-between shadow-sm">
+                <div>
+                    <span class="text-xs font-semibold uppercase text-gray-400 tracking-wider">Supported Tech</span>
+                    <h2 class="h6 font-bold text-gray-900 dark:text-white mt-2 mb-0">HTML, CSS, JS, Bootstrap, Tailwind</h2>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300 d-flex align-items-center justify-content-center text-xl">
+                    <i class="bi bi-code-slash"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Themes & Deployments Grid -->
+    <div class="row g-4">
+        <!-- Recent Themes -->
+        <div class="col-12 col-lg-8">
+            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 shadow-sm">
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <h5 class="font-bold text-gray-900 dark:text-white mb-0">Recent Uploaded Themes</h5>
+                    <a href="{% url 'themes:gallery' %}" class="text-xs font-semibold text-blue-600 hover:text-blue-700">View All →</a>
+                </div>
+
+                <div class="row g-3">
+                    {% for theme in user_themes|slice:":4" %}
+                    <div class="col-12 col-md-6">
+                        <div class="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-gray-50/50 dark:bg-gray-900/50 p-3 d-flex gap-3 align-items-center">
+                            <div class="w-20 h-16 rounded-lg bg-gray-200 dark:bg-gray-700 overflow-hidden flex-shrink-0 position-relative">
+                                {% if theme.thumbnail %}
+                                <img src="{{ theme.thumbnail.url }}" class="w-100 h-100 object-cover">
+                                {% else %}
+                                <div class="w-100 h-100 d-flex align-items-center justify-content-center text-white font-bold bg-gradient-to-br from-blue-500 to-indigo-600 text-xs">
+                                    {{ theme.name|slice:":2"|upper }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="flex-grow-1 overflow-hidden">
+                                <h6 class="font-bold text-gray-900 dark:text-white mb-0 text-sm truncate">{{ theme.name }}</h6>
+                                <p class="text-xs text-gray-400 mb-2 truncate">{{ theme.description|default:"No description" }}</p>
+                                <div class="d-flex gap-2">
+                                    <a href="{% url 'themes:preview' theme.pk %}" target="_blank" class="btn btn-xs btn-outline-primary rounded-pill">Preview</a>
+                                    <a href="{% url 'github:theme_deploy' theme.pk %}" class="btn btn-xs btn-success rounded-pill text-white">Publish</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12 text-center py-5 text-gray-400">
+                        <i class="bi bi-folder-plus text-4xl mb-2 d-block"></i>
+                        <p class="mb-2">You haven't uploaded any custom themes yet.</p>
+                        <a href="{% url 'themes:upload' %}" class="btn btn-sm btn-primary rounded-pill px-4">Upload Theme ZIP</a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Deployments -->
+        <div class="col-12 col-lg-4">
+            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 shadow-sm h-100">
+                <h5 class="font-bold text-gray-900 dark:text-white mb-4">Recent GitHub Deployments</h5>
+                <div class="d-flex flex-column gap-3">
+                    {% for dep in deployments %}
+                    <div class="border-b border-gray-100 dark:border-gray-700 pb-3">
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                            <span class="font-semibold text-sm text-gray-900 dark:text-white truncate">{{ dep.theme.name }}</span>
+                            <span class="badge {% if dep.status == 'SUCCESS' %}bg-emerald-100 text-emerald-700{% else %}bg-rose-100 text-rose-700{% endif %} rounded-pill text-xxs px-2 py-0.5">
+                                {{ dep.status }}
+                            </span>
+                        </div>
+                        <p class="text-xs text-gray-400 mb-1">Repo: {{ dep.repository_owner }}/{{ dep.repo_name }}</p>
+                        {% if dep.published_url %}
+                        <a href="{{ dep.published_url }}" target="_blank" class="text-xs text-blue-500 hover:underline truncate d-block">
+                            <i class="bi bi-box-arrow-up-right me-1"></i>{{ dep.published_url }}
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-4 text-gray-400">
+                        <i class="bi bi-cloud-arrow-up text-3xl mb-2 d-block"></i>
+                        <p class="text-xs mb-0">No deployments triggered yet.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

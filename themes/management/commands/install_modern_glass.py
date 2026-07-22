@@ -1056,7 +1056,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        from themes.models import Theme, ThemeCategory, ThemeMapping, ThemeMappingField
+        from themes.models import Theme, ThemeCategory
         from themes.services import process_theme_upload
 
         force = options["force"]
@@ -1131,46 +1131,11 @@ class Command(BaseCommand):
         theme.save(update_fields=["status"])
         self.stdout.write(self.style.SUCCESS("Theme status set to APPROVED."))
 
-        # ── Create ThemeMapping ──
-        mapping = ThemeMapping.objects.create(
-            theme=theme,
-            name="v1 Default",
-            version=1,
-            is_active=True,
-            created_by=admin_user,
-            notes="Auto-generated mapping for Modern Glass v1.0.0",
-        )
-        self.stdout.write(f"Created ThemeMapping pk={mapping.pk}")
-
-        # ── Create ThemeMappingField rows ──
-        fields_to_create = []
-        seen_keys = set()
-        for order, (field_key, selector, attr) in enumerate(MAPPING_FIELDS):
-            dedup_key = (field_key, selector)
-            if dedup_key in seen_keys:
-                continue
-            seen_keys.add(dedup_key)
-            fields_to_create.append(
-                ThemeMappingField(
-                    mapping=mapping,
-                    field_key=field_key,
-                    selector=selector,
-                    attribute=attr,
-                    order=order,
-                    is_required=(field_key in {"personal.name", "personal.title", "personal.email"}),
-                )
-            )
-
-        ThemeMappingField.objects.bulk_create(fields_to_create)
-        self.stdout.write(self.style.SUCCESS(f"Created {len(fields_to_create)} ThemeMappingField rows."))
-
         self.stdout.write(self.style.SUCCESS(
             f"\n[DONE] Modern Glass theme installed successfully!\n"
             f"  Theme PK      : {theme.pk}\n"
             f"  Slug          : {theme.slug}\n"
             f"  Status        : {theme.status}\n"
-            f"  Mapping PK    : {mapping.pk}\n"
-            f"  Fields mapped : {len(fields_to_create)}\n"
             f"  Extracted to  : {theme.extracted_path}\n"
             f"  Admin URL     : /admin/themes/theme/{theme.pk}/change/\n"
         ))

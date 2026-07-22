@@ -1,22 +1,8 @@
 """
 Django settings for aiportfoliobuilder project.
-
-Module 1: Authentication (Email + Google + GitHub OAuth, role-based users).
-Per the SRS "Development Rules": secrets are read from environment
-variables only — never hardcoded here.
+Portfolio Theme Upload & Publisher Platform.
 """
-import sentry_sdk
-from decouple import config
-import sentry_sdk
 
-SENTRY_DSN = config("SENTRY_DSN", default="")
-
-if SENTRY_DSN:
-    sentry_sdk.init(
-        dsn=SENTRY_DSN,
-        send_default_pii=True,
-        traces_sample_rate=1.0,
-    )
 from pathlib import Path
 from decouple import config, Csv
 import dj_database_url
@@ -47,25 +33,18 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.sites",
 
-    # Auth / OAuth (Module 1)
+    # Auth / OAuth (Google + GitHub)
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
     "allauth.socialaccount.providers.github",
 
-    # Local apps
+    # Core platform apps
     "accounts",
     "dashboard",
     "themes",
-    "portfolio",
-    "subscriptions",
-    "analytics",
-    "payments",
-    "github_integration",
-    "ai",
-    "domains.apps.DomainsConfig",
-    "organizations.apps.OrganizationsConfig",
+    "github",
     "core.apps.CoreConfig",
 ]
 
@@ -103,7 +82,6 @@ WSGI_APPLICATION = "aiportfoliobuilder.wsgi.application"
 
 # ---------------------------------------------------------------------------
 # Database
-# Supports Neon PostgreSQL if DATABASE_URL is set; falls back to MySQL or SQLite.
 # ---------------------------------------------------------------------------
 DATABASE_URL = config("DATABASE_URL", default="")
 
@@ -143,7 +121,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # ---------------------------------------------------------------------------
-# Custom user model (role-based: Super Admin / Admin / User)
+# Custom User model & allauth
 # ---------------------------------------------------------------------------
 AUTH_USER_MODEL = "accounts.User"
 
@@ -152,7 +130,6 @@ AUTHENTICATION_BACKENDS = [
     "allauth.account.auth_backends.AuthenticationBackend",
 ]
 
-# django-allauth config
 ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
 ACCOUNT_EMAIL_VERIFICATION = config("ACCOUNT_EMAIL_VERIFICATION", default="optional")
@@ -166,12 +143,20 @@ ACCOUNT_DEFAULT_HTTP_PROTOCOL = config("ACCOUNT_DEFAULT_HTTP_PROTOCOL", default=
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
         "SCOPE": ["profile", "email"],
-        "AUTH_PARAMS": {
-            "access_type": "online",
-        }
+        "AUTH_PARAMS": {"access_type": "online"},
+        "APP": {
+            "client_id": config("GOOGLE_CLIENT_ID", default="dummy-google-client-id"),
+            "secret": config("GOOGLE_CLIENT_SECRET", default="dummy-google-secret"),
+            "key": "",
+        },
     },
     "github": {
         "SCOPE": ["user:email", "repo"],
+        "APP": {
+            "client_id": config("GITHUB_CLIENT_ID", default="dummy-github-client-id"),
+            "secret": config("GITHUB_CLIENT_SECRET", default="dummy-github-secret"),
+            "key": "",
+        },
     },
 }
 
@@ -184,13 +169,12 @@ USE_I18N = True
 USE_TZ = True
 
 # ---------------------------------------------------------------------------
-# Static / media
+# Static & Media
 # ---------------------------------------------------------------------------
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-# WhiteNoise storage configuration for compression and caching
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 MEDIA_URL = "media/"
@@ -198,107 +182,39 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# ---------------------------------------------------------------------------
-# Email (used for password reset + email verification)
-# Defaults to console backend so dev workflow needs zero setup; switch to
-# smtp in .env for real delivery.
-# ---------------------------------------------------------------------------
-EMAIL_BACKEND = config(
-    "EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend"
-)
-EMAIL_HOST = config("EMAIL_HOST", default="")
-EMAIL_PORT = config("EMAIL_PORT", default=587, cast=int)
-EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
-EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
-EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=True, cast=bool)
-DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="noreply@aiportfoliobuilder.com")
+EMAIL_BACKEND = config("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
 
-# ---------------------------------------------------------------------------
-# Sessions (Remember Me support)
-# Checked -> session lasts SESSION_COOKIE_AGE (2 weeks). Unchecked -> the
-# login view sets expiry to 0, ending the session at browser close.
-# ---------------------------------------------------------------------------
-SESSION_COOKIE_AGE = config("SESSION_COOKIE_AGE", default=1209600, cast=int)  # 14 days
+SESSION_COOKIE_AGE = config("SESSION_COOKIE_AGE", default=1209600, cast=int)
 SESSION_SAVE_EVERY_REQUEST = True
 
 X_FRAME_OPTIONS = "SAMEORIGIN"
 
 # ---------------------------------------------------------------------------
-# Production Security settings (Active only when DJANGO_DEBUG=False)
-# ---------------------------------------------------------------------------
-if not DEBUG:
-    # SSL and Redirection
-    SECURE_SSL_REDIRECT = config("SECURE_SSL_REDIRECT", default=True, cast=bool)
-    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-    
-    # Cookies Security
-    SESSION_COOKIE_SECURE = config("SESSION_COOKIE_SECURE", default=True, cast=bool)
-    CSRF_COOKIE_SECURE = config("CSRF_COOKIE_SECURE", default=True, cast=bool)
-    
-    # HSTS Settings
-    SECURE_HSTS_SECONDS = config("SECURE_HSTS_SECONDS", default=31536000, cast=int)
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = config("SECURE_HSTS_INCLUDE_SUBDOMAINS", default=True, cast=bool)
-    SECURE_HSTS_PRELOAD = config("SECURE_HSTS_PRELOAD", default=True, cast=bool)
-    
-    # Fallback to robust random secret key if dummy default is found in environment
-    if SECRET_KEY.startswith("django-insecure-") or len(SECRET_KEY) < 30:
-        import secrets
-        SECRET_KEY = secrets.token_urlsafe(50)
-
-# ---------------------------------------------------------------------------
-# Analytics & Monitoring Configurations
-# ---------------------------------------------------------------------------
-GOOGLE_ANALYTICS_ID = config("GOOGLE_ANALYTICS_ID", default="")
-MICROSOFT_CLARITY_ID = config("MICROSOFT_CLARITY_ID", default="")
-
-SENTRY_DSN = config("SENTRY_DSN", default="")
-
-if SENTRY_DSN and not DEBUG:
-    try:
-        import sentry_sdk
-        from sentry_sdk.integrations.django import DjangoIntegration
-        sentry_sdk.init(
-            dsn=SENTRY_DSN,
-            integrations=[DjangoIntegration()],
-            traces_sample_rate=0.2,
-            send_default_pii=True,
-        )
-    except ImportError:
-        pass
-
-
-# ---------------------------------------------------------------------------
-# Jazzmin Admin UI Configuration & SaaS Management Section
+# Jazzmin Admin UI Configuration
 # ---------------------------------------------------------------------------
 JAZZMIN_SETTINGS = {
-    "site_title": "AI Portfolio Builder Admin",
-    "site_header": "AI Portfolio Builder SaaS Admin",
-    "site_brand": "SaaS Admin",
-    "welcome_sign": "Welcome to AI Portfolio Builder Admin",
-    "copyright": "AI Portfolio Builder Team",
-    "search_model": ["subscriptions.SubscriptionPlan", "subscriptions.UserSubscription", "portfolio.Portfolio"],
+    "site_title": "Portfolio Theme Publisher Admin",
+    "site_header": "Theme Publisher Admin",
+    "site_brand": "Theme Publisher",
+    "welcome_sign": "Welcome to Theme Publisher Admin",
+    "copyright": "Portfolio Theme Publisher Team",
+    "search_model": ["accounts.User", "themes.Theme", "github.GitHubDeployment"],
     "topmenu_links": [
         {"name": "Home", "url": "admin:index", "permissions": ["auth.view_user"]},
-        {"name": "SaaS Dashboard", "url": "admin:subscriptions_summary", "permissions": ["subscriptions.view_subscriptionplan"]},
     ],
     "show_sidebar": True,
     "navigation_expanded": True,
     "order_with_respect_to": [
-        "subscriptions",
-        "portfolio",
-        "themes",
         "accounts",
-        "auth",
+        "themes",
+        "github",
     ],
     "icons": {
-        "subscriptions.SubscriptionPlan": "fas fa-tags",
-        "subscriptions.PlanFeature": "fas fa-cogs",
-        "subscriptions.PlanFeatureAccess": "fas fa-key",
-        "subscriptions.UserSubscription": "fas fa-user-check",
-        "subscriptions.FeatureUsage": "fas fa-chart-pie",
-        "portfolio.Portfolio": "fas fa-briefcase",
-        "themes.Theme": "fas fa-paint-brush",
         "accounts.User": "fas fa-users",
+        "themes.Theme": "fas fa-paint-brush",
+        "themes.ThemeCategory": "fas fa-tags",
+        "github.GitHubRepoConfig": "fas fa-cog",
+        "github.GitHubDeployment": "fas fa-cloud-upload-alt",
     },
     "default_icon_parents": "fas fa-folder",
     "default_icon_children": "fas fa-circle",

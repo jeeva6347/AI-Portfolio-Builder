@@ -4,124 +4,50 @@ SIDEBAR_NAVIGATION = [
     {
         "title": "Dashboard",
         "icon": "bi-grid-1x2-fill",
-        "url": "dashboard:super_admin", # Handled dynamically in get_sidebar_navigation
-        "required_role": ["SUPER_ADMIN", "ADMIN", "PREMIUM_USER", "FREE_USER"],
-        "badge": None,
-        "coming_soon": False,
+        "url": "dashboard:home",
         "name": "dashboard",
     },
     {
-        "title": "Themes",
+        "title": "Upload Theme",
+        "icon": "bi-cloud-upload-fill",
+        "url": "themes:upload",
+        "name": "upload_theme",
+    },
+    {
+        "title": "My Themes",
         "icon": "bi-palette-fill",
-        "url": "themes:theme_list_admin",
-        "required_role": ["SUPER_ADMIN", "ADMIN"],
-        "badge": None,
-        "coming_soon": False,
-        "name": "themes",
-    },
-    {
-        "title": "Portfolio",
-        "icon": "bi-briefcase-fill",
-        "url": "portfolio:list",
-        "required_role": ["SUPER_ADMIN", "ADMIN", "PREMIUM_USER", "FREE_USER"],
-        "badge": None,
-        "coming_soon": False,
-        "name": "portfolio",
-    },
-    {
-        "title": "Marketplace",
-        "icon": "bi-shop",
-        "url": "themes:marketplace",
-        "required_role": ["SUPER_ADMIN", "ADMIN", "PREMIUM_USER", "FREE_USER"],
-        "badge": None,
-        "coming_soon": False,
-        "name": "marketplace",
+        "url": "themes:gallery",
+        "name": "my_themes",
     },
     {
         "title": "GitHub",
         "icon": "bi-github",
-        "url": "portfolio:list",
-        "required_role": ["SUPER_ADMIN", "PREMIUM_USER", "FREE_USER"],
-        "badge": None,
-        "coming_soon": False,
+        "url": "github:index",
         "name": "github",
     },
     {
-        "title": "AI Content",
-        "icon": "bi-robot",
-        "url": "ai:import",
-        "required_role": ["SUPER_ADMIN", "PREMIUM_USER", "FREE_USER"],
-        "badge": "Beta",
-        "coming_soon": False,
-        "name": "ai",
-    },
-    {
-        "title": "Analytics",
-        "icon": "bi-graph-up",
-        "url": "analytics:dashboard",
-        "required_role": ["SUPER_ADMIN", "PREMIUM_USER"],
-        "badge": "Premium",
-        "coming_soon": False,
-        "name": "analytics",
-    },
-    {
-        "title": "Billing & Plans",
-        "icon": "bi-credit-card-fill",
-        "url": "payments:billing",
-        "required_role": ["SUPER_ADMIN", "PREMIUM_USER", "FREE_USER"],
-        "badge": None,
-        "coming_soon": False,
-        "name": "payments",
-    },
-    {
-        "title": "Settings",
-        "icon": "bi-gear-fill",
-        "url": "dashboard:settings_placeholder",
-        "required_role": ["SUPER_ADMIN", "ADMIN", "PREMIUM_USER", "FREE_USER"],
-        "badge": None,
-        "coming_soon": True,
-        "name": "settings",
+        "title": "Profile",
+        "icon": "bi-person-circle",
+        "url": "dashboard:profile",
+        "name": "profile",
     },
 ]
 
+
 def get_sidebar_navigation(user):
-    """Filters navigation based on user role."""
+    """Returns sidebar navigation links for authenticated users."""
     if not user.is_authenticated:
         return []
-        
+
     nav = []
     for item in SIDEBAR_NAVIGATION:
-        if user.role in item["required_role"]:
-            # Special case for Dashboard URL routing
-            url_name = item["url"]
-            if item["name"] == "dashboard":
-                if user.is_super_admin:
-                    url_name = "dashboard:super_admin"
-                elif user.is_platform_admin:
-                    url_name = "dashboard:admin"
-                else:
-                    url_name = "dashboard:user"
-            elif item["name"] == "github":
-                from portfolio.models import Portfolio
-                portfolio = Portfolio.objects.filter(user=user).order_by("-updated_at").first()
-                if portfolio:
-                    from django.urls import reverse
-                    url_name = None
-                    try:
-                        resolved_url = reverse("github:dashboard", kwargs={"pk": portfolio.pk})
-                    except Exception:
-                        resolved_url = "#"
-                else:
-                    url_name = "portfolio:list"
-                    
-            if url_name:
-                try:
-                    resolved_url = reverse_lazy(url_name)
-                except Exception:
-                    resolved_url = "#"
+        try:
+            resolved_url = reverse_lazy(item["url"])
+        except Exception:
+            resolved_url = "#"
 
-            nav_item = item.copy()
-            nav_item["url"] = resolved_url
-            nav.append(nav_item)
-            
+        nav_item = item.copy()
+        nav_item["url"] = resolved_url
+        nav.append(nav_item)
+
     return nav

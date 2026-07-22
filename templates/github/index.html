@@ -1,0 +1,106 @@
+{% extends "dashboard/layouts/base.html" %}
+
+{% block title %}GitHub Integration & Deployment | Theme Publisher{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-4">
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h1 class="h3 font-bold text-gray-900 dark:text-white mb-1">GitHub Pages Deployment Center</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-0">Connect your GitHub account and publish portfolio themes to GitHub Pages in one click.</p>
+        </div>
+    </div>
+
+    <!-- Account Connection Card -->
+    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 p-md-5 mb-5 shadow-sm">
+        <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="w-14 h-14 rounded-2xl bg-gray-900 text-white d-flex align-items-center justify-content-center text-3xl flex-shrink-0">
+                    <i class="bi bi-github"></i>
+                </div>
+                <div>
+                    <h5 class="font-bold text-gray-900 dark:text-white mb-1">GitHub Account Status</h5>
+                    {% if is_connected %}
+                    <p class="text-sm text-emerald-600 dark:text-emerald-400 mb-0">
+                        <i class="bi bi-check-circle-fill me-1"></i> Connected as <strong>{{ github_username }}</strong>
+                    </p>
+                    {% else %}
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-0">No GitHub account linked yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div>
+                {% if is_connected %}
+                <form method="post" action="{% url 'github:disconnect' %}" class="m-0">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-danger rounded-pill px-4" onclick="return confirm('Disconnect GitHub account?');">
+                        Disconnect GitHub
+                    </button>
+                </form>
+                {% else %}
+                <a href="{% url 'github:connect' %}" class="btn btn-dark rounded-pill px-4 text-white">
+                    <i class="bi bi-github me-1.5"></i> Connect GitHub Account
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Themes Available for Deployment -->
+    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 shadow-sm">
+        <h5 class="font-bold text-gray-900 dark:text-white mb-4">Select a Theme to Publish</h5>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr class="text-xs uppercase text-gray-400 border-b">
+                        <th>Theme</th>
+                        <th>Category</th>
+                        <th>Status</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for theme in user_themes %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="w-12 h-10 rounded bg-gray-200 dark:bg-gray-700 overflow-hidden flex-shrink-0">
+                                    {% if theme.thumbnail %}
+                                    <img src="{{ theme.thumbnail.url }}" class="w-100 h-100 object-cover">
+                                    {% else %}
+                                    <div class="w-100 h-100 d-flex align-items-center justify-content-center text-white font-bold bg-blue-600 text-xs">
+                                        {{ theme.name|slice:":2"|upper }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <span class="font-bold text-gray-900 dark:text-white text-sm">{{ theme.name }}</span>
+                            </div>
+                        </td>
+                        <td class="text-xs text-gray-500">{{ theme.category.name|default:"Standard" }}</td>
+                        <td>
+                            <span class="badge bg-emerald-100 text-emerald-700 rounded-pill text-xxs px-2.5 py-1">
+                                {{ theme.status|upper }}
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <a href="{% url 'github:theme_deploy' theme.pk %}" class="btn btn-sm btn-success text-white rounded-pill px-4">
+                                <i class="bi bi-cloud-arrow-up-fill me-1"></i> Publish to GitHub
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center py-4 text-gray-400 text-xs">
+                            No themes uploaded yet. <a href="{% url 'themes:upload' %}" class="text-blue-500">Upload a theme ZIP first.</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
