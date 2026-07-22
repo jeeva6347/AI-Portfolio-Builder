@@ -25,10 +25,14 @@ class DashboardHomeView(LoginRequiredMixin, DashboardBaseView):
     Main User Dashboard view: overview of uploaded themes, GitHub status, deployments.
     """
     template_name = "dashboard/home.html"
+    login_url = "/accounts/login/"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user
+
+        if not user or not user.is_authenticated:
+            return context
 
         user_themes = Theme.objects.filter(uploaded_by=user).order_by("-created_at")
         all_themes = Theme.objects.filter(is_active=True)
