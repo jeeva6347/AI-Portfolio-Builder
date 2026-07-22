@@ -43,41 +43,19 @@ class ThemeGalleryView(LoginRequiredMixin, View):
 
 class ThemeUploadView(LoginRequiredMixin, View):
     """
-    Upload Theme ZIP view.
-    Validates theme.zip (manifest.json, index.html, Bootstrap 5/Tailwind/HTML5/CSS3/JS supported).
-    Extracts theme and registers in DB.
+    Theme Upload is managed exclusively via the Admin interface.
     """
-    template_name = "themes/upload.html"
-
     def get(self, request):
-        form = ThemeUploadForm()
-        ctx = _base_context(request)
-        ctx["form"] = form
-        return render(request, self.template_name, ctx)
+        if request.user.is_staff or request.user.is_superuser:
+            return redirect("/admin/themes/theme/add/")
+        messages.info(request, "Theme upload is managed by system administrators via the Admin Panel.")
+        return redirect("themes:gallery")
 
     def post(self, request):
-        form = ThemeUploadForm(request.POST, request.FILES)
-        if not form.is_valid():
-            ctx = _base_context(request)
-            ctx["form"] = form
-            return render(request, self.template_name, ctx)
-
-        theme = form.save(commit=False)
-        theme.uploaded_by = request.user
-        theme.status = Theme.Status.APPROVED
-        theme.save()
-
-        zip_file = request.FILES.get("zip_file")
-        try:
-            process_theme_upload(theme, zip_file)
-            messages.success(request, f"Theme '{theme.name}' uploaded and installed successfully!")
-            return redirect("themes:gallery")
-        except ThemeUploadError as e:
-            theme.delete()
-            messages.error(request, f"Theme upload validation failed: {str(e)}")
-            ctx = _base_context(request)
-            ctx["form"] = form
-            return render(request, self.template_name, ctx)
+        if request.user.is_staff or request.user.is_superuser:
+            return redirect("/admin/themes/theme/add/")
+        messages.info(request, "Theme upload is managed by system administrators via the Admin Panel.")
+        return redirect("themes:gallery")
 
 
 class ThemeEditView(LoginRequiredMixin, View):

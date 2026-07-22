@@ -1,6 +1,8 @@
 from django.contrib import admin
+from django.contrib import messages
 from django.utils.html import format_html
 from .models import Theme, ThemeCategory, ThemeAsset
+from .services import process_theme_upload, ThemeUploadError
 
 
 @admin.register(ThemeCategory)
@@ -35,6 +37,22 @@ class ThemeAdmin(admin.ModelAdmin):
         ("Files", {"fields": ("zip_file", "thumbnail", "extracted_path", "file_count_display", "total_size_display")}),
         ("Timestamps", {"fields": ("created_at", "updated_at")}),
     )
+
+    def save_model(self, request, obj, form, change):
+        if not obj.uploaded_by:
+            obj.uploaded_by = request.user
+        obj.status = Theme.Status.APPROVED
+        super().save_model(request, obj, form, change)
+
+        # Trigger automatic theme zip extraction & validation if zip file provided
+        if obj.zip_file and not obj.extracted_path:
+            try:
+                process_theme_upload(obj, obj.zip_file)
+                messages.success(request, f"Theme '{obj.name}' extracted and registered successfully!")
+            except ThemeUploadError as exc:
+                messages.error(request, f"Theme ZIP validation error: {exc}")
+            except Exception as exc:
+                messages.error(request, f"Failed to extract theme: {exc}")
 
     def status_badge(self, obj):
         colors = {

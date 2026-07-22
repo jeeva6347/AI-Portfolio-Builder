@@ -1,18 +1,20 @@
 {% extends "dashboard/layouts/base.html" %}
 
-{% block title %}My Themes Gallery | Theme Publisher{% endblock %}
+{% block title %}Themes Gallery | Theme Publisher{% endblock %}
 
 {% block content %}
 <div class="container-fluid p-4">
     <!-- Header -->
     <div class="d-flex align-items-center justify-content-between mb-4">
         <div>
-            <h1 class="h3 font-bold text-gray-900 dark:text-white mb-1">My Themes Gallery</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mb-0">Browse, edit, preview, and publish your custom HTML5/CSS3/JS/Bootstrap 5/Tailwind CSS portfolio themes.</p>
+            <h1 class="h3 font-bold text-gray-900 dark:text-white mb-1">Themes Gallery</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-0">Browse, preview live, and publish custom HTML5/CSS3/JS/Bootstrap 5/Tailwind CSS portfolio themes to GitHub Pages.</p>
         </div>
-        <a href="{% url 'themes:upload' %}" class="btn btn-primary rounded-pill px-4">
-            <i class="bi bi-cloud-upload-fill me-1.5"></i> Upload New Theme ZIP
+        {% if request.user.is_staff or request.user.is_superuser %}
+        <a href="/admin/themes/theme/add/" class="btn btn-dark rounded-pill px-4 text-white">
+            <i class="bi bi-shield-lock-fill me-1.5"></i> Upload Theme (Admin Only)
         </a>
+        {% endif %}
     </div>
 
     <!-- Themes Grid -->
@@ -59,11 +61,12 @@
                 <!-- Footer Actions -->
                 <div class="p-3 border-t border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 d-flex align-items-center justify-content-between gap-2">
                     <a href="{% url 'themes:preview' theme.pk %}" target="_blank" class="btn btn-xs btn-outline-primary rounded-pill px-3">
-                        <i class="bi bi-eye-fill me-1"></i> Preview
+                        <i class="bi bi-eye-fill me-1"></i> Preview Live
                     </a>
                     <a href="{% url 'github:theme_deploy' theme.pk %}" class="btn btn-xs btn-success text-white rounded-pill px-3">
-                        <i class="bi bi-cloud-arrow-up-fill me-1"></i> Publish
+                        <i class="bi bi-cloud-arrow-up-fill me-1"></i> Publish to GitHub
                     </a>
+                    {% if request.user.is_staff or request.user.is_superuser %}
                     <div class="d-flex gap-1">
                         <a href="{% url 'themes:edit' theme.pk %}" class="btn btn-xs btn-outline-secondary rounded-circle" title="Edit Theme Details">
                             <i class="bi bi-pencil"></i>
@@ -75,6 +78,7 @@
                             </button>
                         </form>
                     </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -83,10 +87,12 @@
             <div class="max-w-md mx-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-5 shadow-sm">
                 <i class="bi bi-palette text-5xl text-blue-500 mb-3 d-block"></i>
                 <h4 class="font-bold text-gray-900 dark:text-white mb-2">No Themes Available</h4>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">Upload your first custom portfolio theme ZIP file (HTML5, CSS3, JS, Bootstrap 5, Tailwind CSS) to get started.</p>
-                <a href="{% url 'themes:upload' %}" class="btn btn-primary rounded-pill px-4">
-                    <i class="bi bi-cloud-upload-fill me-1.5"></i> Upload Theme ZIP
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">No themes have been uploaded yet. Admin can upload themes via the Admin Panel.</p>
+                {% if request.user.is_staff or request.user.is_superuser %}
+                <a href="/admin/themes/theme/add/" class="btn btn-primary rounded-pill px-4">
+                    <i class="bi bi-shield-lock-fill me-1.5"></i> Upload Theme (Admin Only)
                 </a>
+                {% endif %}
             </div>
         </div>
         {% endfor %}

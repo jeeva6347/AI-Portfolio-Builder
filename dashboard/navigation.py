@@ -8,13 +8,7 @@ SIDEBAR_NAVIGATION = [
         "name": "dashboard",
     },
     {
-        "title": "Upload Theme",
-        "icon": "bi-cloud-upload-fill",
-        "url": "themes:upload",
-        "name": "upload_theme",
-    },
-    {
-        "title": "My Themes",
+        "title": "Themes Gallery",
         "icon": "bi-palette-fill",
         "url": "themes:gallery",
         "name": "my_themes",
