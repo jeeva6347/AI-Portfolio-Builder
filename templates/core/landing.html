@@ -77,7 +77,7 @@
                 {% if user.is_authenticated %}
                 <a href="{% url 'dashboard:home' %}" class="btn btn-primary btn-lg rounded-pill px-5">Open Dashboard</a>
                 {% else %}
-                <a href="{% url 'account_login' %}" class="btn btn-primary btn-lg rounded-pill px-5">Sign In / Register</a>
+                <a href="{% url 'accounts:login' %}" class="btn btn-primary btn-lg rounded-pill px-5">Sign In / Register</a>
                 <a href="{% provider_login_url 'google' %}" class="btn btn-outline-danger btn-lg rounded-pill px-4">
                     <i class="bi bi-google me-1.5"></i> Google Sign In
                 </a>

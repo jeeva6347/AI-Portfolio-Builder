@@ -3,6 +3,7 @@ from django.urls import path, include, re_path
 from django.conf import settings
 from django.views.static import serve
 
+from accounts.views import EmailLoginView, SignupView, LogoutView
 from core.views import LandingPageView
 
 urlpatterns = [
@@ -11,6 +12,12 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("accounts/", include("accounts.urls")),
     path("accounts/social/", include("allauth.urls")),
+
+    # Allauth compatibility URL aliases
+    path("accounts/login/compat/", EmailLoginView.as_view(), name="account_login"),
+    path("accounts/signup/compat/", SignupView.as_view(), name="account_signup"),
+    path("accounts/logout/compat/", LogoutView.as_view(), name="account_logout"),
+
     path("dashboard/", include("dashboard.urls")),
     path("themes/", include("themes.urls")),
     path("github/", include("github.urls")),
