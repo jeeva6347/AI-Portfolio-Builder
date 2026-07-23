@@ -20,6 +20,10 @@ CSRF_FAILURE_VIEW = "dashboard.views.custom_csrf_failure_view"
 
 SITE_ID = 1
 
+# Reverse Proxy & SSL Configuration for Render
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
+
 # ---------------------------------------------------------------------------
 # Applications
 # ---------------------------------------------------------------------------
@@ -58,6 +62,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    "core.middleware.ExceptionLoggingMiddleware",
 ]
 
 ROOT_URLCONF = "aiportfoliobuilder.urls"
@@ -138,6 +143,8 @@ LOGOUT_REDIRECT_URL = "accounts:login"
 SOCIALACCOUNT_LOGIN_ON_GET = True
 SOCIALACCOUNT_ADAPTER = "accounts.adapter.CustomSocialAccountAdapter"
 SOCIALACCOUNT_STORE_TOKENS = True
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = config("ACCOUNT_DEFAULT_HTTP_PROTOCOL", default="https" if not DEBUG else "http")
 
 SOCIALACCOUNT_PROVIDERS = {
