@@ -1,5 +1,12 @@
 document.addEventListener('DOMContentLoaded', function () {
 
+    // ── 0. One-time reset: clear old broken sidebarCollapsed value ──
+    // Previous code used inline styles. Reset to default (expanded) on first load.
+    if (localStorage.getItem('sidebarCollapsedV2') === null) {
+        localStorage.removeItem('sidebarCollapsed');
+        localStorage.setItem('sidebarCollapsedV2', 'done');
+    }
+
     // ── 1. Theme Toggle ──────────────────────────────────────────
     const themeToggleBtn = document.getElementById('themeToggleBtn');
     if (themeToggleBtn) {

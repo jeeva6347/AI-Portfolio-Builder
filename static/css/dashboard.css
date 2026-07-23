@@ -75,9 +75,6 @@ body {
   border-right: 1px solid var(--border-color) !important;
   box-shadow: 4px 0 24px rgba(0,0,0,0.06) !important;
   transition: width var(--transition-slow) !important;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
 }
 
 html.dark #sidebarOffcanvas {
