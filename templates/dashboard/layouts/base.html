@@ -88,48 +88,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{% static 'js/charts.js' %}"></script>
     
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            // Sync theme toggle icon
-            const toggleBtn = document.getElementById('themeToggleBtn');
-            function syncThemeIcon() {
-                const dark = document.documentElement.classList.contains('dark');
-                const lightIcon = toggleBtn ? toggleBtn.querySelector('.light-icon') : null;
-                const darkIcon  = toggleBtn ? toggleBtn.querySelector('.dark-icon')  : null;
-                if (!toggleBtn) return;
-                if (dark) {
-                    if (lightIcon) lightIcon.style.display = 'none';
-                    if (darkIcon)  darkIcon.style.display  = '';
-                } else {
-                    if (lightIcon) lightIcon.style.display = '';
-                    if (darkIcon)  darkIcon.style.display  = 'none';
-                }
-            }
-            syncThemeIcon();
-            if (toggleBtn) {
-                toggleBtn.addEventListener('click', function() {
-                    document.documentElement.classList.toggle('dark');
-                    localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
-                    syncThemeIcon();
-                });
-            }
-
-            // Prevent double-submit
-            document.querySelectorAll("form").forEach(form => {
-                form.addEventListener("submit", function() {
-                    const btn = form.querySelector("button[type='submit']");
-                    if (btn && !btn.classList.contains("no-disable")) {
-                        if (form.checkValidity ? form.checkValidity() : true) {
-                            setTimeout(() => {
-                                btn.disabled = true;
-                                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1.5" role="status" aria-hidden="true"></span> Saving...';
-                            }, 50);
-                        }
-                    }
-                });
-            });
-        });
-    </script>
+    <!-- All JS logic handled in static/js/dashboard.js -->
     
     {% block extra_js %}{% endblock %}
 </body>

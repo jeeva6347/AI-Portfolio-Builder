@@ -78,20 +78,4 @@
     </div>
 </div>
 
-<script>
-// Active nav detection using path prefix matching
-(function() {
-    const path = window.location.pathname;
-    const links = document.querySelectorAll('.sidebar-nav-link');
-    links.forEach(link => {
-        const href = link.getAttribute('href');
-        if (!href || href === '#') return;
-        // Remove active first
-        link.classList.remove('active');
-        // Exact match or prefix match (e.g. /themes/ matches /themes/5/edit/)
-        if (path === href || (href !== '/' && path.startsWith(href))) {
-            link.classList.add('active');
-        }
-    });
-})();
-</script>
+
