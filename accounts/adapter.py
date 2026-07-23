@@ -62,13 +62,19 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
             site, _ = Site.objects.get_or_create(
                 id=settings.SITE_ID,
                 defaults={
-                    "domain": "ai-portfolio-builder-icmv.onrender.com",
-                    "name": "Theme Publisher Platform",
+                    "domain": settings.SITE_DOMAIN,
+                    "name": settings.SITE_NAME,
                 }
             )
             prov_config = settings.SOCIALACCOUNT_PROVIDERS.get(provider, {}).get("APP", {})
-            client_id_val = prov_config.get("client_id", f"dummy-{provider}-client-id")
-            secret_val = prov_config.get("secret", f"dummy-{provider}-secret")
+            client_id_val = prov_config.get("client_id", "")
+            secret_val = prov_config.get("secret", "")
+
+            if not client_id_val or not secret_val:
+                raise RuntimeError(
+                    f"{provider.title()} OAuth is not configured. Set its client ID and secret "
+                    "in the production environment."
+                ) from exc
 
             app, _ = SocialApp.objects.get_or_create(
                 provider=provider,

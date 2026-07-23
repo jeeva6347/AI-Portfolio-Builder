@@ -11,23 +11,29 @@ class Command(BaseCommand):
         # 1. Ensure Site object exists for site_id=1
         try:
             site = Site.objects.get(id=settings.SITE_ID)
-            site.domain = "ai-portfolio-builder-icmv.onrender.com"
-            site.name = "Theme Publisher Platform"
+            site.domain = settings.SITE_DOMAIN
+            site.name = settings.SITE_NAME
             site.save()
             self.stdout.write(self.style.SUCCESS(f"Updated Site domain: {site.domain}"))
         except Site.DoesNotExist:
             site = Site.objects.create(
                 id=settings.SITE_ID,
-                domain="ai-portfolio-builder-icmv.onrender.com",
-                name="Theme Publisher Platform"
+                domain=settings.SITE_DOMAIN,
+                name=settings.SITE_NAME,
             )
             self.stdout.write(self.style.SUCCESS(f"Created Site domain: {site.domain}"))
 
         # 2. Ensure SocialApp records exist for Google and GitHub
         for provider in ["google", "github"]:
             prov_config = settings.SOCIALACCOUNT_PROVIDERS.get(provider, {}).get("APP", {})
-            client_id = prov_config.get("client_id", f"dummy-{provider}-client-id")
-            secret = prov_config.get("secret", f"dummy-{provider}-secret")
+            client_id = prov_config.get("client_id", "")
+            secret = prov_config.get("secret", "")
+
+            if not client_id or not secret:
+                self.stdout.write(self.style.WARNING(
+                    f"Skipping {provider.title()} SocialApp: credentials are not configured."
+                ))
+                continue
 
             app, created = SocialApp.objects.get_or_create(
                 provider=provider,

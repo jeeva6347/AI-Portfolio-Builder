@@ -19,6 +19,8 @@ CSRF_TRUSTED_ORIGINS = config("CSRF_TRUSTED_ORIGINS", default="http://127.0.0.1:
 CSRF_FAILURE_VIEW = "dashboard.views.custom_csrf_failure_view"
 
 SITE_ID = 1
+SITE_DOMAIN = config("SITE_DOMAIN", default="ai-portfolio-builder-icmv.onrender.com")
+SITE_NAME = config("SITE_NAME", default="AI Portfolio Builder")
 
 # Reverse Proxy & SSL Configuration for Render
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
@@ -152,16 +154,30 @@ SOCIALACCOUNT_PROVIDERS = {
         "SCOPE": ["profile", "email"],
         "AUTH_PARAMS": {"access_type": "online"},
         "APP": {
-            "client_id": config("GOOGLE_CLIENT_ID", default="dummy-google-client-id"),
-            "secret": config("GOOGLE_CLIENT_SECRET", default="dummy-google-secret"),
+            # GOOGLE_OAUTH_* is the documented/deployment variable name.  Keep
+            # GOOGLE_* as a backwards-compatible fallback for existing setups.
+            "client_id": config(
+                "GOOGLE_OAUTH_CLIENT_ID",
+                default=config("GOOGLE_CLIENT_ID", default=""),
+            ),
+            "secret": config(
+                "GOOGLE_OAUTH_CLIENT_SECRET",
+                default=config("GOOGLE_CLIENT_SECRET", default=""),
+            ),
             "key": "",
         },
     },
     "github": {
         "SCOPE": ["user:email", "repo"],
         "APP": {
-            "client_id": config("GITHUB_CLIENT_ID", default="dummy-github-client-id"),
-            "secret": config("GITHUB_CLIENT_SECRET", default="dummy-github-secret"),
+            "client_id": config(
+                "GITHUB_OAUTH_CLIENT_ID",
+                default=config("GITHUB_CLIENT_ID", default=""),
+            ),
+            "secret": config(
+                "GITHUB_OAUTH_CLIENT_SECRET",
+                default=config("GITHUB_CLIENT_SECRET", default=""),
+            ),
             "key": "",
         },
     },
