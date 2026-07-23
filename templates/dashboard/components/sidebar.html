@@ -2,32 +2,35 @@
 <div class="offcanvas-lg offcanvas-start" tabindex="-1" id="sidebarOffcanvas" aria-labelledby="sidebarOffcanvasLabel">
 
     <!-- Sidebar Header / Brand -->
-    <div class="offcanvas-header border-bottom px-4 py-3 d-flex align-items-center justify-content-between" style="border-color: var(--border-color) !important; min-height: var(--navbar-h);">
+    <div class="offcanvas-header px-4 py-3 d-flex align-items-center justify-content-between sidebar-header" style="min-height: var(--navbar-h);">
         <a href="{% url 'accounts:dashboard_redirect' %}" class="text-decoration-none d-flex align-items-center gap-2 overflow-hidden">
             <div class="sidebar-brand-icon flex-shrink-0">
                 <i class="bi bi-box-fill"></i>
             </div>
             <div class="sidebar-text overflow-hidden">
                 <span class="sidebar-brand-name d-block">AI Portfolio</span>
-                <span style="font-size:10px; color: var(--text-muted); font-weight:500; line-height:1;">Builder</span>
+                <span class="sidebar-brand-sub">Builder</span>
             </div>
         </a>
         <button type="button" class="btn-close d-lg-none" data-bs-dismiss="offcanvas" data-bs-target="#sidebarOffcanvas" aria-label="Close"></button>
     </div>
 
     <!-- Nav Body -->
-    <div class="offcanvas-body p-3 d-flex flex-column overflow-y-auto overflow-x-hidden" style="gap: 4px;">
+    <div class="offcanvas-body p-3 d-flex flex-column overflow-y-auto overflow-x-hidden sidebar-body">
 
         <p class="sidebar-section-label sidebar-text">Main Menu</p>
 
         <ul class="nav flex-column gap-1 mb-auto" style="list-style:none; padding:0; margin:0;">
             {% for item in sidebar_nav %}
-            <li>
+            {% with is_active=request.path|slice:":"|add:"" %}
+            <li class="sidebar-nav-item" data-bs-toggle="tooltip" data-bs-placement="right" title="{{ item.title }}">
                 <a href="{{ item.url }}"
-                   class="sidebar-nav-link {% if request.path == item.url %}active{% endif %}"
-                   title="{{ item.title }}">
-                    <i class="bi {{ item.icon }} sidebar-nav-icon"></i>
-                    <span class="sidebar-text flex-grow-1 text-nowrap">{{ item.title }}</span>
+                   class="sidebar-nav-link {% if request.path == item.url or request.path|slice:'0:'|add:'' and request.path|truncatechars:100 and item.url in request.path %}active{% endif %}"
+                   id="nav-{{ item.name }}">
+                    <span class="sidebar-nav-icon-wrap">
+                        <i class="bi {{ item.icon }} sidebar-nav-icon"></i>
+                    </span>
+                    <span class="sidebar-text flex-grow-1 text-nowrap sidebar-nav-label">{{ item.title }}</span>
                     {% if item.coming_soon %}
                     <span class="sidebar-badge sidebar-badge-soon sidebar-text">Soon</span>
                     {% elif item.badge %}
@@ -36,16 +39,21 @@
                     {% if item.premium %}
                     <span class="sidebar-badge sidebar-badge-premium sidebar-text">Pro</span>
                     {% endif %}
+                    <span class="sidebar-active-dot"></span>
                 </a>
             </li>
+            {% endwith %}
             {% endfor %}
         </ul>
 
-        <!-- Bottom: collapse toggle + user card -->
-        <div class="mt-auto pt-3" style="border-top: 1px solid var(--border-color);">
+        <!-- Divider -->
+        <div class="sidebar-divider sidebar-text"></div>
+
+        <!-- Bottom section: user card + collapse -->
+        <div class="sidebar-bottom">
 
             <!-- User card -->
-            <div class="sidebar-user-card sidebar-text" onclick="window.location='{% url 'accounts:profile' %}'">
+            <a href="{% url 'accounts:profile' %}" class="sidebar-user-card text-decoration-none" id="sidebarUserCard">
                 <div class="sidebar-avatar">
                     {% if user.avatar %}
                         <img src="{{ user.avatar.url }}" alt="avatar" style="width:100%;height:100%;border-radius:10px;object-fit:cover;">
@@ -54,19 +62,36 @@
                     {% endif %}
                 </div>
                 <div class="overflow-hidden flex-grow-1 sidebar-text">
-                    <div style="font-size:13px;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ user.username }}</div>
-                    <div style="font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ user.email }}</div>
+                    <div class="sidebar-user-name">{{ user.username }}</div>
+                    <div class="sidebar-user-email">{{ user.email }}</div>
                 </div>
-                <i class="bi bi-chevron-right sidebar-text" style="font-size:12px;color:var(--text-muted);"></i>
-            </div>
+                <i class="bi bi-chevron-right sidebar-text sidebar-user-arrow"></i>
+            </a>
 
             <!-- Collapse toggle (desktop only) -->
             <button id="sidebarToggleBtn"
-                    class="d-none d-lg-flex mt-2 w-100 align-items-center justify-content-center gap-2 sidebar-nav-link"
-                    style="background:none;border:none;cursor:pointer;color:var(--text-muted);">
-                <i class="bi bi-chevron-bar-left sidebar-nav-icon transition-transform duration-300" id="sidebarToggleIcon"></i>
-                <span class="sidebar-text" style="font-size:12px;font-weight:600;">Collapse</span>
+                    class="d-none d-lg-flex mt-2 w-100 align-items-center justify-content-center gap-2 sidebar-collapse-btn">
+                <i class="bi bi-chevron-bar-left sidebar-nav-icon" id="sidebarToggleIcon"></i>
+                <span class="sidebar-text sidebar-collapse-label">Collapse</span>
             </button>
         </div>
     </div>
 </div>
+
+<script>
+// Active nav detection using path prefix matching
+(function() {
+    const path = window.location.pathname;
+    const links = document.querySelectorAll('.sidebar-nav-link');
+    links.forEach(link => {
+        const href = link.getAttribute('href');
+        if (!href || href === '#') return;
+        // Remove active first
+        link.classList.remove('active');
+        // Exact match or prefix match (e.g. /themes/ matches /themes/5/edit/)
+        if (path === href || (href !== '/' && path.startsWith(href))) {
+            link.classList.add('active');
+        }
+    });
+})();
+</script>
