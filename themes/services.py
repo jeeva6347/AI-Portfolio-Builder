@@ -15,7 +15,8 @@ MAX_EXTRACTED_SIZE_BYTES = 100 * 1024 * 1024   # 100 MB total extracted
 MAX_FILE_COUNT = 500                            # prevent zip-bombs
 
 ALLOWED_EXTENSIONS = {
-    "html", "htm", "css", "js", "mjs", "json", "xml", "txt", "md",
+    "html", "htm", "css", "js", "mjs", "jsx", "ts", "tsx", "vue", "svelte",
+    "json", "xml", "txt", "md",
     "jpg", "jpeg", "png", "gif", "svg", "webp", "ico", "avif", "bmp",
     "woff", "woff2", "ttf", "eot", "otf", "map",
 }
@@ -64,16 +65,6 @@ def _validate_zip(zip_file_obj, max_size: int = MAX_ZIP_SIZE_BYTES):
 
         all_names = [m.filename for m in members if not m.is_dir()]
         lower_names = [n.lower() for n in all_names]
-
-        # Check for forbidden JS framework files (React, Vue, Angular, Svelte, Next, Nuxt)
-        FORBIDDEN_PATTERNS = {"package.json", "node_modules", ".jsx", ".tsx", ".vue", ".svelte"}
-        for name in lower_names:
-            base_name = os.path.basename(name)
-            ext = os.path.splitext(name)[1]
-            if base_name in FORBIDDEN_PATTERNS or ext in FORBIDDEN_PATTERNS or "node_modules/" in name:
-                raise ThemeUploadError(
-                    f"JS Framework file '{base_name}' detected. Frameworks like React, Vue, Angular, Svelte, or Next.js are not allowed. Theme must be built using HTML5, CSS3, JavaScript, Bootstrap 5, or Tailwind CSS."
-                )
 
         for name in all_names:
             ext = os.path.splitext(name)[1].lower().lstrip(".")
