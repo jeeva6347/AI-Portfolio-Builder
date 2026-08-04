@@ -10,11 +10,6 @@
             <h1 class="h3 font-bold text-gray-900 dark:text-white mb-1">Themes Gallery</h1>
             <p class="text-sm text-gray-500 dark:text-gray-400 mb-0">Browse, edit & customize portfolio themes, preview them live, and publish directly to GitHub Pages.</p>
         </div>
-        {% if request.user.is_staff or request.user.is_superuser %}
-        <a href="/admin/themes/theme/add/" class="btn btn-dark rounded-pill px-4 text-white font-semibold" target="_blank">
-            <i class="bi bi-shield-lock-fill me-1.5"></i> Upload Theme (Admin)
-        </a>
-        {% endif %}
     </div>
 
     <!-- Themes Grid -->
@@ -96,12 +91,7 @@
             <div class="max-w-md mx-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-5 shadow-sm">
                 <i class="bi bi-palette text-5xl text-blue-500 mb-3 d-block"></i>
                 <h4 class="font-bold text-gray-900 dark:text-white mb-2">No Themes Available</h4>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">No themes have been added yet. Please contact the administrator to add portfolio themes.</p>
-                {% if request.user.is_staff or request.user.is_superuser %}
-                <a href="/admin/themes/theme/add/" class="btn btn-primary rounded-pill px-4" target="_blank">
-                    <i class="bi bi-shield-lock-fill me-1.5"></i> Upload Theme (Admin)
-                </a>
-                {% endif %}
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-0">No themes have been added yet. Please contact the administrator to add portfolio themes.</p>
             </div>
         </div>
         {% endfor %}
