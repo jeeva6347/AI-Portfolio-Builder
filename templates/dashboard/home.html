@@ -15,11 +15,9 @@
             <a href="{% url 'themes:gallery' %}" class="btn btn-primary rounded-pill px-4">
                 <i class="bi bi-palette-fill me-1.5"></i> Browse Themes Gallery
             </a>
-            {% if request.user.is_staff or request.user.is_superuser %}
-            <a href="/admin/themes/theme/add/" class="btn btn-dark rounded-pill px-4 text-white">
-                <i class="bi bi-shield-lock-fill me-1.5"></i> Upload Theme (Admin)
+            <a href="{% url 'themes:upload' %}" class="btn btn-dark rounded-pill px-4 text-white">
+                <i class="bi bi-cloud-arrow-up-fill me-1.5"></i> Upload Theme ZIP
             </a>
-            {% endif %}
         </div>
     </div>
 
@@ -114,9 +112,7 @@
                     <div class="col-12 text-center py-5 text-gray-400">
                         <i class="bi bi-palette text-4xl mb-2 d-block"></i>
                         <p class="mb-2">No themes installed yet.</p>
-                        {% if request.user.is_staff or request.user.is_superuser %}
-                        <a href="/admin/themes/theme/add/" class="btn btn-sm btn-primary rounded-pill px-4">Upload Theme in Admin</a>
-                        {% endif %}
+                        <a href="{% url 'themes:upload' %}" class="btn btn-sm btn-primary rounded-pill px-4">Upload Theme ZIP</a>
                     </div>
                     {% endfor %}
                 </div>
