@@ -43,43 +43,20 @@ class ThemeGalleryView(LoginRequiredMixin, View):
 
 class ThemeUploadView(LoginRequiredMixin, View):
     """
-    In-App Theme Upload view.
-    Upload and extract HTML5/CSS3/JS/Bootstrap/Tailwind theme ZIP packages directly in the web app.
+    Theme Upload is managed exclusively via the Django Admin interface.
+    Only staff/superusers can upload themes. Regular users are blocked.
     """
-    template_name = "themes/upload.html"
-
     def get(self, request):
-        form = ThemeUploadForm()
-        ctx = _base_context(request)
-        ctx["form"] = form
-        return render(request, self.template_name, ctx)
+        if request.user.is_staff or request.user.is_superuser:
+            return redirect("/admin/themes/theme/add/")
+        messages.error(request, "Theme upload is restricted to administrators only.")
+        return redirect("themes:gallery")
 
     def post(self, request):
-        form = ThemeUploadForm(request.POST, request.FILES)
-        if form.is_valid():
-            theme = form.save(commit=False)
-            theme.uploaded_by = request.user
-            theme.status = Theme.Status.APPROVED
-            theme.save()
-
-            zip_file = form.cleaned_data.get("zip_file")
-            if zip_file:
-                try:
-                    process_theme_upload(theme, zip_file)
-                    messages.success(request, f"Theme '{theme.name}' uploaded and installed successfully!")
-                    return redirect("themes:gallery")
-                except ThemeUploadError as e:
-                    theme.delete()
-                    messages.error(request, f"Theme upload failed: {str(e)}")
-                except Exception as e:
-                    theme.delete()
-                    messages.error(request, f"An unexpected error occurred during theme extraction: {str(e)}")
-        else:
-            messages.error(request, "Please fix the errors in the form below.")
-
-        ctx = _base_context(request)
-        ctx["form"] = form
-        return render(request, self.template_name, ctx)
+        if request.user.is_staff or request.user.is_superuser:
+            return redirect("/admin/themes/theme/add/")
+        messages.error(request, "Theme upload is restricted to administrators only.")
+        return redirect("themes:gallery")
 
 
 class ThemeEditView(LoginRequiredMixin, View):
