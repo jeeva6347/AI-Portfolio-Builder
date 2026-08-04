@@ -8,7 +8,7 @@
     <div class="d-flex align-items-center justify-content-between mb-4">
         <div>
             <h1 class="h3 font-bold text-gray-900 dark:text-white mb-1">GitHub Pages Deployment Center</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mb-0">Connect your GitHub account and publish portfolio themes to GitHub Pages in one click.</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-0">Connect your GitHub account, customize theme details, and publish portfolio themes to GitHub Pages in one click.</p>
         </div>
     </div>
 
@@ -50,7 +50,7 @@
 
     <!-- Themes Available for Deployment -->
     <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 shadow-sm">
-        <h5 class="font-bold text-gray-900 dark:text-white mb-4">Select a Theme to Publish</h5>
+        <h5 class="font-bold text-gray-900 dark:text-white mb-4">Select a Theme to Edit & Publish</h5>
 
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
@@ -59,7 +59,7 @@
                         <th>Theme</th>
                         <th>Category</th>
                         <th>Status</th>
-                        <th class="text-end">Action</th>
+                        <th class="text-end">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -67,7 +67,7 @@
                     <tr>
                         <td>
                             <div class="d-flex align-items-center gap-3">
-                                <div class="w-12 h-10 rounded bg-gray-200 dark:bg-gray-700 overflow-hidden flex-shrink-0">
+                                <a href="{% url 'themes:edit' theme.pk %}" class="w-12 h-10 rounded bg-gray-200 dark:bg-gray-700 overflow-hidden flex-shrink-0 d-block">
                                     {% if theme.thumbnail %}
                                     <img src="{{ theme.thumbnail.url }}" class="w-100 h-100 object-cover">
                                     {% else %}
@@ -75,8 +75,13 @@
                                         {{ theme.name|slice:":2"|upper }}
                                     </div>
                                     {% endif %}
+                                </a>
+                                <div>
+                                    <a href="{% url 'themes:edit' theme.pk %}" class="font-bold text-gray-900 dark:text-white text-sm hover:text-blue-600 no-underline d-block">
+                                        {{ theme.name }}
+                                    </a>
+                                    <span class="text-xxs text-gray-400">v{{ theme.version }}</span>
                                 </div>
-                                <span class="font-bold text-gray-900 dark:text-white text-sm">{{ theme.name }}</span>
                             </div>
                         </td>
                         <td class="text-xs text-gray-500">{{ theme.category.name|default:"Standard" }}</td>
@@ -86,15 +91,20 @@
                             </span>
                         </td>
                         <td class="text-end">
-                            <a href="{% url 'github:theme_deploy' theme.pk %}" class="btn btn-sm btn-success text-white rounded-pill px-4">
-                                <i class="bi bi-cloud-arrow-up-fill me-1"></i> Publish to GitHub
-                            </a>
+                            <div class="d-flex justify-content-end gap-2">
+                                <a href="{% url 'themes:edit' theme.pk %}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                    <i class="bi bi-pencil-square me-1"></i> Edit Details
+                                </a>
+                                <a href="{% url 'github:theme_deploy' theme.pk %}" class="btn btn-sm btn-success text-white rounded-pill px-4">
+                                    <i class="bi bi-cloud-arrow-up-fill me-1"></i> Publish to GitHub
+                                </a>
+                            </div>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
                         <td colspan="4" class="text-center py-4 text-gray-400 text-xs">
-                            No themes uploaded yet. <a href="{% url 'themes:upload' %}" class="text-blue-500">Upload a theme ZIP first.</a>
+                            No themes available. <a href="{% url 'themes:gallery' %}" class="text-blue-500">Browse Themes Gallery</a>
                         </td>
                     </tr>
                     {% endfor %}

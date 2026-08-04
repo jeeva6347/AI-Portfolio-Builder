@@ -53,14 +53,16 @@ class GitHubIndexView(LoginRequiredMixin, View):
         connected = is_github_connected(request.user)
         github_user = get_github_username(request.user) if connected else ""
 
-        user_themes = Theme.objects.filter(uploaded_by=request.user)
+        all_themes = Theme.objects.filter(is_active=True).order_by("-created_at")
+        user_themes = Theme.objects.filter(uploaded_by=request.user).order_by("-created_at")
+        display_themes = user_themes if user_themes.exists() else all_themes
         deployments = GitHubDeployment.objects.filter(user=request.user)
 
         ctx = _base_context(request)
         ctx.update({
             "is_connected": connected,
             "github_username": github_user,
-            "user_themes": user_themes,
+            "user_themes": display_themes,
             "deployments": deployments,
             "latest_deployment": deployments.first(),
         })
