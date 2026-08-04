@@ -22,7 +22,7 @@ def _base_context(request):
 class ThemeGalleryView(LoginRequiredMixin, View):
     """
     My Themes Gallery view.
-    Displays uploaded themes, preview option, edit, delete, and publish buttons.
+    Displays available portfolio themes, preview options, customization/edit, and publish buttons.
     """
     template_name = "themes/gallery.html"
 
@@ -60,40 +60,44 @@ class ThemeUploadView(LoginRequiredMixin, View):
 
 class ThemeEditView(LoginRequiredMixin, View):
     """
-    Edit Theme details (Name, Description, Thumbnail/Preview Image).
+    Edit and Customize Theme details (Name, Description, Author, Font Family, Custom CSS, Thumbnail).
+    Allows all authenticated users to customize themes.
     """
     template_name = "themes/edit.html"
 
     def get(self, request, pk):
         theme = get_object_or_404(Theme, pk=pk)
-        if theme.uploaded_by and theme.uploaded_by != request.user and not request.user.is_staff:
-            messages.error(request, "Permission denied.")
-            return redirect("themes:gallery")
-
         ctx = _base_context(request)
         ctx["theme"] = theme
         return render(request, self.template_name, ctx)
 
     def post(self, request, pk):
         theme = get_object_or_404(Theme, pk=pk)
-        if theme.uploaded_by and theme.uploaded_by != request.user and not request.user.is_staff:
-            messages.error(request, "Permission denied.")
-            return redirect("themes:gallery")
 
         name = request.POST.get("name", "").strip()
         description = request.POST.get("description", "").strip()
+        author = request.POST.get("author", "").strip()
+        font_family = request.POST.get("font_family", "").strip()
+        custom_css = request.POST.get("custom_css", "").strip()
         preview_image = request.FILES.get("preview_image")
 
         if name:
             theme.name = name
         if description:
             theme.description = description
+        if author:
+            theme.author = author
+        if font_family:
+            theme.font_family = font_family
+        
+        theme.custom_css = custom_css
+
         if preview_image:
             theme.thumbnail = preview_image
 
         theme.save()
         messages.success(request, f"Theme '{theme.name}' updated successfully.")
-        return redirect("themes:gallery")
+        return redirect("themes:edit", pk=theme.pk)
 
 
 class ThemeDeleteView(LoginRequiredMixin, View):
@@ -134,6 +138,11 @@ class ThemePreviewView(View):
 
         with open(index_path, "r", encoding="utf-8", errors="replace") as f:
             html_content = f.read()
+
+        # Inject custom CSS if defined
+        if theme.custom_css and "</head>" in html_content:
+            custom_style_tag = f"<style>\n/* Custom Theme Styles */\n{theme.custom_css}\n</style>\n</head>"
+            html_content = html_content.replace("</head>", custom_style_tag, 1)
 
         # Inject base href tag if not present
         if theme.index_html_url and "<base " not in html_content:

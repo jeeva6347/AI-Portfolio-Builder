@@ -1,42 +1,150 @@
 {% extends "dashboard/layouts/base.html" %}
 
-{% block title %}Edit Theme | Theme Publisher{% endblock %}
+{% block title %}Edit & Customize Theme | {{ theme.name }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid p-4">
-    <div class="max-w-2xl mx-auto">
-        <h1 class="h3 font-bold text-gray-900 dark:text-white mb-1">Edit Theme Details</h1>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Update theme title, description, or custom thumbnail image.</p>
 
-        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 p-md-5 shadow-sm">
-            <form method="post" enctype="multipart/form-data">
-                {% csrf_token %}
+    <!-- Top Navigation Header -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+        <div>
+            <div class="d-flex align-items-center gap-2 text-xs text-gray-500 mb-1">
+                <a href="{% url 'themes:gallery' %}" class="text-gray-500 hover:text-blue-600 no-underline">
+                    <i class="bi bi-palette me-1"></i>Themes Gallery
+                </a>
+                <span>/</span>
+                <span class="text-gray-700 dark:text-gray-300 font-medium">Edit & Customize</span>
+            </div>
+            <h1 class="h3 font-bold text-gray-900 dark:text-white mb-1 d-flex align-items-center gap-2">
+                {{ theme.name }}
+                <span class="badge bg-emerald-500 text-white rounded-pill text-xxs px-2.5 py-1">
+                    {{ theme.status|upper }}
+                </span>
+            </h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-0">Customize theme details, typography, custom CSS styles, and cover image.</p>
+        </div>
 
-                <div class="mb-4">
-                    <label class="form-label text-xs font-semibold text-gray-500 uppercase">Theme Name *</label>
-                    <input type="text" name="name" value="{{ theme.name }}" class="form-control rounded-lg" required>
-                </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{% url 'themes:preview' theme.pk %}" target="_blank" class="btn btn-outline-primary rounded-pill px-4 font-semibold">
+                <i class="bi bi-eye-fill me-1.5"></i> Preview Live
+            </a>
+            <a href="{% url 'github:theme_deploy' theme.pk %}" class="btn btn-success text-white rounded-pill px-4 font-semibold">
+                <i class="bi bi-cloud-arrow-up-fill me-1.5"></i> Publish to GitHub
+            </a>
+        </div>
+    </div>
 
-                <div class="mb-4">
-                    <label class="form-label text-xs font-semibold text-gray-500 uppercase">Description</label>
-                    <textarea name="description" class="form-control rounded-lg" rows="4">{{ theme.description }}</textarea>
-                </div>
+    <div class="row g-4">
+        <!-- Main Form Column -->
+        <div class="col-12 col-lg-8">
+            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 p-md-5 shadow-sm">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
 
-                <div class="mb-4">
-                    <label class="form-label text-xs font-semibold text-gray-500 uppercase">Update Thumbnail Image</label>
+                    <h5 class="font-bold text-gray-900 dark:text-white mb-4 d-flex align-items-center gap-2 border-b border-gray-100 dark:border-gray-700 pb-3">
+                        <i class="bi bi-sliders text-blue-600"></i> Theme Properties & Content Data
+                    </h5>
+
+                    <!-- Theme Name -->
+                    <div class="mb-4">
+                        <label class="form-label text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Theme Name *</label>
+                        <input type="text" name="name" value="{{ theme.name }}" class="form-control rounded-xl py-2.5 dark:bg-gray-900 dark:border-gray-700 dark:text-white" required>
+                    </div>
+
+                    <!-- Author Name -->
+                    <div class="mb-4">
+                        <label class="form-label text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Author / Creator Name</label>
+                        <input type="text" name="author" value="{{ theme.author|default:'AI Portfolio Team' }}" class="form-control rounded-xl py-2.5 dark:bg-gray-900 dark:border-gray-700 dark:text-white">
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mb-4">
+                        <label class="form-label text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</label>
+                        <textarea name="description" class="form-control rounded-xl py-2.5 dark:bg-gray-900 dark:border-gray-700 dark:text-white" rows="3">{{ theme.description }}</textarea>
+                    </div>
+
+                    <!-- Font Family Selection -->
+                    <div class="mb-4">
+                        <label class="form-label text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Primary Font Family</label>
+                        <select name="font_family" class="form-select rounded-xl py-2.5 dark:bg-gray-900 dark:border-gray-700 dark:text-white">
+                            <option value="Inter" {% if theme.font_family == "Inter" %}selected{% endif %}>Inter — Modern Clean (Default)</option>
+                            <option value="Space Grotesk" {% if theme.font_family == "Space Grotesk" %}selected{% endif %}>Space Grotesk — Tech & Futurist</option>
+                            <option value="Roboto" {% if theme.font_family == "Roboto" %}selected{% endif %}>Roboto — Classic & Universal</option>
+                            <option value="Outfit" {% if theme.font_family == "Outfit" %}selected{% endif %}>Outfit — Modern Geometric</option>
+                            <option value="Poppins" {% if theme.font_family == "Poppins" %}selected{% endif %}>Poppins — Friendly Rounded</option>
+                            <option value="Montserrat" {% if theme.font_family == "Montserrat" %}selected{% endif %}>Montserrat — Bold & Elegant</option>
+                            <option value="Fira Code" {% if theme.font_family == "Fira Code" %}selected{% endif %}>Fira Code — Developer Monospace</option>
+                        </select>
+                    </div>
+
+                    <!-- Custom CSS Editor -->
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                            <label class="form-label text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-0">Custom CSS Overrides</label>
+                            <span class="text-xxs text-gray-400">Injected directly into preview & build</span>
+                        </div>
+                        <textarea name="custom_css" class="form-control font-mono text-xs rounded-xl p-3 dark:bg-gray-950 dark:border-gray-700 dark:text-emerald-400" rows="6" placeholder="/* Enter custom CSS rules here (e.g. :root { --accent: #6c63ff; }) */">{{ theme.custom_css }}</textarea>
+                    </div>
+
+                    <!-- Thumbnail Image -->
+                    <div class="mb-5">
+                        <label class="form-label text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Update Preview Cover / Thumbnail</label>
+                        {% if theme.thumbnail %}
+                        <div class="mb-3 w-48 h-32 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm">
+                            <img src="{{ theme.thumbnail.url }}" class="w-100 h-100 object-cover">
+                        </div>
+                        {% endif %}
+                        <input type="file" name="preview_image" class="form-control rounded-xl py-2 dark:bg-gray-900 dark:border-gray-700 dark:text-white" accept="image/*">
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="d-flex align-items-center justify-content-between gap-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                        <a href="{% url 'themes:gallery' %}" class="btn btn-outline-secondary rounded-pill px-4 font-medium">
+                            <i class="bi bi-arrow-left me-1"></i> Back to Gallery
+                        </a>
+                        <button type="submit" class="btn btn-primary rounded-pill px-5 font-semibold">
+                            <i class="bi bi-check-circle-fill me-1.5"></i> Save Theme Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Right Side Panel -->
+        <div class="col-12 col-lg-4">
+            <!-- Theme Preview Card -->
+            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 shadow-sm mb-4">
+                <h6 class="font-bold text-gray-900 dark:text-white mb-3 d-flex align-items-center gap-2">
+                    <i class="bi bi-laptop text-blue-600"></i> Theme Quick Preview
+                </h6>
+                <div class="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-gray-900 mb-3" style="height: 180px;">
                     {% if theme.thumbnail %}
-                    <div class="mb-2 w-32 h-20 rounded-lg overflow-hidden border">
-                        <img src="{{ theme.thumbnail.url }}" class="w-100 h-100 object-cover">
+                    <img src="{{ theme.thumbnail.url }}" class="w-100 h-100 object-cover">
+                    {% else %}
+                    <div class="w-100 h-100 d-flex align-items-center justify-content-center text-white font-bold bg-gradient-to-br from-blue-600 to-indigo-700">
+                        {{ theme.name }}
                     </div>
                     {% endif %}
-                    <input type="file" name="preview_image" class="form-control rounded-lg" accept="image/*">
                 </div>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'themes:preview' theme.pk %}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill py-2 font-medium">
+                        <i class="bi bi-box-arrow-up-right me-1"></i> Open Full Live Preview
+                    </a>
+                </div>
+            </div>
 
-                <div class="d-flex justify-content-end gap-2">
-                    <a href="{% url 'themes:gallery' %}" class="btn btn-outline-secondary rounded-pill px-4">Cancel</a>
-                    <button type="submit" class="btn btn-primary rounded-pill px-5">Save Theme Changes</button>
-                </div>
-            </form>
+            <!-- Publishing Box -->
+            <div class="bg-gradient-to-br from-blue-600 to-indigo-700 text-white rounded-2xl p-4 shadow-sm">
+                <h6 class="font-bold text-white mb-2 d-flex align-items-center gap-2">
+                    <i class="bi bi-github"></i> Ready to Publish?
+                </h6>
+                <p class="text-xs text-blue-100 mb-4 leading-relaxed">
+                    Once you've customized your theme, deploy it directly to GitHub Pages in one click!
+                </p>
+                <a href="{% url 'github:theme_deploy' theme.pk %}" class="btn btn-light text-blue-700 font-bold rounded-pill w-100 py-2.5">
+                    <i class="bi bi-cloud-arrow-up-fill me-1.5"></i> Publish to GitHub Pages
+                </a>
+            </div>
         </div>
     </div>
 </div>

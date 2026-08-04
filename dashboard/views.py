@@ -34,14 +34,15 @@ class DashboardHomeView(LoginRequiredMixin, DashboardBaseView):
         if not user or not user.is_authenticated:
             return context
 
+        all_themes = Theme.objects.filter(is_active=True).order_by("-created_at")
         user_themes = Theme.objects.filter(uploaded_by=user).order_by("-created_at")
-        all_themes = Theme.objects.filter(is_active=True)
+        display_themes = user_themes if user_themes.exists() else all_themes
         deployments = GitHubDeployment.objects.filter(user=user)
         is_connected = is_github_connected(user)
 
         context.update({
-            "user_themes": user_themes,
-            "user_themes_count": user_themes.count(),
+            "user_themes": display_themes,
+            "user_themes_count": display_themes.count(),
             "total_themes_count": all_themes.count(),
             "is_github_connected": is_connected,
             "github_username": get_github_username(user) if is_connected else "",
