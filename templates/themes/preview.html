@@ -1,7 +1,7 @@
 {% extends "dashboard/layouts/base.html" %}
 {% load static %}
 
-{% block title %}Preview: {{ theme.name }} | AI Portfolio Builder{% endblock %}
+{% block title %}Preview: {{ theme.name }} | Theme Publisher{% endblock %}
 
 {% block content %}
 
@@ -20,8 +20,8 @@
             <i class="bi bi-box-arrow-up-right"></i> Open in new tab
         </a>
         {% endif %}
-        <a href="{% url 'themes:marketplace' %}" class="btn-primary-gradient" style="padding: 9px 20px;">
-            <i class="bi bi-arrow-left"></i> Back to Marketplace
+        <a href="{% url 'themes:gallery' %}" class="btn-primary-gradient" style="padding: 9px 20px;">
+            <i class="bi bi-arrow-left"></i> Back to Gallery
         </a>
     </div>
 </div>
@@ -42,8 +42,7 @@
                 
                 <!-- Middle: Mock Address Bar -->
                 <div class="d-none d-md-flex align-items-center justify-content-center bg-white dark:bg-gray-850 border border-gray-100 dark:border-gray-800 rounded-lg px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 font-monospace flex-grow-1 mx-4 max-w-lg select-none" style="background-color: var(--bg-base);">
-                    <i class="bi bi-lock-fill me-1.5 text-success"></i>ai-portfolio-builder.com/preview/{{ theme.slug }}/
-                </div>
+                    <i class="bi bi-lock-fill me-1.5 text-success"></i>theme-publisher.com/preview/{{ theme.slug }}/
                 
                 <!-- Right: Viewport Controls -->
                 <div class="d-flex align-items-center gap-1 bg-white dark:bg-gray-800 rounded-lg p-0.5 border border-gray-100 dark:border-gray-700">
@@ -107,8 +106,8 @@
             </div>
             {% endif %}
             
-            <a href="{% url 'portfolio:use_theme_marketplace' theme.pk %}" class="btn btn-primary rounded-pill w-100 py-2 mb-3 d-flex align-items-center justify-content-center gap-1.5 shadow-sm font-semibold">
-                <i class="bi bi-check-circle-fill"></i> Use Theme Layout
+            <a href="{% url 'github:theme_deploy' theme.pk %}" class="btn btn-primary rounded-pill w-100 py-2 mb-3 d-flex align-items-center justify-content-center gap-1.5 shadow-sm font-semibold">
+                <i class="bi bi-cloud-arrow-up-fill"></i> Deploy Theme
             </a>
             
             <dl class="row g-2 text-sm mb-0">

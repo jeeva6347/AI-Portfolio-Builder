@@ -8,9 +8,9 @@ def analytics_context(request):
     
     return {
         "IS_PRODUCTION": not settings.DEBUG,
-        "SEO_TITLE": "Portfolio Theme Publisher — Upload & Deploy Themes to GitHub Pages",
-        "SEO_DESCRIPTION": "Upload custom portfolio themes (HTML5, CSS3, JS, Bootstrap 5, Tailwind CSS), preview live, and publish directly to GitHub Pages.",
-        "SEO_KEYWORDS": "portfolio theme upload, github pages publisher, bootstrap themes, tailwind themes, theme gallery",
+        "SEO_TITLE": "Theme Publisher — Upload & Deploy Themes to GitHub Pages",
+        "SEO_DESCRIPTION": "Upload custom themes (HTML5, CSS3, JS, Bootstrap 5, Tailwind CSS), preview live, and publish directly to GitHub Pages.",
+        "SEO_KEYWORDS": "theme upload, github pages publisher, bootstrap themes, tailwind themes, theme gallery",
         "CANONICAL_URL": canonical_url,
     }
 

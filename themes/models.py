@@ -30,7 +30,7 @@ class ThemeCategory(models.Model):
 
 class Theme(models.Model):
     """
-    A portfolio theme package uploaded as a .zip archive (containing index.html & assets).
+    A theme package uploaded as a .zip archive (containing index.html & assets).
     """
     class Status(models.TextChoices):
         DRAFT = "draft", "Draft"
@@ -42,7 +42,7 @@ class Theme(models.Model):
     name = models.CharField(max_length=200)
     slug = models.SlugField(max_length=220, unique=True, blank=True)
     description = models.TextField(blank=True)
-    author = models.CharField(max_length=150, blank=True, default="AI Portfolio Team")
+    author = models.CharField(max_length=150, blank=True, default="Theme Publisher Team")
     category = models.ForeignKey(
         ThemeCategory,
         on_delete=models.SET_NULL,

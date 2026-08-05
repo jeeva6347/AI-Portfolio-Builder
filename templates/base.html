@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}AI Portfolio Builder{% endblock %}</title>
+  <title>{% block title %}Theme Publisher{% endblock %}</title>
   
   <!-- Prevent Search Engine Indexing of account and error views -->
   <meta name="robots" content="noindex, nofollow">
@@ -115,12 +115,7 @@
         <div class="bg-blue-600 rounded-lg p-1.5 flex items-center justify-center">
           <i class="bi bi-robot text-lg text-white"></i>
         </div>
-        AI Portfolio Builder
-      </a>
-    </div>
-
-    {% if messages %}
-      <div class="space-y-2 mb-4">
+        Theme Publisher
         {% for message in messages %}
           <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} text-xs rounded-xl py-3 px-4 border-0 shadow-md">
             {{ message }}

@@ -19,8 +19,8 @@ CSRF_TRUSTED_ORIGINS = config("CSRF_TRUSTED_ORIGINS", default="http://127.0.0.1:
 CSRF_FAILURE_VIEW = "dashboard.views.custom_csrf_failure_view"
 
 SITE_ID = 1
-SITE_DOMAIN = config("SITE_DOMAIN", default="ai-portfolio-builder-icmv.onrender.com")
-SITE_NAME = config("SITE_NAME", default="AI Portfolio Builder")
+SITE_DOMAIN = config("SITE_DOMAIN", default="theme-publisher.onrender.com")
+SITE_NAME = config("SITE_NAME", default="Theme Publisher")
 
 # Reverse Proxy & SSL Configuration for Render
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

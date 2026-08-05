@@ -10,7 +10,7 @@ class UserManager(DjangoUserManager):
 
 class User(AbstractUser):
     """
-    Custom user model for AI Portfolio Builder.
+    Custom user model for Theme Publisher.
 
     Extends Django's AbstractUser to support the three platform roles
     defined in the SRS: Super Admin, Admin, and User.

@@ -141,7 +141,7 @@ class ThemeDeployView(LoginRequiredMixin, View):
                 user=request.user,
                 theme=theme,
                 token=token,
-                commit_message=f"Deploy {theme.name} portfolio to GitHub Pages"
+                commit_message=f"Deploy {theme.name} theme to GitHub Pages"
             )
 
             if deployment.status == GitHubDeployment.Status.SUCCESS:
